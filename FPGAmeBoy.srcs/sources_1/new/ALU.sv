@@ -27,11 +27,16 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
         output logic [3:0] FLAGS_OUT;
        
        // Local Arithmetic Op-code parameters
-       localparam ADD = 5'b00000;
-       localparam ADC = 5'b00001;
-       localparam SUB = 5'b00010;
-       localparam SBC = 5'b00011;
-       
+       localparam ADD  = 5'b00000;
+       localparam ADC  = 5'b00001;
+       localparam SUB  = 5'b00010;
+       localparam SBC  = 5'b00011;
+       localparam AND  = 5'b00100;
+       localparam OR   = 5'b00101;
+       localparam EXOR = 5'b00110;
+       localparam CP   = 5'b00111;
+       localparam INC  = 5'b01000;
+       localparam DEC  = 5'b01001;  
 
        
        // Flag Register Bits
@@ -99,10 +104,10 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end
                   // (-) Concatenation station
-                  SUB:
+                SUB:
                     begin
                         // Sets the Subtract FLag
-                        FLAGS_OUT[H_FLAG] = 1'b1;
+                        FLAGS_OUT[N_FLAG] = 1'b1;
                         // Concatenation of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width
                         LOW_RESULT = {1'b0, A[3:0]} - {1'b0, B[3:0]};
@@ -122,10 +127,10 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end 
                   // (-) Concatenation station + C               
-                  SBC:
+                SBC:
                     begin
                         // Sets the Subtract FLag
-                        FLAGS_OUT[H_FLAG] = 1'b1;
+                        FLAGS_OUT[N_FLAG] = 1'b1;
                         // Concatenation  of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width and carry flag concatenation
                         LOW_RESULT = {1'b0, A[3:0]} - {1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]};
@@ -144,10 +149,10 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         else           
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end 
-                                              
+                                                 
                 default: 
                     begin
-                        ALU_OUT = 0;
+                        ALU_OUT = 8'b0;
                         FLAGS_OUT = FLAGS_IN;
                     end
             endcase
