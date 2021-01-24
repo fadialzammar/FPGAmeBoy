@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
-        input [4:0] ALU_FUN;  //func7[5],func3
+        input [4:0] ALU_FUN;
         input [7:0] A,B;
         input [3:0] FLAGS_IN;
         output logic [7:0] ALU_OUT; 
@@ -29,6 +29,8 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        // Local Arithmetic Op-code parameters
        localparam ADD = 5'b00000;
        localparam ADC = 5'b00001;
+       localparam SUB = 5'b00010;
+       localparam SBC = 5'b00011;
        
        // Flag Register Bits
        // [Z,N,H,C,0,0,0]
@@ -57,11 +59,14 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
                         // Concatenation  of upper 4 bits of input with 
                         // additional bit for proper LOW_RESULT bit-width
-                        HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]};
+                        HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]};
                         // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
                         FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0] + LOW_RESULT[3:0]};
+                        
+                        // Subtract Flag is reset
+                        FLAGS_OUT[N_FLAG] = 1'b0;
                         
                         if (ALU_OUT == 8'b0)
                             FLAGS_OUT[Z_FLAG] = 1'b1;
@@ -72,18 +77,26 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                 // Concatenation station + C
                 ADC: 
                     begin
-                    // Concatenation  of lower 4 bits of the inputs with 
-                        // additional bit for proper LOW_RESULT bit-width
-                        LOW_RESULT = {1'b0, A[3:0]} + {1'b0, B[3:0]};
+                        // Concatenation  of lower 4 bits of the inputs with 
+                        // additional bit for proper LOW_RESULT bit-width and carry flag concatenation
+                        LOW_RESULT = {1'b0, A[3:0]} + {1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]};
                         // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
                         FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
                         // Concatenation  of upper 4 bits of input with 
                         // additional bit for proper LOW_RESULT bit-width
-                        HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]};
+                        HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]};
                         // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
                         FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0] + LOW_RESULT[3:0]};
+                        
+                        // Subtract Flag is reset
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end
               
                 default: 
