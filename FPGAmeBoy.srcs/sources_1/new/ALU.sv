@@ -63,13 +63,27 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0] + LOW_RESULT[3:0]};
                         
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;            
                     end
                     
                 // Concatenation station + C
                 ADC: 
                     begin
-                    // Need to change to same form as ADD but also add carry flag
-                        ALU_OUT = A + B + FLAGS_IN[C_FLAG];
+                    // Concatenation  of lower 4 bits of the inputs with 
+                        // additional bit for proper LOW_RESULT bit-width
+                        LOW_RESULT = {1'b0, A[3:0]} + {1'b0, B[3:0]};
+                        // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
+                        FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
+                        // Concatenation  of upper 4 bits of input with 
+                        // additional bit for proper LOW_RESULT bit-width
+                        HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]};
+                        // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
+                        FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
+                        // The output is the addition of the upper and lower 4 bits
+                        ALU_OUT = {HIGH_RESULT[3:0] + LOW_RESULT[3:0]};
                     end
               
                 default: 
