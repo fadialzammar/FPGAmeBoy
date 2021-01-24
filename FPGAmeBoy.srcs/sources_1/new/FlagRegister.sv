@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: ME
+// Engineer: ME (Izak Walker)
 // 
 // Create Date: 01/09/2021 04:19:50 PM
 // Design Name: 
