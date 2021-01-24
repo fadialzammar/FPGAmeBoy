@@ -48,6 +48,5 @@ xvlog.*
 *.hw
 *.backup.*
 *.debug
-FPGAmeBoy.xpr
 
 unisims
