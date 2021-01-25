@@ -62,14 +62,14 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // Concatenation  of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width
                         LOW_RESULT = {1'b0, A[3:0]} + {1'b0, B[3:0]};
-                        // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
+                        // Sets Half-carry flag if there was overflow in to the MSB of LOW_RESULT
                         FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
                         // Concatenation  of upper 4 bits of input with 
                         // additional bit for proper HIGH_RESULT bit-width
                         HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]};
-                        // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
+                        // Sets Carry flag if there was overflow in to the MSB of HIGH_RESULT
                         FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
-                        // The output is the addition of the upper and lower 4 bits
+                        // The output is the concatenation of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};                        
                         // Subtract Flag is reset
                         FLAGS_OUT[N_FLAG] = 1'b0;                        
@@ -86,12 +86,12 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // Concatenation  of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width and carry flag concatenation
                         LOW_RESULT = {1'b0, A[3:0]} + {1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]};
-                        // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
+                        // Sets Half-carry flag if there was overflow in to the MSB of LOW_RESULT
                         FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
                         // Concatenation  of upper 4 bits of input with 
                         // additional bit for proper HIGH_RESULT bit-width
                         HIGH_RESULT = {1'b0, A[7:4]} + {1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]};
-                        // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
+                        // Sets Carry flag if there was overflow in to the MSB of HIGH_RESULT
                         FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};                        
@@ -103,7 +103,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         else           
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end
-                  // (-) Concatenation station
+                // (-) Concatenation station
                 SUB:
                     begin
                         // Sets the Subtract FLag
@@ -111,13 +111,13 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // Concatenation of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width
                         LOW_RESULT = {1'b0, A[3:0]} - {1'b0, B[3:0]};
-                        // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
-                        FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
-                        // Concatenation  of upper 4 bits of input with 
+                        // Sets Half-carry flag if there was no borrow from the MSB
+                        FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
+                        // Concatenation of upper 4 bits of input with 
                         // additional bit for proper HIGH_RESULT bit-width
                         HIGH_RESULT = {1'b0, A[7:4]} - {1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]};
-                        // Sets Carry flag is there was overflow ito the fifth bit of HIGH_RESULT
-                        FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
+                        // Sets Carry flag if there was no borrow from the MSB
+                        FLAGS_OUT[C_FLAG] = ~HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};
                         // Z Flag conditional
@@ -126,7 +126,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         else           
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end 
-                  // (-) Concatenation station + C               
+                // (-) Concatenation station + C               
                 SBC:
                     begin
                         // Sets the Subtract FLag
@@ -134,13 +134,13 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // Concatenation  of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width and carry flag concatenation
                         LOW_RESULT = {1'b0, A[3:0]} - {1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]};
-                        // Sets Half-carry flag is there was a borrow from the MSB
-                        FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
-                        // Concatenation  of upper 4 bits of input with 
+                        // Sets Half-carry flag if there was no borrow from the MSB
+                        FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
+                        // Concatenation of upper 4 bits of input with 
                         // additional bit for proper LOW_RESULT bit-width
                         HIGH_RESULT = {1'b0, A[7:4]} - {1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]};
-                        // Sets Carry flag is there was a borrow from the MSB
-                        FLAGS_OUT[C_FLAG] = HIGH_RESULT[4];
+                        // Sets Carry flag if there was no borrow from the MSB
+                        FLAGS_OUT[C_FLAG] = ~HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};
                         // Z Flag conditional
