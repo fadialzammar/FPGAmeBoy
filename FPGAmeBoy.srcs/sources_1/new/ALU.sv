@@ -40,7 +40,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        localparam SWAP = 5'b01010;
        localparam DAA  = 5'b01011;
        localparam CPL  = 5'b01100;
-       localparam CFF  = 5'b01101;
+       localparam CCF  = 5'b01101;
        localparam SCF  = 5'b01110;
        localparam RLC  = 5'b01111;
        localparam RL   = 5'b10000;
@@ -65,7 +65,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        // Upper and lower 4 bit results + 1 bit for Half and Carry Flags
        logic [4:0] HIGH_RESULT;
        logic [4:0] LOW_RESULT;
-       
+       logic [8:0] TEMP_RESULT; 
        
         always_comb
         begin //reevaluate If these change
@@ -278,14 +278,67 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[N_FLAG] = FLAGS_IN[N_FLAG];
                         // H flag is set to 0
                         FLAGS_OUT[H_FLAG] = 1'b0;
-                        // for ADD case
-                        if(~FLAGS_IN[N_FLAG])
+
+                        //if there was a borrow (Half-carry flag equals 1) or the lower nibble was greater than 9
+                        //add 6 to the result
+                        if (FLAGS_IN[H_FLAG] | ((A & 8'h0f) > 8'h09))
                             begin
-                                //if there was a borrow (Half-carry flag equals 1) or the lower nibble was greater than 9
-                                //add 6 to the result
-                                
+                                TEMP_RESULT = {1'b0, A} + 9'h6;    
                             end
+                         else
+                            begin
+                                TEMP_RESULT = {1'b0, A};   
+                            end    
+                        //if Carry-flag IN equals 1 or the upper nibble was greater than 9
+                        //add 6 to the upper nibble 
+                        if (FLAGS_IN[C_FLAG] | (TEMP_RESULT > 9'h9f))
+                            begin
+                                TEMP_RESULT = TEMP_RESULT + 9'h60;    
+                            end                                
+                        ALU_OUT = TEMP_RESULT[7:0];
+                        //C flag condition
+                        FLAGS_OUT[C_FLAG]= TEMP_RESULT[8] ? 1'b1 : 1'b0;
+                        
                     end
+                  // CPL - complement input register  
+                  CPL:
+                    begin 
+                        //Z & C flags are not affected
+                        FLAGS_OUT[Z_FLAG] = FLAGS_IN[Z_FLAG];
+                        FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG];
+                        //flip all bits of input register
+                        ALU_OUT = ~A;
+                        // N & H flags are set to 1
+                        FLAGS_OUT[H_FLAG] = 1'b1;
+                        FLAGS_OUT[N_FLAG] = 1'b1;
+                    end
+                    
+                  // CCF - Complement carry flag
+                  CCF:
+                    begin
+                        //Z flag is not affected
+                        FLAGS_OUT[Z_FLAG] = FLAGS_IN[Z_FLAG];
+                        // N & H flags are set to 0
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        //C flag is complemented
+                        FLAGS_OUT[C_FLAG] = ~FLAGS_IN[C_FLAG];
+                        ALU_OUT = A; //doesnt matter
+                    end
+                    
+                  // SCF - Set carry flag
+                  SCF:
+                    begin
+                        //Z flag is not affected
+                        FLAGS_OUT[Z_FLAG] = FLAGS_IN[Z_FLAG];
+                        // N & H flags are set to 0
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        //C flag is set
+                        FLAGS_OUT[C_FLAG] = 1'b1;
+                        ALU_OUT = A; //doesnt matter
+                    end
+                
                     
                 // Used for the C and CB Prefix commands  
                 // Rotates A input left, MSB = Carry Flag 
