@@ -167,15 +167,21 @@ module ALU_Testbench();
         
         #10;
         // BIT  Test
-        
+        A = 8'b11110111;
+        B = 8'h3;
+        ALU_FUN = BIT;
         
         #10;
         // SET  Test
-        
+        A = 8'b00001111;
+        B = 8'h6;
+        ALU_FUN = SET;
         
         #10;
         // RES  Test
-        
+        A = 8'b11111111;
+        B = 8'h7;
+        ALU_FUN = RES;
         
         #10;
      
