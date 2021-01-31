@@ -171,6 +171,9 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         ALU_OUT  = A & B;
                         //Set Z flag to 1 if result is zero
                         FLAGS_OUT[Z_FLAG] = (ALU_OUT   == 8'b0) ? 1'b1 : 1'b0;
+                        // N & C flags are set to 0
+                        FLAGS_OUT[C_FLAG] = 1'b0;
+                        FLAGS_OUT[N_FLAG] = 1'b0;
                                               
                     end
                   // logical OR 2 inputs A B, result in A
@@ -179,6 +182,10 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         ALU_OUT = A | B;
                         //Set Z flag to 1 if result is zero
                         FLAGS_OUT[Z_FLAG] = (ALU_OUT   == 8'b0) ? 1'b1 : 1'b0;
+                        //Set N,H,C flags to zero
+                        FLAGS_OUT[H_FLAG] = 1'b0; 
+                        FLAGS_OUT[N_FLAG] = 1'b0; 
+                        FLAGS_OUT[C_FLAG] = 1'b0; 
                     end
                     
                   //logical XOR 2inputs A B, result in A
@@ -187,6 +194,10 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         ALU_OUT = A ^ B;
                         //Set Z flag to 1 if result is zero
                         FLAGS_OUT[Z_FLAG] = (ALU_OUT   == 8'b0) ? 1'b1 : 1'b0;
+                        //Set N,H,C flags to zero
+                        FLAGS_OUT[H_FLAG] = 1'b0; 
+                        FLAGS_OUT[N_FLAG] = 1'b0; 
+                        FLAGS_OUT[C_FLAG] = 1'b0; 
                     end
                    
                   //compare input A & B, set ALU_OUT = A-B
@@ -232,11 +243,15 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                       if (ALU_OUT == 8'b0)
                           FLAGS_OUT[Z_FLAG] = 1'b1;
                       else           
-                          FLAGS_OUT[Z_FLAG] = 1'b0;            
+                          FLAGS_OUT[Z_FLAG] = 1'b0;     
+                      //C flag is not affected
+                      FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG];       
                   end
                   //decrement input B
                   DEC:
                     begin
+                        //C flag is not affected
+                        FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG]; 
                         // Sets the Subtract FLag
                         FLAGS_OUT[N_FLAG] = 1'b1;
                         // Concatenation of lower 4 bits of the inputs with 
