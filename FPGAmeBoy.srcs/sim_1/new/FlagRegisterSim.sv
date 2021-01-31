@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Izak Walker
 // 
 // Create Date: 01/09/2021 04:43:54 PM
 // Design Name: 
