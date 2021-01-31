@@ -42,17 +42,13 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        localparam CPL  = 5'b01100;
        localparam CFF  = 5'b01101;
        localparam SCF  = 5'b01110;
-       localparam RLCA = 5'b01111;
-       localparam RLA  = 5'b10000;
-       localparam RRCA = 5'b10001;
-       localparam RRA  = 5'b10010;
-       localparam RLC  = 5'b10011;
-       localparam RL   = 5'b10100;
-       localparam RRC  = 5'b10101;
-       localparam RR   = 5'b10110;
-       localparam SLA  = 5'b10111;
-       localparam SRA  = 5'b11000;
-       localparam SRL  = 5'b11001; 
+       localparam RLC = 5'b01111;
+       localparam RL  = 5'b10000;
+       localparam RRC = 5'b10001;
+       localparam RR  = 5'b10010;
+       localparam SLA  = 5'b10011;
+       localparam SRA   = 5'b10100;
+       localparam SRL  = 5'b10101;
 
        
        // Flag Register Bits
@@ -256,7 +252,90 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         else           
                             FLAGS_OUT[Z_FLAG] = 1'b0;   
                     end 
-                                                    
+                // Used for the C and CB Prefix commands  
+                // Rotates A input left, MSB = Carry Flag 
+                // LSB = A input MSB      
+                RLC: 
+                    begin
+                        // Resets the Subtract FLag
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        // Resets the Half Carry FLag
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        // Rotates the bits in A to the left by 1    
+                        ALU_OUT[7:1] = A[6:0];
+                        ALU_OUT[0] = A[7];
+                        // Sets the carry flag equal to the MSB of A
+                        FLAGS_OUT[C_FLAG] = A[7];
+                        // Z Flag conditional
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;   
+                    end
+                // Used for the RLA and CB Prefix commands                                 
+                // Rotates A input left through the Carry Flag
+                // LSB = input Carry Flag  
+                RL:
+                    begin
+                        // Resets the Subtract FLag
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        // Resets the Half Carry FLag
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        // Rotates the bits in A to the left by 1    
+                        ALU_OUT[7:1] = A[6:0];
+                        // Sets LSB of output to the current Carry Flag
+                        ALU_OUT[0] = FLAGS_IN[C_FLAG];
+                        // Sets the carry flag equal to the MSB of A
+                        FLAGS_OUT[C_FLAG] = A[7];
+                        // Z Flag conditional
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;   
+                    end
+                // Used for the RRCA and CB Prefix commands  
+                // Rotates A input right
+                // MSB = A input MSB    
+                RRC:
+                    begin
+                        // Resets the Subtract FLag
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        // Resets the Half Carry FLag
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        // Rotates the bits in A to the right by 1    
+                        ALU_OUT[6:0] = A[7:1];
+                        ALU_OUT[7] = A[0];
+                        // Sets the carry flag equal to the LSB of A
+                        FLAGS_OUT[C_FLAG] = A[0];
+                        // Z Flag conditional
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;   
+                    end   
+                // Used for the RLA and CB Prefix commands  
+                // Rotates A input right through the Carry Flag
+                // MSB = input Carry Flag     
+                RR:
+                    begin
+                        // Resets the Subtract FLag
+                        FLAGS_OUT[N_FLAG] = 1'b0;
+                        // Resets the Half Carry FLag
+                        FLAGS_OUT[H_FLAG] = 1'b0;
+                        // Rotates the bits in A to the right by 1    
+                        ALU_OUT[6:0] = A[7:1];
+                        // Sets LSB of output to the current Carry Flag
+                        ALU_OUT[7] = FLAGS_IN[C_FLAG];
+                        // Sets the carry flag equal to the LSB of A
+                        FLAGS_OUT[C_FLAG] = A[0];
+                        // Z Flag conditional
+                        if (ALU_OUT == 8'b0)
+                            FLAGS_OUT[Z_FLAG] = 1'b1;
+                        else           
+                            FLAGS_OUT[Z_FLAG] = 1'b0;   
+                    end  
+  
+                                                      
                 default: 
                     begin
                         ALU_OUT = 8'b0;
