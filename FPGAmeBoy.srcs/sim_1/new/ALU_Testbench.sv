@@ -163,7 +163,7 @@ module ALU_Testbench();
         
         #10;
         // DAA  Test
-        A=8'haf;
+        A=8'he;
         FLAGS_IN = H_FLAG_SET;
         ALU_FUN = DAA;
             
