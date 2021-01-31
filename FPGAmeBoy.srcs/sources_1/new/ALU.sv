@@ -501,7 +501,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             // Resets the Subtract FLag
                             FLAGS_OUT[N_FLAG] = 1'b0;
                             // Sets the Half Carry FLag
-                            FLAGS_OUT[H_FLAG] = 1'b0;
+                            FLAGS_OUT[H_FLAG] = 1'b1;
                             // No Change in the Carry Flag
                             FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG];
                             // Z Flag set if bit is 0, it is cleared otherwise                            

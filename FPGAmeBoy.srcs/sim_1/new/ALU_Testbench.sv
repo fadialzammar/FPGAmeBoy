@@ -170,47 +170,62 @@ module ALU_Testbench();
         A = 8'b01010011;
         B = 8'b00001111;
         FLAGS_IN = C_FLAG_SET;        
-        ALU_FUN = RLC;
+        ALU_FUN = RL;
         
         #10;
         // RRC  Test
         A = 8'b01010011;
         B = 8'b00001111;
         FLAGS_IN = ALL_FLAGS_CLR;        
-        ALU_FUN = RLC;
+        ALU_FUN = RRC;
         
         #10;
         // RR   Test
-        
+        A = 8'b01010010;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_SET;        
+        ALU_FUN = RR;
         
         #10;
         // SLA  Test
-        
+        A = 8'b01010011;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_SET;        
+        ALU_FUN = SLA;
         
         #10;
         // SRA  Test
-        
+        A = 8'b11010011;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_CLR;        
+        ALU_FUN = SRA;
         
         #10;
         // SRL  Test
-        
+        A = 8'b01010010;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_SET;        
+        ALU_FUN = SRL;
         
         #10;
         // BIT  Test
         A = 8'b11110111;
         B = 8'h3;
+        FLAGS_IN = ALL_FLAGS_SET;
         ALU_FUN = BIT;
         
         #10;
         // SET  Test
         A = 8'b00001111;
         B = 8'h6;
+        FLAGS_IN = ALL_FLAGS_CLR;
         ALU_FUN = SET;
         
         #10;
         // RES  Test
         A = 8'b11111111;
         B = 8'h7;
+        FLAGS_IN = ALL_FLAGS_SET;
         ALU_FUN = RES;
         
         #10;
