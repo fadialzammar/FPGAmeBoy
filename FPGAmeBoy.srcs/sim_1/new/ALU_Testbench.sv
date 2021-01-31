@@ -87,7 +87,10 @@ module ALU_Testbench();
         
         #10;
         // SUB  Test
-        
+        A = 8'h69;
+        B = 8'h45;
+        FLAGS_IN = 4'b0;
+        ALU_FUN = SUB;
         
         #10;
         // SBC  Test
