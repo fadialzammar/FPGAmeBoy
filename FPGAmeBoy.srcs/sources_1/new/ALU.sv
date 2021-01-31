@@ -33,10 +33,26 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        localparam SBC  = 5'b00011;
        localparam AND  = 5'b00100;
        localparam OR   = 5'b00101;
-       localparam EXOR = 5'b00110;
+       localparam XOR  = 5'b00110;
        localparam CP   = 5'b00111;
        localparam INC  = 5'b01000;
        localparam DEC  = 5'b01001;  
+       localparam SWAP = 5'b01010;
+       localparam DAA  = 5'b01011;
+       localparam CPL  = 5'b01100;
+       localparam CFF  = 5'b01101;
+       localparam SCF  = 5'b01110;
+       localparam RLCA = 5'b01111;
+       localparam RLA  = 5'b10000;
+       localparam RRCA = 5'b10001;
+       localparam RRA  = 5'b10010;
+       localparam RLC  = 5'b10011;
+       localparam RL   = 5'b10100;
+       localparam RRC  = 5'b10101;
+       localparam RR   = 5'b10110;
+       localparam SLA  = 5'b10111;
+       localparam SRA  = 5'b11000;
+       localparam SRL  = 5'b11001; 
 
        
        // Flag Register Bits
