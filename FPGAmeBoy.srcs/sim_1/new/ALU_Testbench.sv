@@ -64,41 +64,59 @@ module ALU_Testbench();
     localparam SET  = 5'b10111;
     localparam RES  = 5'b11000;
     
+    // Flag Register Bits
+    // [Z,N,H,C]
+    localparam Z_FLAG_SET = 4'b1000;
+    localparam N_FLAG_SET = 4'b0100;
+    localparam H_FLAG_SET = 4'b0010;
+    localparam C_FLAG_SET = 4'b0001;
+    localparam ALL_FLAGS_SET = 4'b1111;
+    localparam ALL_FLAGS_CLR = 4'b0000;
+    
     initial begin
     
         // Initialize values to 0
         ALU_FUN = ADD;
         A = 8'h0;
         B = 8'h0;
-        FLAGS_IN = 4'h0;
-        FLAGS_OUT = 4'h0;
+        FLAGS_IN = ALL_FLAGS_CLR;
+        FLAGS_OUT = ALL_FLAGS_CLR;
         ALU_OUT = 8'h0;
         
         #10;
         // ADD  Test
         A = 8'h45;
         B = 8'h69;
-        FLAGS_IN = 4'b0;
+        FLAGS_IN = ALL_FLAGS_CLR;
         ALU_FUN = ADD;
         
         #10;
         // ADC  Test
-        
+        A = 8'h45;
+        B = 8'h69;
+        FLAGS_IN = C_FLAG_SET;
+        ALU_FUN = ADC;
         
         #10;
         // SUB  Test
         A = 8'h69;
         B = 8'h45;
-        FLAGS_IN = 4'b0;
+        FLAGS_IN = ALL_FLAGS_CLR;
         ALU_FUN = SUB;
         
         #10;
         // SBC  Test
-        
+        A = 8'h69;
+        B = 8'h45;
+        FLAGS_IN = C_FLAG_SET;
+        ALU_FUN = SBC;
         
         #10;
         // AND  Test
-        
+        A = 8'hff;
+        B = 8'h0f;
+        FLAGS_IN = N_FLAG_SET;
+        ALU_FUN = AND;
         
         #10;
         // OR   Test
@@ -142,15 +160,24 @@ module ALU_Testbench();
         
         #10;
         // RLC  Test
-        
+        A = 8'b10010011;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_CLR;        
+        ALU_FUN = RLC;
         
         #10;
         // RL   Test
-        
+        A = 8'b01010011;
+        B = 8'b00001111;
+        FLAGS_IN = C_FLAG_SET;        
+        ALU_FUN = RLC;
         
         #10;
         // RRC  Test
-        
+        A = 8'b01010011;
+        B = 8'b00001111;
+        FLAGS_IN = ALL_FLAGS_CLR;        
+        ALU_FUN = RLC;
         
         #10;
         // RR   Test

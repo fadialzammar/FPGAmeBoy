@@ -55,7 +55,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
 
        
        // Flag Register Bits
-       // [Z,N,H,C,0,0,0]
+       // [Z,N,H,C]
        localparam Z_FLAG = 2'd3;
        localparam N_FLAG = 2'd2;
        localparam H_FLAG = 2'd1;
