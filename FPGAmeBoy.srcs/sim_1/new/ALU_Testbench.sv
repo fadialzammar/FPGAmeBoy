@@ -118,45 +118,72 @@ module ALU_Testbench();
         FLAGS_IN = N_FLAG_SET;
         ALU_FUN = AND;
         
+        
         #10;
         // OR   Test
-        
+        A = 8'h1f;
+        B = 8'h3a;
+        FLAGS_IN = H_FLAG_SET;
+        ALU_FUN = OR;        
         
         #10;
         // XOR  Test
-        
+        A = 8'h1f;
+        B = 8'h3a;
+        FLAGS_IN = C_FLAG_SET;
+        ALU_FUN = XOR;
         
         #10;
         // CP   Test
-        
+        A = 8'h1f;
+        B = 8'h3a;
+        FLAGS_IN = ALL_FLAGS_CLR;
+        ALU_FUN = CP;
+    
     
         #10;
         // INC  Test
-            
+        A=8'h2f;
+        FLAGS_IN = N_FLAG_SET;
+        ALU_FUN = INC;
+        
+        ALU_FUN = INC;    
         
         #10;
         // DEC  Test
-        
+        A=8'h1f;
+        FLAGS_IN = ALL_FLAGS_CLR;
+        ALU_FUN = DEC;
         
         #10;
         // SWAP Test
-        
+        A=8'h96;
+        FLAGS_IN = C_FLAG_SET;
+        ALU_FUN = SWAP;
         
         #10;
         // DAA  Test
-        
+        A=8'haf;
+        FLAGS_IN = H_FLAG_SET;
+        ALU_FUN = DAA;
             
         #10;    
-        // PL   Test
+        // CPL   Test
+        A=8'h0f;
+        FLAGS_IN = ALL_FLAGS_CLR;
+        ALU_FUN = CPL;
         
-    
         #10;    
-        // CFF  Test
-        
+        // CCF  Test
+        A=8'h0f;
+        FLAGS_IN = ALL_FLAGS_SET;
+        ALU_FUN = CCF;
        
         #10; 
         // SCF  Test
-        
+        A=8'h0f;
+        FLAGS_IN = ALL_FLAGS_CLR;
+        ALU_FUN = SCF;
         
         #10;
         // RLC  Test
@@ -170,14 +197,14 @@ module ALU_Testbench();
         A = 8'b01010011;
         B = 8'b00001111;
         FLAGS_IN = C_FLAG_SET;        
-        ALU_FUN = RLC;
+        ALU_FUN = RL;
         
         #10;
         // RRC  Test
         A = 8'b01010011;
         B = 8'b00001111;
         FLAGS_IN = ALL_FLAGS_CLR;        
-        ALU_FUN = RLC;
+        ALU_FUN = RRC;
         
         #10;
         // RR   Test
