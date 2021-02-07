@@ -55,7 +55,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
 
        
        // Flag Register Bits
-       // [Z,N,H,C]
+       // [Z,N,H,C,0,0,0]
        localparam Z_FLAG = 2'd3;
        localparam N_FLAG = 2'd2;
        localparam H_FLAG = 2'd1;
@@ -228,12 +228,12 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                     begin
                       // Concatenation  of lower 4 bits of input B with 
                       // additional bit 
-                      LOW_RESULT = {1'b0, B[3:0]} + {4'b0, 1'b1};
+                      LOW_RESULT = {1'b0, A[3:0]} + {4'b0, 1'b1};
                       // Sets Half-carry flag is there was overflow ito the fifth bit of LOW_RESULT
                       FLAGS_OUT[H_FLAG] = LOW_RESULT[4];
                       // Concatenation  of upper 4 bits of input with 
                       // additional bit for proper HIGH_RESULT bit-width
-                      HIGH_RESULT =  {1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]};
+                      HIGH_RESULT =  {1'b0, A[7:4]} + {4'b0, LOW_RESULT[4]};
                                            
                       // The output is the addition of the upper and lower 4 bits
                       ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};                        
@@ -256,12 +256,12 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[N_FLAG] = 1'b1;
                         // Concatenation of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width
-                        LOW_RESULT = {1'b0, B[3:0]} - {4'b0, 1'b1};
+                        LOW_RESULT = {1'b0, A[3:0]} - {4'b0, 1'b1};
                         // Sets Half-carry flag if there was no borrow from the MSB
                         FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
                         // Concatenation of upper 4 bits of input with 
                         // additional bit for proper HIGH_RESULT bit-width
-                        HIGH_RESULT = {1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]};
+                        HIGH_RESULT = {1'b0, A[7:4]} - {4'b0, LOW_RESULT[4]};
                         // The output is the addition of the upper and lower 4 bits
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[3:0]};
                         // Z Flag conditional
