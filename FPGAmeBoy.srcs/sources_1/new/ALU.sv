@@ -148,12 +148,12 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[N_FLAG] = 1'b1;
                         // Concatenation  of lower 4 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width and carry flag concatenation
-                        LOW_RESULT = {1'b0, A[3:0]} - {1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]};
+                        LOW_RESULT = {1'b0, A[3:0]} - ({1'b0, B[3:0]} + {4'b0, FLAGS_IN[C_FLAG]});
                         // Sets Half-carry flag if there was no borrow from the MSB
                         FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
                         // Concatenation of upper 4 bits of input with 
                         // additional bit for proper LOW_RESULT bit-width
-                        HIGH_RESULT = {1'b0, A[7:4]} - {1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]};
+                        HIGH_RESULT = {1'b0, A[7:4]} - ({1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]});
                         // Sets Carry flag if there was no borrow from the MSB
                         FLAGS_OUT[C_FLAG] = ~HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
@@ -287,6 +287,45 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                   // Used to correct presentation of ALU_OUT to BCD
                   DAA:
                     begin
+                        // There was an ADD previously
+                        if (FLAGS_IN[N_FLAG] == 1'b0)
+                        begin
+                            //if there was a borrow (Half-carry flag equals 1) or the lower nibble was greater than 9
+                            //add 6 to the result
+                            if (FLAGS_IN[H_FLAG] || ((A & 8'h0f) > 8'h09))
+                                begin
+                                    TEMP_RESULT = {1'b0, A} + 9'h6;    
+                                end
+                             else
+                                begin
+                                    TEMP_RESULT = {1'b0, A};   
+                                end    
+                            //if Carry-flag IN equals 1 or the upper nibble was greater than 9
+                            //add 6 to the upper nibble 
+                            if (FLAGS_IN[C_FLAG] || (TEMP_RESULT > 9'h99))
+                                begin
+                                    TEMP_RESULT = TEMP_RESULT + 9'h60;    
+                                end
+                        end    
+                        // There was a SUB previously
+                        else
+                            begin
+                                if (FLAGS_IN[H_FLAG] == 1'b1)
+                                    begin
+                                        TEMP_RESULT = {1'b0, A - 8'h6}; 
+                                    end
+                                else
+                                    begin
+                                        TEMP_RESULT = {1'b0, A};
+                                    end 
+                                if (FLAGS_IN[C_FLAG] == 1'b1)
+                                    begin
+                                        TEMP_RESULT = TEMP_RESULT - 9'h60;
+                                    end                               
+                            end                            
+                        ALU_OUT = TEMP_RESULT[7:0];
+                        //C flag condition
+                        FLAGS_OUT[C_FLAG]= TEMP_RESULT[8] ? 1'b1 : 1'b0;
                         //Set Z flag to 1 if result is zero
                         FLAGS_OUT[Z_FLAG] = (ALU_OUT   == 8'b0) ? 1'b1 : 1'b0;
                         //N flag is not affected
@@ -294,26 +333,6 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         // H flag is set to 0
                         FLAGS_OUT[H_FLAG] = 1'b0;
 
-                        //if there was a borrow (Half-carry flag equals 1) or the lower nibble was greater than 9
-                        //add 6 to the result
-                        if (FLAGS_IN[H_FLAG] | ((A & 8'h0f) > 8'h09))
-                            begin
-                                TEMP_RESULT = {1'b0, A} + 9'h6;    
-                            end
-                         else
-                            begin
-                                TEMP_RESULT = {1'b0, A};   
-                            end    
-                        //if Carry-flag IN equals 1 or the upper nibble was greater than 9
-                        //add 6 to the upper nibble 
-                        if (FLAGS_IN[C_FLAG] | (TEMP_RESULT > 9'h9f))
-                            begin
-                                TEMP_RESULT = TEMP_RESULT + 9'h60;    
-                            end                                
-                        ALU_OUT = TEMP_RESULT[7:0];
-                        //C flag condition
-                        FLAGS_OUT[C_FLAG]= TEMP_RESULT[8] ? 1'b1 : 1'b0;
-                        
                     end
                   // CPL - complement input register  
                   CPL:
