@@ -136,7 +136,7 @@ module ALU_Testbench();
         #10;
         // CP   Test
         A = 8'h1f;
-        B = 8'h3a;
+        B = 8'h1f;
         FLAGS_IN = ALL_FLAGS_CLR;
         ALU_FUN = CP;
     
@@ -145,9 +145,7 @@ module ALU_Testbench();
         // INC  Test
         A=8'h2f;
         FLAGS_IN = N_FLAG_SET;
-        ALU_FUN = INC;
-        
-        ALU_FUN = INC;    
+        ALU_FUN = INC; 
         
         #10;
         // DEC  Test
@@ -163,8 +161,8 @@ module ALU_Testbench();
         
         #10;
         // DAA  Test
-        A=8'haf;
-        FLAGS_IN = H_FLAG_SET;
+        A=8'd33;
+        FLAGS_IN = 4'b0010;
         ALU_FUN = DAA;
             
         #10;    
