@@ -27,6 +27,7 @@ module ControlUnit(
         output logic [1:0] PC_MUX_SEL,
         output logic RF_WR,             // register file
         output logic [1:0] RF_WR_SEL,
+        output logic [2:0] RF_ADRX, RF_ADRY,
         output logic [3:0] ALU_SEL,     // ALU
         output logic ALU_OPY_SEL,
         output logic SCR_DATA_SEL, SCR_WE,  // scratch pad
@@ -37,34 +38,54 @@ module ControlUnit(
         output logic RST,       // reset
         output logic IO_STRB    // IO
     );
+
+    parameter RF_MUX_ALU = 0;   // ALU output
+    parameter RF_MUX_SCR = 1;   // scratch RAM output
+    parameter RF_MUX_SP = 2;    // stack pointer output
+    parameter RF_MUX_IN = 3;    // external input
+    parameter RF_MUX_IMM = 4;   // immediate value from instruction
+    parameter RF_MUX_DY = 5;    // DY output of reg file
+
+    parameter SCR_ADDR_DY = 0;  // DY output of reg file
+    parameter SCR_ADDR_ADRY = 1;    // ADRY of reg file
+    parameter SCR_ADDR_SP = 2;  // stack pointer output
+    parameter SCR_ADDR_SP_SUB = 3;  // stack pointer output minus 1?
+
+    parameter REG_B = 3'b000;
+    parameter REG_C = 3'b001;
+    parameter REG_D = 3'b010;
+    parameter REG_E = 3'b011;
+    parameter REG_H = 3'b100;
+    parameter REG_L = 3'b101;
+    // parameter REG_HL = 3'b110;
+    parameter REG_A = 3'b111;
+
     
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT} STATE;
 
     STATE NS, PS = INIT;
 
-    always_ff @(posedge CLK)
-    begin
+    logic mcycle = 0;
+
+    always_ff @(posedge CLK) begin
         if (RESET)
             PS <= INIT;
         else
             PS <= NS;
     end
 
-    always_comb
-    begin
+    always_comb begin
         I_SET = 0; I_CLR =0; PC_LD=0; PC_INC=0; ALU_OPY_SEL=0; RF_WR=0; SP_LD=0; SP_INCR=0; SP_DECR=0;
         SCR_WE=0; SCR_DATA_SEL=0; FLG_C_SET=0; FLG_C_CLR=0; FLG_C_LD=0; FLG_Z_LD=0; FLG_LD_SEL=0;
         RST=0; PC_MUX_SEL=0; RF_WR_SEL=0; SCR_ADDR_SEL=0; ALU_SEL=0; IO_STRB = 0;
 
         case (PS)
-            INIT:
-            begin
+            INIT: begin
                 RST = 1;
                 NS = FETCH;
             end
 
-            FETCH:
-            begin
+            FETCH: begin
                 PC_INC = 1;
                 NS = EXEC;
             end
@@ -76,17 +97,97 @@ module ControlUnit(
                 else
                     NS = FETCH;
 
-                
-                if (OPCODE[7:6] == 2'b01) // LD r, r'
-                begin
-                    //filler
-                end
+                case (OPCODE) inside
+
+                    //
+                    // 8-bit loads
+                    //
+
+                    8'b00???110: begin  // LD r, n
+                        if (OPCODE[5:3] == 3'b110) begin    // LD (HL), n
+                            
+                        end
+                        else begin  // normal LD r8, n8
+                            RF_WR = 1;
+                            RF_WR_SEL = RF_MUX_IMM;
+                            RF_ADRX = OPCODE[5:3];
+                            // SCR_ADDR_SEL = 1;
+                        end
+                    end
+
+                    8'b01??????: begin  // LD r, r
+                        if (OPCODE == 8'b01110110) begin    // HALT
+                            
+                        end
+
+                        else if (OPCODE[5:3] == 3'b110) begin   // LD (HL), r
+                            if (mcycle == 0) begin
+                                
+                            end
+                            if (mcycle == 1) begin
+                                
+                            end
+                        end
+
+                        else if (OPCODE[2:0] == 3'b110) begin   // LD r, (HL)
+                            if (mcycle == 0) begin
+                                RF_WR = 0;
+                                RF_ADRY = REG_HL;
+                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                            end
+                            if (mcycle == 1) begin
+                                RF_WR = 1;
+                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_ADRX = OPCODE[5:3]; // r
+                            end
+                        end
+
+                        else begin  // normal LD r8, r8
+                            RF_WR = 1;
+                            RF_WR_SEL = RF_MUX_DY;
+                            RF_ADRX = OPCODE[5:3];  // copies from Y into X
+                            RF_ADRY = OPCODE[2:0];
+                            // SCR_ADDR_SEL = 0;
+                        end
+                    end
+
+                    8'b00001010: begin // LD A, (BC)
+                    
+                    end
+
+                    8'b00011010: begin // LD A, (DE)
+                    
+                    end
+
+                    8'b00000010: begin // LD (BC), A
+                    
+                    end
+
+                    8'b00010010: begin // LD (DE), A
+                    
+                    end
+
+                    8'b11111010: begin // LD A, (nn), (nn) = 16-bit immediate, LSB first
+                    
+                    end
+
+                    8'b11101010: begin // LD (nn), A, (nn) = 16-bit immediate, LSB first
+                    
+                    end
+
+                    default: begin
+                        // literally crashes on a real game boy
+                    end
+
+
+                endcase // OPCODE
 
                 if (INTR == 1)
                     NS = INTERRUPT;
                 NS = FETCH;
-            end
-        endcase
+            mcycle++;
+            end // EXEC
+        endcase // PS
     end
 
 
