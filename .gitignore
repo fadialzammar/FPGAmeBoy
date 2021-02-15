@@ -50,3 +50,5 @@ xvlog.*
 *.debug
 
 unisims
+
+vivado_pid*.zip
