@@ -22,7 +22,8 @@
 
 module Wrapper(
     input CLK,
-    input RST);
+    input RST
+    );
     
     // Program Counter Signals
     logic PC_LD;
@@ -50,8 +51,7 @@ module Wrapper(
     logic H_IN,H_FLAG_LD, H_FLAG_SET,H_FLAG_CLR,H_FLAG;
     logic C_IN, C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, C_FLAG;
     
-    // Control Cycles 
-    input CLK, C, Z, N, H, INTR, RESET,
+    // Control signals
         logic [7:0] OPCODE;
         logic PC_INC;            // program counter
         logic [1:0] PC_MUX_SEL;
@@ -63,19 +63,14 @@ module Wrapper(
         logic SCR_DATA_SEL, SCR_WE;     // scratch pad
         logic [1:0] SCR_ADDR_SEL;
         logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
-        logic C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR; // C Flag control
-        logic Z_FLAG_LD, Z_FLAG_SET, Z_FLAG_CLR; // Z Flag control  
-        logic N_FLAG_LD, N_FLAG_SET, N_FLAG_CLR; // N Flag control
-        logic H_FLAG_LD, H_FLAG_SET, H_FLAG_CLR; // H Flag control
-        logic I_CLR, I_SET, FLG_LD_SEL; // interrupts
-        logic RST;
         
-    ProgCount ProgCount( // Needs incrementer
+    ProgCount ProgCount( 
         .PC_CLK(CLK),
-.PC_RST(RST),
-.PC_LD(PC_LD),
-.PC_DIN(PC_DIN),
- .PC_COUNT(PC)
+        .PC_RST(RST),
+        .PC_LD(PC_LD),
+        .PC_INC(PC_INC),
+        .PC_DIN(PC_DIN),
+        .PC_COUNT(PC)
     );
     
     ALU ALU(
@@ -96,9 +91,35 @@ module Wrapper(
         .WE(RF_WR), .CLK(CLK)
     );
     
-    // ADD PROGROM HERE
-    
-    ControlUnit MCU();
-    
+    ProgRom ProgRom(
+        .PROG_CLK(CLK),
+        .PROG_ADDR(PC),
+        .PROG_IR(OPCODE)
     );
+    
+    ControlUnit ControlUnit(
+        // Inputs
+        .CLK(CLK), .INTR(0), .RESET(RST),
+        .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
+        .OPCODE(), // Memory Line
+        // Outputs
+        .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
+        .PC_MUX_SEL(0),                     // Unconnected
+        .RF_WR(RF_WR),             // register file
+        .RF_WR_SEL(0),                       //Unconnected
+        .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),
+        .ALU_SEL(ALU_FUN),     // ALU
+        .ALU_OPY_SEL(0),
+        .SCR_DATA_SEL(0), .SCR_WE(0),  // scratch pad
+        .SCR_ADDR_SEL(0),
+        .SP_LD(0), .SP_INCR(0), .SP_DECR(0),   // stack pointer
+        .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), // Flags 
+        .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), // Z Flag control
+        .N_FLAG_LD(N_FLAG_LD), .N_FLAG_SET(N_FLAG_SET), .N_FLAG_CLR(N_FLAG_CLR), // N Flag control
+        .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), // H Flag control
+        .I_CLR(0), .I_SET(0), .FLG_LD_SEL(0), // interrupts
+        .RST(RST),       // reset
+        .IO_STRB(0)    // IO
+    );
+   
 endmodule

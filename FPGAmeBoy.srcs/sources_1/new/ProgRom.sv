@@ -20,14 +20,15 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
+
 module ProgRom(
     input PROG_CLK,
     input [9:0] PROG_ADDR,
-    output logic [17:0] PROG_IR
+    output logic [7:0] PROG_IR
     );
       
     (* rom_style="{distributed | block}" *) // force the ROM to be block memory
-     logic [17:0] rom[0:1023];
+     logic [7:0] rom[0:1023];
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
