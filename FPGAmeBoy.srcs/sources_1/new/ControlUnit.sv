@@ -27,7 +27,7 @@ module ControlUnit(
         output logic [1:0] PC_MUX_SEL,
         output logic RF_WR,                     // register file
         output logic [1:0] RF_WR_SEL,
-        output logic [2:0] RF_ADRX, RF_ADRY,
+        output logic [4:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,             // ALU
         output logic ALU_OPX_SEL,
         output logic [1:0] ALU_OPY_SEL,
@@ -105,15 +105,15 @@ module ControlUnit(
             PS <= NS;
     end
 
-
     always_comb begin
-        // Default Values
-        I_SET = 0; I_CLR =0; PC_LD=0; PC_INC=0; ALU_OPY_SEL=0; ALU_OPX_SEL = 0; RF_WR=0; SP_LD=0; SP_INCR=0; SP_DECR=0;
+        I_SET = 0; I_CLR =0; PC_LD=0; PC_INC=0; ALU_OPY_SEL=0; ALU_OPX_SEL = 0; RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;
+        SP_LD=0; SP_INCR=0; SP_DECR=0;
         SCR_WE=0; SCR_DATA_SEL=0; RST=0; PC_MUX_SEL=0; RF_WR_SEL=0; SCR_ADDR_SEL=0; ALU_SEL=0; IO_STRB = 0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
         H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL=0;
+        
         
 
         case (PS)
@@ -135,7 +135,21 @@ module ControlUnit(
                     NS = FETCH;
 
                 case (OPCODE) inside
-
+                    
+                    8'b00000000:  // NOP
+                    begin 
+                        // Control signal later TM                              
+                        // No Reg Write
+                        RF_WR = 0;  
+                                                      
+                        // Flags
+                        C_FLAG_LD = 0;
+                        Z_FLAG_LD = 0;
+                        N_FLAG_LD = 0;
+                        H_FLAG_LD = 0;
+                       
+                    end
+                    
                     //
                     // 8-bit loads
                     //
@@ -213,42 +227,86 @@ module ControlUnit(
                     end
                     
                     // ALU Time
-                    8'b10000???: begin // ADD A, n
-                        // ALU Input Select
-                        ALU_OPY_SEL = 0;
-                        //ALU OP SEL
-                        ALU_SEL = ADD_ALU;
-                        // RF_MUX_ALU
-                        RF_WR_SEL = RF_MUX_ALU;
-                        // RF Write Enable
-                        RF_WR = 1; 
-                        // Flag Write Enables
+                    8'b10000???:  // ADD A, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = ADD_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;                                
+                        // Flags
                         C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
-                        // Register input A
+                        // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
+
+                        // CP A, (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            if (mcycle == 0)
+                            begin
+                                RF_WR = 0;
+                                RF_ADRY = REG_HL;
+                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                            end
+                            
+                            if (mcycle == 1) 
+                            begin
+                                RF_WR = 1;
+                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_ADRX = OPCODE[5:3]; // r
+                            end 
+                        end                                                        
                     end
-                      8'b10001???: begin // ADC A, n
-                        // ALU Input Select
-                        ALU_OPY_SEL = 0;
-                        //ALU OP SEL
-                        ALU_SEL = ADC_ALU;
-                        // RF_MUX_ALU
-                        RF_WR_SEL = RF_MUX_ALU;
-                        // RF Write Enable
-                        RF_WR = 1; 
-                        // Flag Write Enables
+                    
+                    8'b10001???:  // ADC A, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = ADC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;                                
+                        // Flags
                         C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
-                        // Register input A
+                        // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
+
+                        // CP A, (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            if (mcycle == 0)
+                            begin
+                                RF_WR = 0;
+                                RF_ADRY = REG_HL;
+                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                            end
+                            
+                            if (mcycle == 1) 
+                            begin
+                                RF_WR = 1;
+                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_ADRX = OPCODE[5:3]; // r
+                            end 
+                        end                                                        
                     end
+                    
                     8'b10100???:  // AND A, n
                     begin
                         // ALU A input mux select                                
@@ -429,7 +487,7 @@ module ControlUnit(
                         H_FLAG_LD = 1;
                         // Register File Addresses
                         RF_ADRX = REG_A;
-                        RF_ADRY = REG_A;  
+                        RF_ADRY = OPCODE[2:0];  
                                                         
                         // SUB A, (HL)  /// FIX Later  
                         if (OPCODE[2:0] == 3'b110)
