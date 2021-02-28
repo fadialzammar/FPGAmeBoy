@@ -92,12 +92,13 @@ module ControlUnit(
     localparam RES_ALU  = 5'b11000;
 
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC} STATE;
 
     STATE NS, PS = INIT;
 
-    logic mcycle = 0;
-
+     logic mcycle = 0;
+     logic CB_FLAG = 0;
+     
     always_ff @(posedge CLK) begin
         if (RESET)
             PS <= INIT;
@@ -105,6 +106,7 @@ module ControlUnit(
             PS <= NS;
     end
 
+    
     always_comb begin
         I_SET = 0; I_CLR =0; PC_LD=0; PC_INC=0; ALU_OPY_SEL=0; ALU_OPX_SEL = 0; RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;
         SP_LD=0; SP_INCR=0; SP_DECR=0;
@@ -124,7 +126,10 @@ module ControlUnit(
 
             FETCH: begin
                 PC_INC = 1;
-                NS = EXEC;
+                if (CB_FLAG == 1)
+                    NS = CB_EXEC;
+                else
+                    NS = EXEC;
             end
 
             EXEC:
@@ -548,6 +553,11 @@ module ControlUnit(
                         end
                     end                        
                     
+                    8'b11001011: // CB Prefix command
+                    begin
+                        CB_FLAG = 1'b1;
+                    end
+                    
                     default: begin
                         // literally crashes on a real game boy
                     end
@@ -557,9 +567,67 @@ module ControlUnit(
 
                 if (INTR == 1)
                     NS = INTERRUPT;
+                    
                 NS = FETCH;
-            mcycle++;
+                mcycle++;
             end // EXEC
+            
+            CB_EXEC: begin   //CB prefix opcodes
+                case (OPCODE) inside
+                    // CB Time
+                    8'b0000???:  // RLC n, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = RLC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register n
+                        RF_WR = 1;                                
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Register File Addresses
+                        // Writes to the opcode defined address
+                        RF_ADRX = OPCODE[2:0];
+                        RF_ADRY = REG_A;
+
+                        // CP A, (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            if (mcycle == 0)
+                            begin
+                                RF_WR = 0;
+                                RF_ADRY = REG_HL;
+                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                            end
+                            
+                            if (mcycle == 1) 
+                            begin
+                                RF_WR = 1;
+                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_ADRX = OPCODE[5:3]; // r
+                            end 
+                        end                                                        
+                    end
+                    default: begin
+                        
+                    end
+                endcase
+                
+                if (INTR == 1)
+                    NS = INTERRUPT;
+                    
+                NS = FETCH;
+                mcycle++;
+                
+            end
+            
         endcase // PS
     end
 
