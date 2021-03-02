@@ -42,8 +42,8 @@ module ALU_16(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
        
        
        // Upper 4 bit and lower 12 bit results + 1 bit for Half and Carry Flags
-       logic [3:0] HIGH_RESULT;
-       logic [11:0] LOW_RESULT;
+       logic [4:0] HIGH_RESULT;
+       logic [12:0] LOW_RESULT;
        logic [8:0] TEMP_RESULT; 
        
         always_comb
