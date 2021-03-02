@@ -178,6 +178,45 @@ module ControlUnit(
                     default: begin
                         // literally crashes on a real game boy
                     end
+                    8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
+                        PC_LD = 1; 
+                    end
+                    
+                    8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
+                        if(Z == 0) PC_LD = 1;                        
+                    end
+                    8'b11001010: begin //JP if Z flag is set (opcode CA)
+                        if(Z == 1) PC_LD = 1;
+                    end
+                    8'b11010010: begin //JP if C flag is reset (opcode D2)
+                        if(C == 1) PC_LD = 1;
+                    end
+                    8'b11011010: begin // JP if C flat is set (opcode DA)
+                        if(C == 0) PC_LD = 1;
+                    end
+                    8'b11101001: begin //JP to address contained in HL (opcode E9)
+                    end
+                    8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
+                    end
+                    8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
+                    end
+                    8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
+                    end
+                    8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
+                    end
+                    8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
+                    end
+                    8'b11001101: begin //CALL : push addr of next instruction onto stack and then jump to address nn (opcode CD)
+                    end
+                    8'b11000100: begin //CALL cc, nn : call address n if Z flag is reset (opcode C4)
+                    end
+                    8'b11001100: begin //CALL cc, nn : call address n if Z flag is set (opcode CC)
+                    end
+                    8'b11010100: begin //CALL cc, nn : call address n if C flag is reset(opcode D4)
+                    end
+                    8'b11011100: begin //CALL cc, nn: call address n if C flag is set (opcode DC)
+                    end
+                
 
 
                 endcase // OPCODE
