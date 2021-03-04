@@ -92,7 +92,7 @@ module ControlUnit(
     localparam RES_ALU  = 5'b11000;
 
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR} STATE;
 
     STATE NS, PS = INIT;
 
@@ -411,24 +411,25 @@ module ControlUnit(
                         H_FLAG_LD = 1;
                         // Register File Addresses
                         RF_ADRX = REG_A;
-                        RF_ADRY = OPCODE[2:0];
+                        RF_ADRY = OPCODE[2:0]; 
 
                         // OR A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
-                            end
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            MEM_DATA_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            NS = HL_PTR;
                         end                                                        
                     end
                     
@@ -676,7 +677,16 @@ module ControlUnit(
                 mcycle++;
                 
             end
+            HL_PTR: begin
+                NS = FETCH;
             
+                RF_ADRX = REG_A;
+                RF_WR = 1;
+                C_FLAG_LD = 1;
+                Z_FLAG_LD = 1;
+                N_FLAG_LD = 1;
+                H_FLAG_LD = 1;                  
+            end
         endcase // PS
     end
 
