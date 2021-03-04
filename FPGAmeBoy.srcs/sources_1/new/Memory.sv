@@ -26,16 +26,17 @@ module Memory(
     input logic WE, 
     input logic RE, 
     input logic ADDR, 
-    input logic DIN,
-    output logic DOUT,
+    input logic [7:0] DIN,
+    output logic [7:0] DOUT,
     logic [7:0] mem [15:0]
 
     );
     
     always_ff@(posedge CLK)
     begin
-    if(WE)
-    mem[ADDR] <= DIN;
-    DOUT <= mem[ADDR];
+        if(WE)
+            mem[ADDR] <= DIN;
+        if(RE)    
+            DOUT <= mem[ADDR];
     end
 endmodule

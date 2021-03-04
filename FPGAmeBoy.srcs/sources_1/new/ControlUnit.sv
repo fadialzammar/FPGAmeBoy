@@ -23,37 +23,45 @@
 module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
-        output logic PC_LD, PC_INC,             // program counter
+        output logic PC_LD, PC_INC,                     // program counter
         output logic [1:0] PC_MUX_SEL,
-        output logic RF_WR,                     // register file
-        output logic [1:0] RF_WR_SEL,
+        output logic RF_WR,                             // register file
+        output logic [2:0] RF_WR_SEL,
         output logic [4:0] RF_ADRX, RF_ADRY,
-        output logic [4:0] ALU_SEL,             // ALU
+        output logic [4:0] ALU_SEL,                     // ALU
         output logic ALU_OPX_SEL,
         output logic [1:0] ALU_OPY_SEL,
-        output logic SCR_DATA_SEL, SCR_WE,      // scratch pad
-        output logic [1:0] SCR_ADDR_SEL,
-        output logic SP_LD, SP_INCR, SP_DECR,   // stack pointer
+        output logic MEM_WE, MEM_RE,                    // memory
+        output logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL,
+        output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
         output logic C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, // C Flag control
         output logic Z_FLAG_LD, Z_FLAG_SET, Z_FLAG_CLR, // Z Flag control
         output logic N_FLAG_LD, N_FLAG_SET, N_FLAG_CLR, // N Flag control
         output logic H_FLAG_LD, H_FLAG_SET, H_FLAG_CLR, // H Flag control
-        output logic I_CLR, I_SET, FLG_LD_SEL, // interrupts
-        output logic RST,       // reset
-        output logic IO_STRB    // IO
+        output logic FLAGS_DATA_SEL,
+        output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
+        output logic RST,                               // reset
+        output logic IO_STRB                            // IO
     );
 
     parameter RF_MUX_ALU = 0;   // ALU output
-    parameter RF_MUX_SCR = 1;   // scratch RAM output
+    parameter RF_MUX_MEM = 1;   // scratch RAM output
     parameter RF_MUX_SP = 2;    // stack pointer output
     parameter RF_MUX_IN = 3;    // external input
     parameter RF_MUX_IMM = 4;   // immediate value from instruction
     parameter RF_MUX_DY = 5;    // DY output of reg file
 
-    parameter SCR_ADDR_DY = 0;  // DY output of reg file
-    parameter SCR_ADDR_ADRY = 1;    // ADRY of reg file
-    parameter SCR_ADDR_SP = 2;  // stack pointer output
-    parameter SCR_ADDR_SP_SUB = 3;  // stack pointer output minus 1?
+    parameter MEM_ADDR_DY = 0;      // DY output of reg file
+    parameter MEM_ADDR_ADRY = 1;    // ADRY of reg file
+    parameter MEM_ADDR_SP = 2;      // stack pointer output
+    parameter MEM_ADDR_SP_SUB = 3;  // stack pointer output minus 1?
+    
+    parameter MEM_DATA_DX = 0;      // DX output of the Reg File
+    parameter MEM_DATA_PC = 1;      // PC value output 
+    parameter MEM_DATA_FLAGS = 2;   // Flags Register values
+    
+    parameter FLAGS_DATA_ALU = 0;   // ALU Flags Output
+    parameter FLAGS_DATA_MEM = 1;   // Memory Flags Output 
 
     parameter REG_B = 3'b000;
     parameter REG_C = 3'b001;
@@ -92,12 +100,24 @@ module ControlUnit(
     localparam RES_ALU  = 5'b11000;
 
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, SP} STATE;
 
     STATE NS, PS = INIT;
 
      logic mcycle = 0;
-     logic CB_FLAG = 0;
+     // Flag for CB prefixes
+     logic CB_FLAG = 1'b0;
+     // Flags for PUSH and POP
+     logic POP_FLAG = 1'b0;
+     logic POP_LB = 1'b0;
+     logic POP_HB = 1'b0;
+     logic PUSH_FLAG = 1'b0;
+     logic PUSH_LB = 1'b0;
+     logic PUSH_HB = 1'b0;
+     
+     logic [7:0] FLAGS;
+     // Flag format for the Gameboy
+     assign FLAGS = {Z,N,H,C,4'b0000};
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -108,23 +128,26 @@ module ControlUnit(
 
     
     always_comb begin
-        I_SET = 0; I_CLR =0; PC_LD=0; PC_INC=0; ALU_OPY_SEL=0; ALU_OPX_SEL = 0; RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;
+        I_SET = 0; I_CLR =0; RST=0; IO_STRB = 0;
+        PC_LD=0; PC_INC=0; PC_MUX_SEL=0;
+        RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;  RF_WR_SEL=0;
         SP_LD=0; SP_INCR=0; SP_DECR=0;
-        SCR_WE=0; SCR_DATA_SEL=0; RST=0; PC_MUX_SEL=0; RF_WR_SEL=0; SCR_ADDR_SEL=0; ALU_SEL=0; IO_STRB = 0;
+        MEM_WE=0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
+        ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
-        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL=0;
-        
-        
+        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
 
         case (PS)
-            INIT: begin
+            INIT: 
+            begin
                 RST = 1;
                 NS = FETCH;
             end
 
-            FETCH: begin
+            FETCH:
+            begin
                 PC_INC = 1;
                 if (CB_FLAG == 1)
                     NS = CB_EXEC;
@@ -146,7 +169,9 @@ module ControlUnit(
                         // Control signal later TM                              
                         // No Reg Write
                         RF_WR = 0;  
-                                                      
+                        // No Memory read or write
+                        MEM_WE = 0;
+                        MEM_RE = 0;            
                         // Flags
                         C_FLAG_LD = 0;
                         Z_FLAG_LD = 0;
@@ -158,7 +183,26 @@ module ControlUnit(
                     //
                     // 8-bit loads
                     //
+                    
+                    8'b00110111: // SCF
+                    begin
+                        // Flags
+                        C_FLAG_SET = 1;
+                        Z_FLAG_LD = 0;
+                        N_FLAG_CLR = 1;
+                        H_FLAG_CLR = 1;
+                    end
 
+                    8'b00110111: // CCF
+                    begin
+                        // Flags                        
+                        C_FLAG_SET = C == 0 ? 1'b1 : 1'b0;
+                        C_FLAG_CLR = C == 1 ? 1'b1 : 1'b0;
+                        Z_FLAG_LD = 0;
+                        N_FLAG_CLR = 1;
+                        H_FLAG_CLR = 1;
+                    end
+                    
                     8'b00???110: begin  // LD r, n
                         if (OPCODE[5:3] == 3'b110) begin    // LD (HL), n
                             
@@ -189,11 +233,11 @@ module ControlUnit(
                             if (mcycle == 0) begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             if (mcycle == 1) begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end
                         end
@@ -249,6 +293,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -260,13 +306,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -289,6 +335,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -300,13 +348,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -329,6 +377,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -340,13 +390,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -369,6 +419,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -380,13 +432,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -409,6 +461,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -420,13 +474,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -449,6 +503,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
@@ -460,13 +516,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end
                         end                                                         
@@ -490,6 +546,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];  
@@ -501,13 +559,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end
                         end                                                  
@@ -529,7 +587,9 @@ module ControlUnit(
                         C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;                            
+                        H_FLAG_LD = 1;     
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;                       
                         // Register File Addresses
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0]; 
@@ -541,17 +601,36 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end
                         end
-                    end                        
+                    end  
+                    
+                    8'b11??0001: // POP
+                    begin
+                        POP_FLAG = 1'b1;
+                        PUSH_LB = 1'b0;
+                        PUSH_HB = 1'b1;
+                        NS = SP;                       
+                    end       
+                    
+                    8'b11??0101: // PUSH
+                    begin
+                        PUSH_FLAG = 1'b1;
+                        PUSH_LB = 1'b1;
+                        PUSH_HB = 1'b0;
+                        SP_DECR = 1'b1; 
+                        NS = SP;         // ======================== Might need to send to wait state for consistent timing ========================                
+                    end             
+                    
+                        
                     
                     8'b11001011: // CB Prefix command
                     begin
@@ -572,7 +651,201 @@ module ControlUnit(
                 mcycle++;
             end // EXEC
             
-            CB_EXEC: begin   //CB prefix opcodes
+            SP: begin   // Stack Pointer instructions
+                    begin
+                        if (PUSH_FLAG) // Pushes the Low Byte and then the High Byte
+                            begin
+                            case (OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin
+                                        // Register File does not write on a PUSH
+                                        RF_WR = 0;
+                                        // SP decrements additionally if pushing the High Byte
+                                        SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRY depeding on HB Flag
+                                        RF_ADRX = PUSH_HB ? REG_B : REG_C;
+                                        // Write the pushed value to memory &(SP)
+                                        MEM_WE = 1'b1;
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin
+                                        // Register File does not write on a PUSH
+                                        RF_WR = 0;
+                                        // SP decrements additionally if pushing the High Byte
+                                        SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRY depeding on HB Flag
+                                        RF_ADRX = PUSH_HB ? REG_D : REG_E;
+                                        // Write the pushed value to memory &(SP)
+                                        MEM_WE = 1'b1;
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                        // Register File does not write on a PUSH
+                                        RF_WR = 0;
+                                        // SP decrements additionally if pushing the High Byte
+                                        SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRY depeding on HB Flag
+                                        RF_ADRX = PUSH_HB ? REG_H : REG_L;
+                                        // Write the pushed value to memory &(SP)
+                                        MEM_WE = 1'b1;
+                                    end
+                                    
+                                    2'b11: // AF 
+                                    begin
+                                        // Register File does not write on a PUSH
+                                        RF_WR = 0;
+                                        // SP decrements additionally if pushing the High Byte
+                                        SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File or Flag Register values
+                                        MEM_DATA_SEL = PUSH_HB ? MEM_DATA_DX : MEM_DATA_FLAGS;
+                                        // RF_ADRX set to REG_A 
+                                        RF_ADRX = REG_A;                                        
+                                        // Write the pushed value to memory &(SP)
+                                        MEM_WE = 1'b1;
+                                    end
+                                endcase                                
+                                // Set Low Byte flag low and High Byte flag high to signify that the Low Byte has been pushed                                
+                                // Return to the SP state to push the high byte 
+                                if(PUSH_LB && ~PUSH_HB)
+                                    begin
+                                        PUSH_HB = 1'b1;
+                                        PUSH_LB = 1'b0;
+                                        NS = SP;
+                                    end                                                                           
+                                // Transition to the fetch state once both bytes are pushed   
+                                else 
+                                    begin
+                                        // Reset High and Low Byte flags and the PUSH flag
+                                        PUSH_FLAG = 1'b0;
+                                        POP_HB = 1'b0;
+                                        POP_LB = 1'b0;
+                                        NS = FETCH;
+                                    end
+                                    
+                            end       
+                            
+                        else if (POP_FLAG)  // Pops the High Byte and then the Low Byte
+                             begin
+                            case (OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin
+                                        // Reg File select set to memory
+                                        RF_WR_SEL = RF_MUX_MEM;
+                                        // Register File writes on a POP
+                                        RF_WR = 1;
+                                        // SP increments if popping the Low Byte
+                                        SP_INCR = POP_LB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRX depeding on LB Flag
+                                        RF_ADRX = ~POP_LB ? REG_B : REG_C;
+                                        // Read the popped value from memory &(SP)
+                                        MEM_RE = 1'b1;
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin
+                                        // Reg File select set to memory
+                                        RF_WR_SEL = RF_MUX_MEM;
+                                        // Register File writes on a POP
+                                        RF_WR = 1;
+                                        // SP increments if popping the Low Byte
+                                        SP_INCR = POP_LB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRX depeding on LB Flag
+                                        RF_ADRX = ~POP_LB ? REG_D : REG_E;
+                                        // Read the popped value from memory &(SP)
+                                        MEM_RE = 1'b1;
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                       // Reg File select set to memory
+                                        RF_WR_SEL = RF_MUX_MEM;
+                                        // Register File writes on a POP
+                                        RF_WR = 1;
+                                        // SP increments if popping the Low Byte
+                                        SP_INCR = POP_LB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File
+                                        MEM_DATA_SEL = MEM_DATA_DX;
+                                        // High or Low Byte used set by RF_ADRX depeding on HB Flag
+                                        RF_ADRX = ~POP_LB ? REG_H : REG_L;
+                                        // Read the popped value from memory &(SP)
+                                        MEM_RE = 1'b1;
+                                    end
+                                    
+                                    2'b11: // AF
+                                    begin
+                                        // Reg File select set to memory
+                                        RF_WR_SEL = RF_MUX_MEM;
+                                        // Register File writes on a POP if not popping the flag register values
+                                        RF_WR = ~POP_LB ? 1'b1: 1'b0;
+                                        // Load the popped Low Byte values from the stack into the flag register
+                                        C_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
+                                        Z_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
+                                        N_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
+                                        H_FLAG_LD = POP_LB ? 1'b1 : 1'b0;   
+                                        // Flag register data select
+                                        FLAGS_DATA_SEL = POP_LB ? FLAGS_DATA_MEM : FLAGS_DATA_ALU;
+                                        // SP increments if popping the low Byte
+                                        SP_INCR = POP_LB ? 1'b1 : 1'b0;
+                                        // Memory address select set to SP
+                                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                                        // Memory Data select set to DX output of the Reg File or Flag Register values
+                                        MEM_DATA_SEL = POP_HB ? MEM_DATA_DX : MEM_DATA_FLAGS;
+                                        // RF_ADRX set to REG_A 
+                                        RF_ADRX = REG_A;                                         
+                                        // Read the popped value from memory &(SP)
+                                        MEM_RE = 1'b1;
+                                    end
+                                endcase                                
+                                // Set Low Byte flag high and High Byte flag low to signify that the High Byte has been popped
+                                // Return to the SP state to POP the Low Byte  
+                                if(~POP_LB && POP_HB)
+                                    begin
+                                        POP_HB = 1'b0;
+                                        POP_LB = 1'b1;
+                                        NS = SP;
+                                    end                                                        
+                                // Transition to the fetch state once both bytes are poped    
+                                else 
+                                    begin
+                                        // Reset High and Low Byte flags and the POP Flag
+                                        POP_FLAG = 1'b0;
+                                        POP_HB = 1'b0;
+                                        POP_LB = 1'b0;
+                                        NS = FETCH;
+                                    end
+                            end                            
+                    end
+                    
+            end // SP
+            
+            CB_EXEC: //CB prefix opcodes
+            begin   
                 case (OPCODE) inside
                     // CB Time
                     8'b00000???:  // RLC n, n
@@ -592,6 +865,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;                        
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -604,13 +879,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -633,6 +908,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -645,13 +922,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -674,6 +951,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -686,13 +965,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -715,6 +994,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -727,13 +1008,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -756,6 +1037,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -768,13 +1051,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -797,6 +1080,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -809,13 +1094,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -838,6 +1123,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -850,13 +1137,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -879,6 +1166,8 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
@@ -891,13 +1180,13 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                SCR_ADDR_SEL =  SCR_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_DY;
                             end
                             
                             if (mcycle == 1) 
                             begin
                                 RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_SCR;
+                                RF_WR_SEL = RF_MUX_MEM;
                                 RF_ADRX = OPCODE[5:3]; // r
                             end 
                         end                                                        
@@ -911,10 +1200,13 @@ module ControlUnit(
                 if (INTR == 1)
                     NS = INTERRUPT;
                     
+                // Reset the CB Flag
+                CB_FLAG = 1'b0;
                 NS = FETCH;
                 mcycle++;
                 
-            end
+            end // CB_EXEC
+           
             
         endcase // PS
     end
