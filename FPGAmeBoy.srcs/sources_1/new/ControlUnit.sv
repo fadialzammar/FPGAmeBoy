@@ -62,6 +62,9 @@ module ControlUnit(
     
     parameter FLAGS_DATA_ALU = 0;   // ALU Flags Output
     parameter FLAGS_DATA_MEM = 1;   // Memory Flags Output 
+    
+    parameter ALU_B_MUX_DY = 0;     // DY output of the Reg File
+    parameter ALU_B_MUX_MEM = 1;    // Memory output
 
     parameter REG_B = 3'b000;
     parameter REG_C = 3'b001;
@@ -100,11 +103,13 @@ module ControlUnit(
     localparam RES_ALU  = 5'b11000;
 
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, SP} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, SP, IMMED} STATE;
 
     STATE NS, PS = INIT;
 
      logic mcycle = 0;
+     // Flag used for identifying that NS after EXEC is not FETCH
+     logic special_state = 1'b0;
      // Flag for CB prefixes
      logic CB_FLAG = 1'b0;
      // Flags for PUSH and POP
@@ -114,6 +119,17 @@ module ControlUnit(
      logic PUSH_FLAG = 1'b0;
      logic PUSH_LB = 1'b0;
      logic PUSH_HB = 1'b0;
+     
+     // Immediate Value Select and defines
+     logic [3:0] IMMED_SEL = 4'b0000;
+     localparam ADD_IMMED   = 4'b0000;
+     localparam SUB_IMMED   = 4'b0001;
+     localparam AND_IMMED   = 4'b0010;
+     localparam OR_IMMED    = 4'b0011;
+     localparam ADC_IMMED   = 4'b0100;
+     localparam SBC_IMMED   = 4'b0101;
+     localparam XOR_IMMED   = 4'b0110;
+     localparam CP_IMMED    = 4'b0111;
      
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
@@ -160,7 +176,8 @@ module ControlUnit(
                 if (INTR)
                     NS = INTERRUPT;
                 else
-                    NS = FETCH;
+                    if(~special_state)
+                        NS = FETCH;
 
                 case (OPCODE) inside
                     
@@ -618,6 +635,7 @@ module ControlUnit(
                         POP_FLAG = 1'b1;
                         PUSH_LB = 1'b0;
                         PUSH_HB = 1'b1;
+                        special_state = 1'b1;
                         NS = SP;                       
                     end       
                     
@@ -627,10 +645,63 @@ module ControlUnit(
                         PUSH_LB = 1'b1;
                         PUSH_HB = 1'b0;
                         SP_DECR = 1'b1; 
+                        special_state = 1'b1;
                         NS = SP;         // ======================== Might need to send to wait state for consistent timing ========================                
                     end             
                     
-                        
+                    8'b11??0110: // ADD, SUB, AND, OR with Immediate values 
+                    begin
+                        case(OPCODE)
+                            2'b00: // ADD A, immed
+                                begin
+                                    IMMED_SEL = ADD_IMMED;
+                                end
+                                
+                             2'b01:  // SUB A, immed
+                                begin
+                                    IMMED_SEL = SUB_IMMED;
+                                end
+                                
+                             2'b10:  // AND A, immed
+                                begin
+                                    IMMED_SEL = AND_IMMED;
+                                end
+                                
+                             2'b11:  // OR A, immed
+                                begin
+                                    IMMED_SEL = OR_IMMED;
+                                end                           
+                        endcase
+                        special_state = 1'b1;
+                        NS = IMMED;
+                    end   
+                    
+                    8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
+                    begin
+                        case(OPCODE)
+                            2'b00: // ADC A, immed
+                                begin
+                                    IMMED_SEL = ADC_IMMED;
+                                end
+                                
+                             2'b01:  // SBC A, immed
+                                begin
+                                    IMMED_SEL = SBC_IMMED;
+                                end
+                                
+                             2'b10:  // XOR A, immed
+                                begin
+                                    IMMED_SEL = XOR_IMMED;
+                                end
+                                
+                             2'b11:  // CP A, immed
+                                begin
+                                    IMMED_SEL = CP_IMMED;
+                                end                           
+                        endcase
+                        special_state = 1'b1;
+                        NS = IMMED;
+                    end
                     
                     8'b11001011: // CB Prefix command
                     begin
@@ -650,6 +721,80 @@ module ControlUnit(
                 NS = FETCH;
                 mcycle++;
             end // EXEC
+            
+            IMMED: begin  // Immediate Value Instrutions
+                // Same for each case
+                // ALU A input mux select                                
+                ALU_OPX_SEL = 1'b0;
+                // ALU B input mux select
+                ALU_OPY_SEL = ALU_B_MUX_MEM;                                
+                // Input to the Reg File is the ALU output
+                RF_WR_SEL = RF_MUX_ALU;                                
+                // Write operation back into Register A
+                RF_WR = 1;                                
+                // Flags
+                C_FLAG_LD = 1;
+                Z_FLAG_LD = 1;
+                N_FLAG_LD = 1;
+                H_FLAG_LD = 1;
+                // Flag register data select
+                FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                // Register File Addresses
+                RF_ADRX = REG_A;
+                
+                case(IMMED_SEL)
+                    ADD_IMMED: // ADD A, immed
+                        begin                                                      
+                            // ALU Operation Select
+                            ALU_SEL = ADD_ALU;                             
+                        end
+                        
+                    SUB_IMMED: // SUB A, immed
+                        begin                                             
+                            // ALU Operation Select
+                            ALU_SEL = SUB_ALU;                                                        
+                        end
+                        
+                    AND_IMMED: // AND A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = AND_ALU;                                                           
+                        end
+                        
+                    OR_IMMED: // OR A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = OR_ALU;
+                        end
+                        
+                    ADC_IMMED: // ADC A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = ADC_ALU;
+                        end
+                        
+                    SUB_IMMED: // SBC A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = SUB_ALU;
+                        end
+                    
+                    XOR_IMMED: // XOR A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = XOR_ALU;
+                        end
+                    
+                    CP_IMMED: // CP A, immed
+                        begin
+                            // ALU Operation Select
+                            ALU_SEL = CP_ALU;
+                        end                                      
+                endcase
+                special_state = 1'b0;
+                NS = FETCH;
+            end
+            
             
             SP: begin   // Stack Pointer instructions
                     begin
@@ -731,10 +876,11 @@ module ControlUnit(
                                 // Transition to the fetch state once both bytes are pushed   
                                 else 
                                     begin
-                                        // Reset High and Low Byte flags and the PUSH flag
+                                        // Reset High Byte flag, Low Byte flag, PUSH flag, and special state flag
                                         PUSH_FLAG = 1'b0;
                                         POP_HB = 1'b0;
                                         POP_LB = 1'b0;
+                                        special_state = 1'b0;
                                         NS = FETCH;
                                     end
                                     
@@ -833,10 +979,11 @@ module ControlUnit(
                                 // Transition to the fetch state once both bytes are poped    
                                 else 
                                     begin
-                                        // Reset High and Low Byte flags and the POP Flag
+                                        // Reset High Byte flag, Low Byte flag, POP flag, and special state flag
                                         POP_FLAG = 1'b0;
                                         POP_HB = 1'b0;
                                         POP_LB = 1'b0;
+                                        special_state = 1'b0;
                                         NS = FETCH;
                                     end
                             end                            

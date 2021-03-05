@@ -36,14 +36,15 @@ module Wrapper(
     logic [4:0] ALU_FUN;
     logic [7:0] ALU_A,ALU_B;
     logic [3:0] ALU_FLAGS_IN;
-
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
+    logic ALU_B_SEL;
     
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
     logic RF_WR;
+    logic [2:0] RF_DIN_SEL;
 
     // FlagReg Signals
     logic Z_IN,Z_FLAG_LD,Z_FLAG_SET,Z_FLAG_CLR,Z_FLAG;
@@ -73,9 +74,13 @@ module Wrapper(
     logic [15:0] SP_DOUT;
     
     // Memory signals
+    
     logic [7:0] MEM_DIN, MEM_DOUT;
     logic [15:0] MEM_ADDR_IN;
-      
+    logic [15:0] HL_PTR;
+    
+    // H is the X output of  Reg File and L is the Y output of the Reg File
+    assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
     
     // Control signals
     logic [7:0] OPCODE;
@@ -99,12 +104,17 @@ module Wrapper(
         .PC_COUNT(PC)
     );
     
-    ALU ALU(
-        .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(RF_DY_OUT), .FLAGS_IN(FLAG_REG_OUT[7:4]),
-        .ALU_OUT(RF_DIN), .FLAGS_OUT(ALU_FLAGS_OUT)
+    MUX2to1 ALU_B_MUX(
+        .In0(RF_DY_OUT), .In1(MEM_OUT), 
+        .Sel(ALU_B_SEL), .Out(FLAG_REG_IN)
     );
     
-    Flag_Reg_MUX MUX2to1(
+    ALU ALU(
+        .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(RF_DY_OUT), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
+    );
+    
+    MUX2to1 Flag_Reg_MUX(
         .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_OUT), 
         .Sel(FLAGS_DATA_SEL), .Out(FLAG_REG_IN)
     );
@@ -116,6 +126,13 @@ module Wrapper(
         .H(H_IN), .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), .H_FLAG(H_FLAG),
         .C(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_FLAG(C_FLAG)
     );
+    
+    MUX6to1 RegFile_MUX(
+        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
+        .In3(), .In4(), .In5(),
+         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
+    );
+    
     RegFile RegFile(
         .ADRX(RF_ADRX), .ADRY(RF_ADRY), .DIN(RF_DIN),
         .DX_OUT(RF_DX_OUT), .DY_OUT(RF_DY_OUT), 
@@ -139,20 +156,18 @@ module Wrapper(
     );
     
     // Memory Address MUX
-    MUX4to1 #(.DATA_SIZE(16))
-    (
-        .In0(RF_ADRY), .In1(RF_ADRY), .In2(SP_DOUT), .In3(),
+    MUX4to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+        .In0(RF_ADRY), .In1(RF_DY_OUT), .In2(SP_DOUT), .In3(HL_PTR),
         .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
     // Memory Data MUX
-    MUX4to1 #(.DATA_SIZE(8))
-    (
-        .In0(RF_DX_OUT), .In1(PC), .In2(FLAGS_OUT), .In3(),
-        .Sel(MEM_DATA_SEL), .Out(MEM_ADDR_IN)
+    MUX4to1#(.DATA_SIZE(8)) MEM_DATA_MUX(
+        .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(),
+        .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
-    Memory(
+    Memory Memory(
         .CLK(CLK), 
         .WE(MEM_WE), 
         .RE(MEM_RE), 
@@ -170,18 +185,18 @@ module Wrapper(
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_MUX_SEL(),                     // Unconnected
         .RF_WR(RF_WR),             // register file
-        .RF_WR_SEL(),                       //Unconnected
+        .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),
         .ALU_SEL(ALU_FUN),     // ALU
-        .ALU_OPY_SEL(),
-        .SCR_DATA_SEL(), .SCR_WE(),  // scratch pad
-        .SCR_ADDR_SEL(),
-        .SP_LD(), .SP_INCR(), .SP_DECR(),   // stack pointer
+        .ALU_OPY_SEL(ALU_B_SEL),
+        .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
+        .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
+        .SP_LD(SP_LD), .SP_INCR(SP_INCR), .SP_DECR(SP_DECR),   // stack pointer
         .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), // Flags 
         .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), // Z Flag control
         .N_FLAG_LD(N_FLAG_LD), .N_FLAG_SET(N_FLAG_SET), .N_FLAG_CLR(N_FLAG_CLR), // N Flag control
         .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), // H Flag control
-        .FLAGS_DATA_SEL(FLAGS_DATA_SEL),
+        .FLAGS_DATA_SEL(FLAGS_DATA_SEL),        
         .I_CLR(), .I_SET(), .FLG_LD_SEL(), // interrupts
         .RST(RST),       // reset
         .IO_STRB()    // IO

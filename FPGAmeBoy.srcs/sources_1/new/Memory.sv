@@ -25,7 +25,7 @@ module Memory(
     input logic CLK, 
     input logic WE, 
     input logic RE, 
-    input logic ADDR, 
+    input logic [15:0] ADDR, 
     input logic [7:0] DIN,
     output logic [7:0] DOUT,
     logic [7:0] mem [15:0]
