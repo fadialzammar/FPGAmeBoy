@@ -43,6 +43,7 @@ module ControlUnit(
         output logic RST,                               // reset
         output logic IO_STRB                            // IO
     );
+    
 
     parameter RF_MUX_ALU = 0;   // ALU output
     parameter RF_MUX_MEM = 1;   // scratch RAM output
@@ -65,6 +66,7 @@ module ControlUnit(
     
     parameter ALU_B_MUX_DY = 0;     // DY output of the Reg File
     parameter ALU_B_MUX_MEM = 1;    // Memory output
+    parameter ALU_B_MUX_PROG = 2;   // PROGOM output
 
     parameter REG_B = 3'b000;
     parameter REG_C = 3'b001;
@@ -200,6 +202,28 @@ module ControlUnit(
                     //
                     // 8-bit loads
                     //
+                    8'b00101111: // CPL
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = CPL_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        // Register File Addresses
+                        RF_ADRX = REG_A;
+                    end
                     
                     8'b00110111: // SCF
                     begin
@@ -210,7 +234,7 @@ module ControlUnit(
                         H_FLAG_CLR = 1;
                     end
 
-                    8'b00110111: // CCF
+                    8'b00111111: // CCF
                     begin
                         // Flags                        
                         C_FLAG_SET = C == 0 ? 1'b1 : 1'b0;
@@ -727,7 +751,7 @@ module ControlUnit(
                 // ALU A input mux select                                
                 ALU_OPX_SEL = 1'b0;
                 // ALU B input mux select
-                ALU_OPY_SEL = ALU_B_MUX_MEM;                                
+                ALU_OPY_SEL = ALU_B_MUX_PROG;                                
                 // Input to the Reg File is the ALU output
                 RF_WR_SEL = RF_MUX_ALU;                                
                 // Write operation back into Register A

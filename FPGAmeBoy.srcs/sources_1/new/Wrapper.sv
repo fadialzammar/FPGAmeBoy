@@ -66,7 +66,7 @@ module Wrapper(
     assign H_IN = FLAG_REG_IN[H_IDX];
     assign C_IN = FLAG_REG_IN[C_IDX];
     
-    // Outputs from the flag register file to the ALU
+    // Outputs from the flag register file to the ALU or Memory
     assign FLAG_REG_OUT = {Z_FLAG,N_FLAG,H_FLAG,C_FLAG, 4'b0000};
         
     // Stack Pointer signals
@@ -82,6 +82,8 @@ module Wrapper(
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
     
+
+    
     // Control signals
     logic [7:0] OPCODE;
     logic PC_INC;            // program counter
@@ -94,6 +96,7 @@ module Wrapper(
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic MEM_WE, MEM_RE;            // memory
     logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL;
+      
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -104,18 +107,18 @@ module Wrapper(
         .PC_COUNT(PC)
     );
     
-    MUX2to1 ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_OUT), 
-        .Sel(ALU_B_SEL), .Out(FLAG_REG_IN)
+    MUX3to1 ALU_B_MUX(
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE),
+        .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
     ALU ALU(
-        .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(RF_DY_OUT), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
     
     MUX2to1 Flag_Reg_MUX(
-        .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_OUT), 
+        .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_DOUT), 
         .Sel(FLAGS_DATA_SEL), .Out(FLAG_REG_IN)
     );
     

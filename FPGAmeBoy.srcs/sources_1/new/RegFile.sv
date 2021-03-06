@@ -34,9 +34,11 @@ initial begin
     for (int i = 0; i < (1<<ADDR_SIZE); i++) begin
         mem[i] = 0;
     end
-    mem[0] = 8'h18;
-    mem[1] = 8'h69;
-    mem[7] = 8'h2D;
+    mem[0] = 8'h18; // REG B
+    mem[1] = 8'h69; // REG C
+    mem[2] = 8'h00; // REG D
+    mem[3] = 8'h01; // REG E
+    mem[7] = 8'h2D; // REG A
 end
 
 //create synchronous write to port X
