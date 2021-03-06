@@ -103,17 +103,28 @@ module ControlUnit(
     localparam BIT_ALU  = 5'b10110;
     localparam SET_ALU  = 5'b10111;
     localparam RES_ALU  = 5'b11000;
-
+    
+    // Immediate Value Defines
+    localparam ADD_IMMED   = 4'b0000;
+    localparam SUB_IMMED   = 4'b0001;
+    localparam AND_IMMED   = 4'b0010;
+    localparam OR_IMMED    = 4'b0011;
+    localparam ADC_IMMED   = 4'b0100;
+    localparam SBC_IMMED   = 4'b0101;
+    localparam XOR_IMMED   = 4'b0110;
+    localparam CP_IMMED    = 4'b0111;
     
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, SP, IMMED} STATE;
 
     STATE NS, PS = INIT;
 
      logic mcycle = 0;
-     // Flag used for identifying that NS after EXEC is not FETCH
-     logic special_state = 1'b0;
+     // Flag used for identifying that NS after EXEC is SP
+     logic SP_FLAG = 1'b0;
      // Flag for CB prefixes
      logic CB_FLAG = 1'b0;
+     // Flag for Immediate value usage
+     logic IMMED_FLAG = 1'b0;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
      logic POP_LB = 1'b0;
@@ -122,16 +133,8 @@ module ControlUnit(
      logic PUSH_LB = 1'b0;
      logic PUSH_HB = 1'b0;
      
-     // Immediate Value Select and defines
-     logic [3:0] IMMED_SEL = 4'b0000;
-     localparam ADD_IMMED   = 4'b0000;
-     localparam SUB_IMMED   = 4'b0001;
-     localparam AND_IMMED   = 4'b0010;
-     localparam OR_IMMED    = 4'b0011;
-     localparam ADC_IMMED   = 4'b0100;
-     localparam SBC_IMMED   = 4'b0101;
-     localparam XOR_IMMED   = 4'b0110;
-     localparam CP_IMMED    = 4'b0111;
+     // Immediate Value Select 
+     logic [3:0] IMMED_SEL = 4'b0000;     
      
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
@@ -155,7 +158,7 @@ module ControlUnit(
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
-        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
+        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;   
 
         case (PS)
             INIT: 
@@ -169,18 +172,15 @@ module ControlUnit(
                 PC_INC = 1;
                 if (CB_FLAG == 1)
                     NS = CB_EXEC;
+                else if (IMMED_FLAG == 1)
+                    NS = IMMED;
                 else
                     NS = EXEC;
             end
 
             EXEC:
-            begin
-                if (INTR)
-                    NS = INTERRUPT;
-                else
-                    if(~special_state)
-                        NS = FETCH;
-
+            begin              
+                        
                 case (OPCODE) inside
                     
                     8'b00000000:  // NOP
@@ -202,6 +202,191 @@ module ControlUnit(
                     //
                     // 8-bit loads
                     //
+                    
+                    8'b00??0100: // INC B, D, H, (HL)
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = INC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register n
+                        RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        case (OPCODE[5:4])
+                            2'b00: // INC B
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_B;
+                            end
+                            
+                             2'b01: // INC D
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_D;
+                            end
+                            
+                             2'b10: // INC H
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_H;
+                            end
+                            
+                             2'b11: // INC (HL) ////////////=========== Update with (HL) code
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_HL;
+                            end
+                        endcase
+                    end
+                    
+                    8'b00??0101: // DEC B, D, H, (HL)
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = DEC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register n
+                        RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        case (OPCODE[5:4])
+                            2'b00: // DEC B
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_B;
+                            end
+                            
+                             2'b01: // DEC D
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_D;
+                            end
+                            
+                             2'b10: // DEC H
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_H;
+                            end
+                            
+                             2'b11: // DEC (HL) ////////////=========== Update with (HL) code
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_HL;
+                            end
+                        endcase
+                    end
+
+                    8'b00??1100: // INC C, E, L, A
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = INC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        case (OPCODE[5:4])
+                            2'b00: // INC C
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_C;
+                            end
+                            
+                             2'b01: // INC E
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_E;
+                            end
+                            
+                             2'b10: // INC L
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_L;
+                            end
+                            
+                             2'b11: // INC A 
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_A;
+                            end
+                        endcase
+                    end
+                    
+                     8'b00??1101: // DEC C, E, L, A
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_SEL = DEC_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register n
+                        RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        case (OPCODE[5:4])
+                            2'b00: // DEC C
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_C;
+                            end
+                            
+                             2'b01: // DEC E
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_E;
+                            end
+                            
+                             2'b10: // DEC L
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_L;
+                            end
+                            
+                             2'b11: // DEC A 
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_A;
+                            end
+                        endcase
+                    end
+                    
                     8'b00101111: // CPL
                     begin
                         // ALU A input mux select                                
@@ -453,8 +638,8 @@ module ControlUnit(
                         ALU_SEL = CP_ALU;                                
                         // Input to the Reg File is the ALU output
                         RF_WR_SEL = RF_MUX_ALU;                                
-                        // Write operation back into Register A
-                        RF_WR = 1;                                
+                        // Does not write operation back into Register A
+                        RF_WR = 0;                                
                         // Flags
                         C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
@@ -659,23 +844,22 @@ module ControlUnit(
                         POP_FLAG = 1'b1;
                         PUSH_LB = 1'b0;
                         PUSH_HB = 1'b1;
-                        special_state = 1'b1;
-                        NS = SP;                       
+                        SP_FLAG = 1'b1;                     
                     end       
                     
-                    8'b11??0101: // PUSH
+                    8'b11??0101: // PUSH // ======================== Might need to send to wait state for consistent timing ======================== //
                     begin
                         PUSH_FLAG = 1'b1;
                         PUSH_LB = 1'b1;
                         PUSH_HB = 1'b0;
                         SP_DECR = 1'b1; 
-                        special_state = 1'b1;
-                        NS = SP;         // ======================== Might need to send to wait state for consistent timing ========================                
+                        SP_FLAG = 1'b1;
+                                                       
                     end             
                     
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values 
                     begin
-                        case(OPCODE)
+                        case(OPCODE[5:4])
                             2'b00: // ADD A, immed
                                 begin
                                     IMMED_SEL = ADD_IMMED;
@@ -696,13 +880,12 @@ module ControlUnit(
                                     IMMED_SEL = OR_IMMED;
                                 end                           
                         endcase
-                        special_state = 1'b1;
-                        NS = IMMED;
+                        IMMED_FLAG = 1'b1;
                     end   
                     
                     8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
                     begin
-                        case(OPCODE)
+                        case(OPCODE[5:4])
                             2'b00: // ADC A, immed
                                 begin
                                     IMMED_SEL = ADC_IMMED;
@@ -723,8 +906,7 @@ module ControlUnit(
                                     IMMED_SEL = CP_IMMED;
                                 end                           
                         endcase
-                        special_state = 1'b1;
-                        NS = IMMED;
+                        IMMED_FLAG = 1'b1;
                     end
                     
                     8'b11001011: // CB Prefix command
@@ -742,7 +924,14 @@ module ControlUnit(
                 if (INTR == 1)
                     NS = INTERRUPT;
                     
-                NS = FETCH;
+                if (INTR)
+                    NS = INTERRUPT;
+                else
+                    if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                        NS = SP;
+                    else 
+                        NS = FETCH;
+                        
                 mcycle++;
             end // EXEC
             
@@ -797,10 +986,10 @@ module ControlUnit(
                             ALU_SEL = ADC_ALU;
                         end
                         
-                    SUB_IMMED: // SBC A, immed
+                    SBC_IMMED: // SBC A, immed
                         begin
                             // ALU Operation Select
-                            ALU_SEL = SUB_ALU;
+                            ALU_SEL = SBC_ALU;
                         end
                     
                     XOR_IMMED: // XOR A, immed
@@ -813,9 +1002,13 @@ module ControlUnit(
                         begin
                             // ALU Operation Select
                             ALU_SEL = CP_ALU;
+                            // Does not write operation back into Register A
+                            RF_WR = 0; 
                         end                                      
                 endcase
-                special_state = 1'b0;
+                // Reset Immediate Flag and Immediate select and transition back to the fetch state
+                IMMED_FLAG = 1'b0;
+                //IMMED_SEL = 4'b0000;
                 NS = FETCH;
             end
             
@@ -900,11 +1093,11 @@ module ControlUnit(
                                 // Transition to the fetch state once both bytes are pushed   
                                 else 
                                     begin
-                                        // Reset High Byte flag, Low Byte flag, PUSH flag, and special state flag
+                                        // Reset High Byte flag, Low Byte flag, PUSH flag, and Stack Pointer flag
                                         PUSH_FLAG = 1'b0;
                                         POP_HB = 1'b0;
                                         POP_LB = 1'b0;
-                                        special_state = 1'b0;
+                                        SP_FLAG = 1'b0;
                                         NS = FETCH;
                                     end
                                     
@@ -1003,11 +1196,11 @@ module ControlUnit(
                                 // Transition to the fetch state once both bytes are poped    
                                 else 
                                     begin
-                                        // Reset High Byte flag, Low Byte flag, POP flag, and special state flag
+                                        // Reset High Byte flag, Low Byte flag, POP flag, and Stack Pointer flag
                                         POP_FLAG = 1'b0;
                                         POP_HB = 1'b0;
                                         POP_LB = 1'b0;
-                                        special_state = 1'b0;
+                                        SP_FLAG = 1'b0;
                                         NS = FETCH;
                                     end
                             end                            

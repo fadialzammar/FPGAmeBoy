@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0fs"></ZoomStartTime>
-      <ZoomEndTime time="132fs"></ZoomEndTime>
-      <Cursor1Time time="770fs"></Cursor1Time>
+      <ZoomStartTime time="1909000fs"></ZoomStartTime>
+      <ZoomEndTime time="2018201fs"></ZoomEndTime>
+      <Cursor1Time time="2000000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="149"></NameColumnWidth>
+      <NameColumnWidth column_width="144"></NameColumnWidth>
       <ValueColumnWidth column_width="72"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="41" />
+   <WVObjectSize size="48" />
    <wvobject fp_name="/CPU_TEST_BENCH/CLK" type="logic">
       <obj_property name="ElementShortName">CLK</obj_property>
       <obj_property name="ObjectShortName">CLK</obj_property>
@@ -44,11 +44,9 @@
       <obj_property name="ElementShortName">ALU_OUT[7:0]</obj_property>
       <obj_property name="ObjectShortName">ALU_OUT[7:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ALU/FLAGS_OUT" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">FLAGS_OUT[3:0]</obj_property>
-      <obj_property name="ObjectShortName">FLAGS_OUT[3:0]</obj_property>
-      <obj_property name="label">ALU_FLAGS_OUT[3:0]</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/FLAG_REG_OUT" type="array">
+      <obj_property name="ElementShortName">FLAG_REG_OUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">FLAG_REG_OUT[7:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/ALU/FLAGS_IN" type="array">
       <obj_property name="DisplayName">label</obj_property>
@@ -56,9 +54,19 @@
       <obj_property name="ObjectShortName">FLAGS_IN[3:0]</obj_property>
       <obj_property name="label">ALU_FLAGS_IN[3:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/Z" type="logic">
-      <obj_property name="ElementShortName">Z</obj_property>
-      <obj_property name="ObjectShortName">Z</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ALU/FLAGS_OUT" type="array">
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="ElementShortName">FLAGS_OUT[3:0]</obj_property>
+      <obj_property name="ObjectShortName">FLAGS_OUT[3:0]</obj_property>
+      <obj_property name="label">ALU_FLAGS_OUT[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/FLAG_REG_IN" type="array">
+      <obj_property name="ElementShortName">FLAG_REG_IN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">FLAG_REG_IN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/Z_IN" type="logic">
+      <obj_property name="ElementShortName">Z_IN</obj_property>
+      <obj_property name="ObjectShortName">Z_IN</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/Z_FLAG_LD" type="logic">
       <obj_property name="ElementShortName">Z_FLAG_LD</obj_property>
@@ -72,13 +80,13 @@
       <obj_property name="ElementShortName">Z_FLAG_CLR</obj_property>
       <obj_property name="ObjectShortName">Z_FLAG_CLR</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/Z_FLAG" type="logic">
-      <obj_property name="ElementShortName">Z_FLAG</obj_property>
-      <obj_property name="ObjectShortName">Z_FLAG</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/Z_OUT" type="logic">
+      <obj_property name="ElementShortName">Z_OUT</obj_property>
+      <obj_property name="ObjectShortName">Z_OUT</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/N" type="logic">
-      <obj_property name="ElementShortName">N</obj_property>
-      <obj_property name="ObjectShortName">N</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/N_IN" type="logic">
+      <obj_property name="ElementShortName">N_IN</obj_property>
+      <obj_property name="ObjectShortName">N_IN</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/N_FLAG_LD" type="logic">
       <obj_property name="ElementShortName">N_FLAG_LD</obj_property>
@@ -92,13 +100,13 @@
       <obj_property name="ElementShortName">N_FLAG_CLR</obj_property>
       <obj_property name="ObjectShortName">N_FLAG_CLR</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/N_FLAG" type="logic">
-      <obj_property name="ElementShortName">N_FLAG</obj_property>
-      <obj_property name="ObjectShortName">N_FLAG</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/N_OUT" type="logic">
+      <obj_property name="ElementShortName">N_OUT</obj_property>
+      <obj_property name="ObjectShortName">N_OUT</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/H" type="logic">
-      <obj_property name="ElementShortName">H</obj_property>
-      <obj_property name="ObjectShortName">H</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/H_IN" type="logic">
+      <obj_property name="ElementShortName">H_IN</obj_property>
+      <obj_property name="ObjectShortName">H_IN</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/H_FLAG_LD" type="logic">
       <obj_property name="ElementShortName">H_FLAG_LD</obj_property>
@@ -112,13 +120,13 @@
       <obj_property name="ElementShortName">H_FLAG_CLR</obj_property>
       <obj_property name="ObjectShortName">H_FLAG_CLR</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/H_FLAG" type="logic">
-      <obj_property name="ElementShortName">H_FLAG</obj_property>
-      <obj_property name="ObjectShortName">H_FLAG</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/H_OUT" type="logic">
+      <obj_property name="ElementShortName">H_OUT</obj_property>
+      <obj_property name="ObjectShortName">H_OUT</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/C" type="logic">
-      <obj_property name="ElementShortName">C</obj_property>
-      <obj_property name="ObjectShortName">C</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/C_IN" type="logic">
+      <obj_property name="ElementShortName">C_IN</obj_property>
+      <obj_property name="ObjectShortName">C_IN</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/C_FLAG_LD" type="logic">
       <obj_property name="ElementShortName">C_FLAG_LD</obj_property>
@@ -132,9 +140,9 @@
       <obj_property name="ElementShortName">C_FLAG_CLR</obj_property>
       <obj_property name="ObjectShortName">C_FLAG_CLR</obj_property>
    </wvobject>
-   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/C_FLAG" type="logic">
-      <obj_property name="ElementShortName">C_FLAG</obj_property>
-      <obj_property name="ObjectShortName">C_FLAG</obj_property>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/C_OUT" type="logic">
+      <obj_property name="ElementShortName">C_OUT</obj_property>
+      <obj_property name="ObjectShortName">C_OUT</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/RegFile/mem[7]" type="array">
       <obj_property name="DisplayName">label</obj_property>
@@ -197,5 +205,25 @@
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/RegFile/DIN" type="array">
       <obj_property name="ElementShortName">DIN[7:0]</obj_property>
       <obj_property name="ObjectShortName">DIN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/CLK" type="logic">
+      <obj_property name="ElementShortName">CLK</obj_property>
+      <obj_property name="ObjectShortName">CLK</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Flag_Reg/RST" type="logic">
+      <obj_property name="ElementShortName">RST</obj_property>
+      <obj_property name="ObjectShortName">RST</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/RF_DIN_SEL" type="array">
+      <obj_property name="ElementShortName">RF_DIN_SEL[2:0]</obj_property>
+      <obj_property name="ObjectShortName">RF_DIN_SEL[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ALU_B_SEL" type="array">
+      <obj_property name="ElementShortName">ALU_B_SEL[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ALU_B_SEL[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/IMMED_SEL" type="array">
+      <obj_property name="ElementShortName">IMMED_SEL[3:0]</obj_property>
+      <obj_property name="ObjectShortName">IMMED_SEL[3:0]</obj_property>
    </wvobject>
 </wave_config>

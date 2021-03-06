@@ -38,7 +38,7 @@ module Wrapper(
     logic [3:0] ALU_FLAGS_IN;
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
-    logic ALU_B_SEL;
+    logic [1:0] ALU_B_SEL;
     
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
@@ -124,10 +124,10 @@ module Wrapper(
     
     Flag_Reg Flag_Reg(
         .CLK(CLK), .RST(RST),
-        .Z(Z_IN), .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), .Z_FLAG(Z_FLAG),
-        .N(N_IN), .N_FLAG_LD(N_FLAG_LD), .N_FLAG_SET(N_FLAG_SET), .N_FLAG_CLR(N_FLAG_CLR), .N_FLAG(N_FLAG),
-        .H(H_IN), .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), .H_FLAG(H_FLAG),
-        .C(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_FLAG(C_FLAG)
+        .Z_IN(Z_IN), .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), .Z_OUT(Z_FLAG),
+        .N_IN(N_IN), .N_FLAG_LD(N_FLAG_LD), .N_FLAG_SET(N_FLAG_SET), .N_FLAG_CLR(N_FLAG_CLR), .N_OUT(N_FLAG),
+        .H_IN(H_IN), .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), .H_OUT(H_FLAG),
+        .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
     MUX6to1 RegFile_MUX(
