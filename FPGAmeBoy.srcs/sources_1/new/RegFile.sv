@@ -19,6 +19,14 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+//REGISTER ADDRESSES:
+//000: B
+//001: C
+//002: D 
+//003: E;
+//004: H
+//005: L 
+//007: A
 
 module RegFile #(parameter ADDR_SIZE = 5, DATA_SIZE = 8)(
     input [ADDR_SIZE-1:0] ADRX, ADRY,

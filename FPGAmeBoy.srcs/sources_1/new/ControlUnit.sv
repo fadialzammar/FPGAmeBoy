@@ -114,7 +114,7 @@ module ControlUnit(
     localparam XOR_IMMED   = 4'b0110;
     localparam CP_IMMED    = 4'b0111;
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, SP, IMMED} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP, IMMED} STATE;
 
     STATE NS, PS = INIT;
 
@@ -691,24 +691,25 @@ module ControlUnit(
                         FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                         // Register File Addresses
                         RF_ADRX = REG_A;
-                        RF_ADRY = OPCODE[2:0];
+                        RF_ADRY = OPCODE[2:0]; 
 
                         // OR A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            MEM_DATA_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            NS = HL_PTR;
                         end                                                        
                     end
                     
@@ -1469,7 +1470,6 @@ module ControlUnit(
                             end 
                         end                                                        
                     end
-                    
                     8'b00110???:  // SWAP n, n
                     begin
                         // ALU A input mux select                                
@@ -1481,8 +1481,7 @@ module ControlUnit(
                         // Input to the Reg File is the ALU output
                         RF_WR_SEL = RF_MUX_ALU;                                
                         // Write operation back into Register n
-                        RF_WR = 1;                                
-                        // Flags
+                        RF_WR = 1; 
                         C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
@@ -1555,9 +1554,61 @@ module ControlUnit(
                             end 
                         end                                                        
                     end
-                    
+                                        8'b01??????:  // BIT K, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0; // PLACEHOLDER
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        // ALU Operation Select
+                        ALU_SEL = BIT_ALU;   
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;                            
+                        // Register File Addresses
+                        RF_ADRX = OPCODE[2:0];
+                        RF_ADRY = OPCODE[5:3]; 
+                        // ADD HL CASE
+                    end
+                    8'b10??????:  // SET K, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0; // PLACEHOLDER
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        // ALU Operation Select
+                        ALU_SEL = SET_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;                            
+                        // Register File Addresses
+                        RF_ADRX = OPCODE[2:0];
+                        RF_ADRY = OPCODE[5:3]; 
+                        // ADD HL CASE
+                    end
+                    8'b11??????:  // RES K, n
+                    begin
+                        // ALU A input mux select                                
+                        ALU_OPX_SEL = 1'b0; // PLACEHOLDER
+                        // ALU B input mux select
+                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        // ALU Operation Select
+                        ALU_SEL = RES_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU;                                
+                        // Write operation back into Register A
+                        RF_WR = 1;                            
+                        // Register File Addresses
+                        RF_ADRX = OPCODE[2:0];
+                        RF_ADRY = OPCODE[5:3];
+                        // ADD HL CASE
+                    end
+                  
                     default: begin
-                        
+                        // CRASHES
                     end
                 endcase
                 
@@ -1568,13 +1619,17 @@ module ControlUnit(
                 CB_FLAG = 1'b0;
                 NS = FETCH;
                 mcycle++;
-                
             end // CB_EXEC
-           
-            
+          
+            HL_PTR: begin
+                NS = FETCH;
+                RF_ADRX = REG_A;
+                RF_WR = 1;
+                C_FLAG_LD = 1;
+                Z_FLAG_LD = 1;
+                N_FLAG_LD = 1;
+                H_FLAG_LD = 1;                  
+            end
         endcase // PS
     end
-
-
-    
 endmodule
