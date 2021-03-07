@@ -26,52 +26,59 @@ module Flag_Reg(
     input RST,
     
     // Zero FLag
-    input Z,
+    input Z_IN,
     input Z_FLAG_LD,
     input Z_FLAG_SET,
     input Z_FLAG_CLR,
-    output logic Z_FLAG,
+    output logic Z_OUT,
     
     // Subtract Flag
-    input N,
+    input N_IN,
     input N_FLAG_LD,
     input N_FLAG_SET,
     input N_FLAG_CLR,
-    output logic N_FLAG,
+    output logic N_OUT,
     
     // Half Carry Flag
-    input H,
+    input H_IN,
     input H_FLAG_LD,
     input H_FLAG_SET,
     input H_FLAG_CLR,    
-    output logic H_FLAG,
+    output logic H_OUT,
     
     // Carry Flag
-    input C,
+    input C_IN,
     input C_FLAG_LD,
     input C_FLAG_SET,
     input C_FLAG_CLR,
-    output logic C_FLAG
+    output logic C_OUT
     
     );
     
+    // Initialize all flags to zero
+//    initial begin
+//        Z_OUT <= 0;
+//        N_OUT <= 0;
+//        H_OUT <= 0;
+//        C_OUT <= 0;        
+//    end
     // Zero Flag Register
     always_ff @(posedge CLK) begin
         //RESET
         if (RST == 1) begin
-            Z_FLAG <= 0; 
+            Z_OUT <= 0; 
         end
         // Clear Z Flag
         else if (Z_FLAG_CLR == 1) begin
-            Z_FLAG <= 0; 
+            Z_OUT <= 0; 
         end
         // Set Z FLag High
         else if (Z_FLAG_SET == 1) begin
-            Z_FLAG <= 1;
+            Z_OUT <= 1;
         end
         // Load Z Flag
         else if (Z_FLAG_LD == 1) begin
-            Z_FLAG <= Z;
+            Z_OUT <= Z_IN;
         end
     end
     
@@ -79,19 +86,19 @@ module Flag_Reg(
     always_ff @(posedge CLK) begin
         //RESET
         if (N_FLAG_CLR == 1) begin
-            N_FLAG <= 0; 
+            N_OUT <= 0; 
         end
         // Clear N Flag
         else if (N_FLAG_CLR == 1) begin
-            N_FLAG <= 0; 
+            N_OUT <= 0; 
         end
         // Set N FLag High
         else if (N_FLAG_SET == 1) begin
-            N_FLAG <= 1;
+            N_OUT <= 1;
         end
         // Load N Flag
         else if (N_FLAG_LD == 1) begin
-            N_FLAG <= N;
+            N_OUT <= N_IN;
         end
     end
     
@@ -99,19 +106,19 @@ module Flag_Reg(
     always_ff @(posedge CLK) begin
         // RESET
         if (RST == 1) begin
-            H_FLAG <= 0; 
+            H_OUT <= 0; 
         end    
         // Clear H Flag
         else if (H_FLAG_CLR == 1) begin
-            H_FLAG <= 0; 
+            H_OUT <= 0; 
         end
         // Set H FLag High
         else if (H_FLAG_SET == 1) begin
-            H_FLAG <= 1;
+            H_OUT <= 1;
         end
         // Load H Flag
         else if (H_FLAG_LD == 1) begin
-            H_FLAG <= H;
+            H_OUT <= H_IN;
         end
 
     end
@@ -120,19 +127,19 @@ module Flag_Reg(
     always_ff @(posedge CLK) begin
         // RESET
         if (RST == 1) begin
-            C_FLAG <= 0; 
+            C_OUT <= 0; 
         end
         // Clear C Flag
         else if (C_FLAG_CLR == 1) begin
-            C_FLAG <= 0; 
+            C_OUT <= 0; 
         end
         // Set C FLag High
         else if (C_FLAG_SET == 1) begin
-            C_FLAG <= 1;
+            C_OUT <= 1;
         end
         // Load C Flag
         else if (C_FLAG_LD == 1) begin
-            C_FLAG <= C;
+            C_OUT <= C_IN;
         end
     end
 endmodule
