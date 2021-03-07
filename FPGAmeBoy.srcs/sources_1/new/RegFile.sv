@@ -46,6 +46,8 @@ initial begin
     mem[1] = 8'h69; // REG C
     mem[2] = 8'h00; // REG D
     mem[3] = 8'h01; // REG E
+    mem[4] = 8'h02;
+    mem[5] = 8'h05;
     mem[7] = 8'h2D; // REG A
 end
 

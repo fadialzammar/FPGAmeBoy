@@ -22,7 +22,7 @@
 
 module Wrapper(
     input CLK,
-    input RST
+    input CPU_RESET
     );
     
     // Program Counter Signals
@@ -181,7 +181,7 @@ module Wrapper(
     
     ControlUnit ControlUnit(
         // Inputs
-        .CLK(CLK), .INTR(), .RESET(RST),
+        .CLK(CLK), .INTR(), .RESET(CPU_RESET),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs

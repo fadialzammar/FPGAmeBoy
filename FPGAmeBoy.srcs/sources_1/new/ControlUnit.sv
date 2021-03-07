@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 02/07/2021 03:35:48 PM
+// Create Date: 02/07/2021 03:35:48 
 // Design Name: 
 // Module Name: ControlUnit
 // Project Name: 
@@ -125,6 +125,8 @@ module ControlUnit(
      logic CB_FLAG = 1'b0;
      // Flag for Immediate value usage
      logic IMMED_FLAG = 1'b0;
+     // Flag for HL pointer state
+     logic HL_FLAG = 1'b0;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
      logic POP_LB = 1'b0;
@@ -699,7 +701,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_DATA_SEL = 3'b011;
+                            MEM_ADDR_SEL = 3'b011;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -709,6 +711,7 @@ module ControlUnit(
                             N_FLAG_LD = 0;
                             H_FLAG_LD = 0;                            
                             
+                            HL_FLAG = 1;
                             NS = HL_PTR;
                         end                                                        
                     end
@@ -930,6 +933,8 @@ module ControlUnit(
                 else
                     if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
                         NS = SP;
+                    else if(HL_FLAG) // Transition to HL state
+                        NS = HL_PTR;
                     else 
                         NS = FETCH;
                         
@@ -1623,7 +1628,10 @@ module ControlUnit(
           
             HL_PTR: begin
                 NS = FETCH;
-                RF_ADRX = REG_A;
+                RF_ADRX = REG_H;
+                RF_ADRY = REG_L;
+                MEM_ADDR_SEL = 'b011;
+                //RF_ADRX = REG_A;
                 RF_WR = 1;
                 C_FLAG_LD = 1;
                 Z_FLAG_LD = 1;
