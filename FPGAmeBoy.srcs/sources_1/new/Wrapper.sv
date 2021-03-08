@@ -132,7 +132,7 @@ module Wrapper(
     
     MUX6to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
-        .In3(), .In4(), .In5(),
+        .In3(), .In4(OPCODE), .In5(RF_DY_OUT),
          .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     

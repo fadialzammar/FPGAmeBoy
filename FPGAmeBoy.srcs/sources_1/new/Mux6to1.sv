@@ -22,8 +22,8 @@
 
 module MUX6to1(
     input [7:0] In0, In1, In2, In3, In4, In5, //8-bit inputs 
-    input [3:0] Sel, //selector signal
-    output logic [8:0] Out //8-bit output
+    input [2:0] Sel, //selector signal
+    output logic [7:0] Out //8-bit output
     );
     always_comb
         case (Sel) // 6->1 multiplexor

@@ -27,7 +27,7 @@ module ControlUnit(
         output logic [1:0] PC_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [2:0] RF_WR_SEL,
-        output logic [4:0] RF_ADRX, RF_ADRY,
+        output logic [2:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,                     // ALU
         output logic ALU_OPX_SEL,
         output logic [1:0] ALU_OPY_SEL,
@@ -113,6 +113,7 @@ module ControlUnit(
     localparam SBC_IMMED   = 4'b0101;
     localparam XOR_IMMED   = 4'b0110;
     localparam CP_IMMED    = 4'b0111;
+    // localparam LD_IMMEED   = 4'b1000;
     
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP, IMMED} STATE;
 
@@ -134,7 +135,7 @@ module ControlUnit(
      logic PUSH_HB = 1'b0;
      
      // Immediate Value Select 
-     logic [3:0] IMMED_SEL = 4'b0000;     
+     logic [7:0] IMMED_SEL = 4'b0000;     
      
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
@@ -434,10 +435,9 @@ module ControlUnit(
                             
                         end
                         else begin  // normal LD r8, n8
-                            RF_WR = 1;
-                            RF_WR_SEL = RF_MUX_IMM;
-                            RF_ADRX = OPCODE[5:3];
-                            // SCR_ADDR_SEL = 1;
+                            // RF_WR = 0;
+                            IMMED_FLAG = 1;
+                            IMMED_SEL = OPCODE;
                         end
                     end
 
@@ -460,6 +460,7 @@ module ControlUnit(
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
                                 MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                //hold_exec = 1;
                             end
                             if (mcycle == 1) begin
                                 RF_WR = 1;
@@ -921,23 +922,21 @@ module ControlUnit(
 
 
                 endcase // OPCODE
-
-                if (INTR == 1)
-                    NS = INTERRUPT;
                     
                 if (INTR)
                     NS = INTERRUPT;
-                else
-                    if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
-                        NS = SP;
-                    else 
-                        NS = FETCH;
+                // else if (IMMED_FLAG)
+                //     NS = IMMED;
+                else if (SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                    NS = SP;
+                else 
+                    NS = FETCH;
                         
                 mcycle++;
             end // EXEC
             
             IMMED: begin  // Immediate Value Instrutions
-                // Same for each case
+                // Same for each ALU case, LD cases will overwrite when necessary
                 // ALU A input mux select                                
                 ALU_OPX_SEL = 1'b0;
                 // ALU B input mux select
@@ -956,7 +955,12 @@ module ControlUnit(
                 // Register File Addresses
                 RF_ADRX = REG_A;
                 
-                case(IMMED_SEL)
+                case(IMMED_SEL) inside
+                    8'b00???110: begin  // LD r, n
+                        RF_WR = 1;
+                        RF_WR_SEL = RF_MUX_IMM;
+                        RF_ADRX = IMMED_SEL[5:3];
+                    end
                     ADD_IMMED: // ADD A, immed
                         begin                                                      
                             // ALU Operation Select
