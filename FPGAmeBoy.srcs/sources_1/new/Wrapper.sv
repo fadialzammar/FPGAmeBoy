@@ -109,7 +109,7 @@ module Wrapper(
     );
     
     MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_CTRL),
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     

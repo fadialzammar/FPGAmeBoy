@@ -1583,7 +1583,7 @@ module ControlUnit(
                         RF_ADRY = OPCODE[5:3]; 
                         // ADD HL CASE
                     end
-                    8'b10??????:  // SET K, n
+                    8'b11??????:  // SET K, n
                     begin
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0; // PLACEHOLDER
@@ -1601,7 +1601,7 @@ module ControlUnit(
                         RF_ADRY = OPCODE[5:3]; 
                         // ADD HL CASE
                     end
-                    8'b11??????:  // RES K, n
+                    8'b10??????:  // RES K, n
                     begin
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0; // PLACEHOLDER
