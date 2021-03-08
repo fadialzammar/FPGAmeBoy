@@ -153,7 +153,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
                         // Concatenation of upper 4 bits of input with 
                         // additional bit for proper LOW_RESULT bit-width
-                        HIGH_RESULT = {1'b0, A[7:4]} - ({1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]});
+                        HIGH_RESULT = {1'b0, A[7:4]} - ({1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]});
                         // Sets Carry flag if there was no borrow from the MSB
                         FLAGS_OUT[C_FLAG] = ~HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
@@ -212,7 +212,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         FLAGS_OUT[H_FLAG] = ~LOW_RESULT[4];
                         // Concatenation of upper 4 bits of input with 
                         // additional bit for proper HIGH_RESULT bit-width
-                        HIGH_RESULT = {1'b0, A[7:4]} - {1'b0, B[7:4]} - {4'b0, LOW_RESULT[4]};
+                        HIGH_RESULT = {1'b0, A[7:4]} - ({1'b0, B[7:4]} + {4'b0, LOW_RESULT[4]});
                         // Sets Carry flag if there was no borrow from the MSB
                         FLAGS_OUT[C_FLAG] = ~HIGH_RESULT[4];
                         // The output is the addition of the upper and lower 4 bits
