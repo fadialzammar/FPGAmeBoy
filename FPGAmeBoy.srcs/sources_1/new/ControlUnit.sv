@@ -41,8 +41,9 @@ module ControlUnit(
         output logic FLAGS_DATA_SEL,
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
         output logic RST,                               // reset
-        output logic IO_STRB                            // IO
-    );
+        output logic IO_STRB,                           // IO
+        output logic [2:0] BIT_SEL                      // BIT select signal 
+    ); 
     
 
     parameter RF_MUX_ALU = 0;   // ALU output
@@ -114,10 +115,10 @@ module ControlUnit(
     localparam XOR_IMMED   = 4'b0110;
     localparam CP_IMMED    = 4'b0111;
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP, IMMED} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP, IMMED} STATE;
 
     STATE NS, PS = INIT;
-
+    
      logic mcycle = 0;
      // Flag used for identifying that NS after EXEC is SP
      logic SP_FLAG = 1'b0;
@@ -134,6 +135,9 @@ module ControlUnit(
      logic PUSH_FLAG = 1'b0;
      logic PUSH_LB = 1'b0;
      logic PUSH_HB = 1'b0;
+     
+     // Store ALU function for HL States
+     logic [4:0] HL_ALU_FUN = 5'b00000;
      
      // Immediate Value Select 
      logic [3:0] IMMED_SEL = 4'b0000;     
@@ -160,7 +164,8 @@ module ControlUnit(
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
-        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;   
+        H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
+        HL_FLAG = 0; BIT_SEL = 0;
 
         case (PS)
             INIT: 
@@ -697,7 +702,8 @@ module ControlUnit(
 
                         // OR A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
+                        begin
+                            HL_ALU_FUN = 5'b00101;                      
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -712,7 +718,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            NS = HL_PTR;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -934,7 +940,7 @@ module ControlUnit(
                     if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
                         NS = SP;
                     else if(HL_FLAG) // Transition to HL state
-                        NS = HL_PTR;
+                        NS = HL_FETCH;
                     else 
                         NS = FETCH;
                         
@@ -1559,7 +1565,7 @@ module ControlUnit(
                             end 
                         end                                                        
                     end
-                                        8'b01??????:  // BIT K, n
+                    8'b01??????:  // BIT K, n
                     begin
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0; // PLACEHOLDER
@@ -1582,7 +1588,8 @@ module ControlUnit(
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0; // PLACEHOLDER
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        ALU_OPY_SEL = 2'b11; // PLACEHOLDER
+                        BIT_SEL = OPCODE[5:3];                                
                         // ALU Operation Select
                         ALU_SEL = SET_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -1626,17 +1633,28 @@ module ControlUnit(
                 mcycle++;
             end // CB_EXEC
           
-            HL_PTR: begin
-                NS = FETCH;
+            HL_FETCH: begin
+                NS = HL_EXEC;
                 RF_ADRX = REG_H;
                 RF_ADRY = REG_L;
+                
                 MEM_ADDR_SEL = 'b011;
                 //RF_ADRX = REG_A;
+                ALU_SEL = HL_ALU_FUN;
+                ALU_OPY_SEL = 'b01;
                 RF_WR = 1;
                 C_FLAG_LD = 1;
                 Z_FLAG_LD = 1;
                 N_FLAG_LD = 1;
                 H_FLAG_LD = 1;                  
+            end
+            HL_EXEC: begin
+                NS = FETCH;
+                ALU_SEL = HL_ALU_FUN;
+                RF_ADRX = REG_A;
+                ALU_OPY_SEL = 'b01;
+                RF_WR = 1;
+                
             end
         endcase // PS
     end
