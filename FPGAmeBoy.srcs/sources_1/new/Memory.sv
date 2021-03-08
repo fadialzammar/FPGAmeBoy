@@ -19,24 +19,34 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-//synchronous memory
+///synchronous memory
 
-module Memory(
-    input logic CLK, 
-    input logic WE, 
-    input logic RE, 
-    input logic [15:0] ADDR, 
-    input logic [7:0] DIN,
-    output logic [7:0] DOUT,
-    logic [7:0] mem [15:0]
+module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
+// main RAM 8KByte
+//video RAM 8KByte
+    input CLK, 
+    input WE,
+    input RE,
+    input [ADDR_SIZE-1:0] ADDR, 
+    input [DATA_SIZE-1:0] DIN,
+    output logic [DATA_SIZE-1:0] DOUT);
+    
+    logic [DATA_SIZE-1:0] mem [0:(1<<ADDR_SIZE)-1];
 
-    );
+//    (* rom_style="{distributed | block}" *) 
+//    initial begin
+//        $readmemh("nintendographic.mem", memory, )
+     
+    always_ff@(posedge CLK)
+    begin
+    if(WE==1)
+    mem[ADDR] <= DIN;
+    end
     
     always_ff@(posedge CLK)
     begin
-        if(WE)
-            mem[ADDR] <= DIN;
-        if(RE)    
-            DOUT <= mem[ADDR];
+    if(RE == 1)
+    assign DOUT = mem[ADDR];
     end
+    
 endmodule

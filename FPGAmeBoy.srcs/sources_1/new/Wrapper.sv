@@ -73,8 +73,7 @@ module Wrapper(
     logic [15:0] SP_DIN;
     logic [15:0] SP_DOUT;
     
-    // Memory signals
-    
+    // Memory signals    
     logic [7:0] MEM_DIN, MEM_DOUT;
     logic [15:0] MEM_ADDR_IN;
     logic [15:0] HL_PTR;
@@ -82,17 +81,13 @@ module Wrapper(
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
     
-
-    
     // Control signals
     logic [7:0] OPCODE;
-    logic PC_INC;            // program counter
+    logic PC_INC;                   // program counter
     logic [1:0] PC_MUX_SEL;
     logic [1:0] RF_WR_SEL;
     logic ALU_OPY_SEL;
     logic FLAGS_DATA_SEL;
-    logic SCR_DATA_SEL, SCR_WE;     // scratch pad
-    logic [1:0] SCR_ADDR_SEL;
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic MEM_WE, MEM_RE;            // memory
     logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL;
