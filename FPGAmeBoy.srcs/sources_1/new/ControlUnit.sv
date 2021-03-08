@@ -104,13 +104,15 @@ module ControlUnit(
     localparam SET_ALU  = 5'b10111;
     localparam RES_ALU  = 5'b11000;
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP, IMMED} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP_LOW, SP_HIGH, IMMED} STATE;
 
     STATE NS, PS = INIT;
 
      logic mcycle = 0;     
-     // Flag used for identifying that NS after EXEC is SP
-     logic SP_FLAG = 1'b0;
+     // Flag used for identifying that NS after EXEC is SP_LOW
+     logic SP_LOW_FLAG = 1'b0;
+     // Flag used for identifying that NS after EXEC is SP_HIGH
+     logic SP_HIGH_FLAG = 1'b0;
      // Used for saving the opcode into the SP state
      logic [7:0] SP_OPCODE = 8'h00;
      // Flag for CB prefixes
@@ -145,7 +147,7 @@ module ControlUnit(
         PC_LD=0; PC_INC=0; PC_MUX_SEL=0;
         RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;  RF_WR_SEL=0;
         SP_LD=0; SP_INCR=0; SP_DECR=0;
-        MEM_WE=0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
+        MEM_WE=0; MEM_RE = 0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
         ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
@@ -951,20 +953,17 @@ module ControlUnit(
                     8'b11??0001: // POP
                     begin
                         POP_FLAG = 1'b1;
-                        PUSH_LB = 1'b0;
-                        PUSH_HB = 1'b1;
                         SP_OPCODE = OPCODE;
-                        SP_FLAG = 1'b1;                     
+                        SP_HIGH_FLAG = 1'b1;                    
                     end       
                     
                     8'b11??0101: // PUSH // ======================== Might need to send to wait state for consistent timing ======================== //
                     begin
-                        PUSH_FLAG = 1'b1;
-                        PUSH_LB = 1'b1;
-                        PUSH_HB = 1'b0;
-                        SP_DECR = 1'b1; 
+                        PUSH_FLAG = 1'b1;                        
                         SP_OPCODE = OPCODE;
-                        SP_FLAG = 1'b1;
+                        SP_LOW_FLAG = 1'b1;
+                        // Decrement before pushing
+                        SP_DECR = 1'b1;
                                                        
                     end             
                     
@@ -999,8 +998,10 @@ module ControlUnit(
                 if (INTR)
                     NS = INTERRUPT;
                 else
-                    if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
-                        NS = SP;
+                    if (SP_LOW_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                        NS = SP_LOW;
+                    else if (SP_HIGH_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                        NS = SP_HIGH;
                     else 
                         NS = FETCH;
                         
@@ -1097,197 +1098,186 @@ module ControlUnit(
             end // IMMED
             
             
-            SP: begin   // Stack Pointer instructions
+            SP_LOW: begin   // Stack Pointer Low Byte state
                 if (PUSH_FLAG) // Pushes the Low Byte and then the High Byte
                     begin
-                    case (SP_OPCODE[5:4])
-                        2'b00: // BC
-                        begin
-                            // Register File does not write on a PUSH
-                            RF_WR = 0;
-                            // SP decrements additionally if pushing the High Byte
-                            SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
-                            // Memory address select set to SP
-                            MEM_ADDR_SEL = MEM_ADDR_SP;
-                            // Memory Data select set to DX output of the Reg File
-                            MEM_DATA_SEL = MEM_DATA_DX;
-                            // High or Low Byte used set by RF_ADRY depeding on HB Flag
-                            RF_ADRX = PUSH_HB ? REG_B : REG_C;
-                            // Write the pushed value to memory &(SP)
-                            MEM_WE = 1'b1;
-                        end
-                        
-                        2'b01: // DE
-                        begin
-                            // Register File does not write on a PUSH
-                            RF_WR = 0;
-                            // SP decrements additionally if pushing the High Byte
-                            SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
-                            // Memory address select set to SP
-                            MEM_ADDR_SEL = MEM_ADDR_SP;
-                            // Memory Data select set to DX output of the Reg File
-                            MEM_DATA_SEL = MEM_DATA_DX;
-                            // High or Low Byte used set by RF_ADRY depeding on HB Flag
-                            RF_ADRX = PUSH_HB ? REG_D : REG_E;
-                            // Write the pushed value to memory &(SP)
-                            MEM_WE = 1'b1;                            
-                        end
-                        
-                        2'b10: // HL
-                        begin
-                            // Register File does not write on a PUSH
-                            RF_WR = 0;
-                            // SP decrements additionally if pushing the High Byte
-                            SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
-                            // Memory address select set to SP
-                            MEM_ADDR_SEL = MEM_ADDR_SP;
-                            // Memory Data select set to DX output of the Reg File
-                            MEM_DATA_SEL = MEM_DATA_DX;
-                            // High or Low Byte used set by RF_ADRY depeding on HB Flag
-                            RF_ADRX = PUSH_HB ? REG_H : REG_L;
-                            // Write the pushed value to memory &(SP)
-                            MEM_WE = 1'b1;
-                        end
-                        
-                        2'b11: // AF 
-                        begin
-                            // Register File does not write on a PUSH
-                            RF_WR = 0;
-                            // SP decrements additionally if pushing the High Byte
-                            SP_DECR = PUSH_HB ? 1'b1 : 1'b0;
-                            // Memory address select set to SP
-                            MEM_ADDR_SEL = MEM_ADDR_SP;
-                            // Memory Data select set to DX output of the Reg File or Flag Register values
-                            MEM_DATA_SEL = PUSH_HB ? MEM_DATA_DX : MEM_DATA_FLAGS;
-                            // RF_ADRX set to REG_A 
-                            RF_ADRX = REG_A;                                        
-                            // Write the pushed value to memory &(SP)
-                            MEM_WE = 1'b1;
-                        end
-                    endcase                                
-                    // Set Low Byte flag low and High Byte flag high to signify that the Low Byte has been pushed                                
-                    // Return to the SP state to push the high byte 
-                    if(PUSH_LB && ~PUSH_HB)
-                        begin
-                            PUSH_HB = 1'b1;
-                            PUSH_LB = 1'b0;
-                            NS = SP;
-                        end                                                                           
-                    // Transition to the fetch state once both bytes are pushed   
-                    else 
-                        begin
-                            // Reset High Byte flag, Low Byte flag, PUSH flag, and Stack Pointer flag
-                            PUSH_FLAG = 1'b0;
-                            POP_HB = 1'b0;
-                            POP_LB = 1'b0;
-                            SP_FLAG = 1'b0;
-                            NS = FETCH;
-                        end
-                        
-                end       
-                        
-                else if (POP_FLAG)  // Pops the High Byte and then the Low Byte
-                     begin
-                    case (SP_OPCODE[5:4])
+                        // Register File does not write on a PUSH
+                        RF_WR = 0;
+                        // The Stack Pointer  is decremented when pushing the Low Byte
+                        SP_DECR = 1'b1; 
+                        // Memory address select set to SP
+                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        // Write the pushed value to memory &(SP)
+                        MEM_WE = 1'b1;
+                        // Low Byte used set by RF_ADRX except for the Flag Register Values
+                        case (SP_OPCODE[5:4])
                             2'b00: // BC
-                            begin
-                                // Reg File select set to memory
-                                RF_WR_SEL = RF_MUX_MEM;
-                                // Register File writes on a POP
-                                RF_WR = 1;
-                                // SP increments if popping the Low Byte
-                                SP_INCR = POP_LB ? 1'b1 : 1'b0;
-                                // Memory address select set to SP
-                                MEM_ADDR_SEL = MEM_ADDR_SP;
-                                // Memory Data select set to DX output of the Reg File
-                                MEM_DATA_SEL = MEM_DATA_DX;
-                                // High or Low Byte used set by RF_ADRX depeding on LB Flag
-                                RF_ADRX = ~POP_LB ? REG_B : REG_C;
-                                // Read the popped value from memory &(SP)
-                                MEM_RE = 1'b1;
+                            begin                                                          
+                                RF_ADRX = REG_C;                                
                             end
                             
                             2'b01: // DE
                             begin
-                                // Reg File select set to memory
-                                RF_WR_SEL = RF_MUX_MEM;
-                                // Register File writes on a POP
-                                RF_WR = 1;
-                                // SP increments if popping the Low Byte
-                                SP_INCR = POP_LB ? 1'b1 : 1'b0;
-                                // Memory address select set to SP
-                                MEM_ADDR_SEL = MEM_ADDR_SP;
-                                // Memory Data select set to DX output of the Reg File
-                                MEM_DATA_SEL = MEM_DATA_DX;
-                                // High or Low Byte used set by RF_ADRX depeding on LB Flag
-                                RF_ADRX = ~POP_LB ? REG_D : REG_E;
-                                // Read the popped value from memory &(SP)
-                                MEM_RE = 1'b1;
+                                RF_ADRX = REG_E;                        
                             end
                             
                             2'b10: // HL
                             begin
-                               // Reg File select set to memory
-                                RF_WR_SEL = RF_MUX_MEM;
-                                // Register File writes on a POP
-                                RF_WR = 1;
-                                // SP increments if popping the Low Byte
-                                SP_INCR = POP_LB ? 1'b1 : 1'b0;
-                                // Memory address select set to SP
-                                MEM_ADDR_SEL = MEM_ADDR_SP;
-                                // Memory Data select set to DX output of the Reg File
-                                MEM_DATA_SEL = MEM_DATA_DX;
-                                // High or Low Byte used set by RF_ADRX depeding on HB Flag
-                                RF_ADRX = ~POP_LB ? REG_H : REG_L;
-                                // Read the popped value from memory &(SP)
-                                MEM_RE = 1'b1;
+                                RF_ADRX = REG_L;
                             end
                             
-                            2'b11: // AF
+                            2'b11: // AF 
                             begin
-                                // Reg File select set to memory
-                                RF_WR_SEL = RF_MUX_MEM;
-                                // Register File writes on a POP if not popping the flag register values
-                                RF_WR = ~POP_LB ? 1'b1: 1'b0;
-                                // Load the popped Low Byte values from the stack into the flag register
-                                C_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
-                                Z_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
-                                N_FLAG_LD = POP_LB ? 1'b1 : 1'b0;
-                                H_FLAG_LD = POP_LB ? 1'b1 : 1'b0;   
-                                // Flag register data select
-                                FLAGS_DATA_SEL = POP_LB ? FLAGS_DATA_MEM : FLAGS_DATA_ALU;
-                                // SP increments if popping the low Byte
-                                SP_INCR = POP_LB ? 1'b1 : 1'b0;
-                                // Memory address select set to SP
-                                MEM_ADDR_SEL = MEM_ADDR_SP;
-                                // Memory Data select set to DX output of the Reg File or Flag Register values
-                                MEM_DATA_SEL = POP_HB ? MEM_DATA_DX : MEM_DATA_FLAGS;
-                                // RF_ADRX set to REG_A 
-                                RF_ADRX = REG_A;                                         
-                                // Read the popped value from memory &(SP)
-                                MEM_RE = 1'b1;
+                                // Memory Data select set to the Flag Register values (Low Byte)
+                                MEM_DATA_SEL = MEM_DATA_FLAGS;
                             end
                         endcase                                
-                        // Set Low Byte flag high and High Byte flag low to signify that the High Byte has been popped
-                        // Return to the SP state to POP the Low Byte  
-                        if(~POP_LB && POP_HB)
-                            begin
-                                POP_HB = 1'b0;
-                                POP_LB = 1'b1;
-                                NS = SP;
-                            end                                                        
-                        // Transition to the fetch state once both bytes are poped    
-                        else 
-                            begin
-                                // Reset High Byte flag, Low Byte flag, POP flag, and Stack Pointer flag
-                                POP_FLAG = 1'b0;
-                                POP_HB = 1'b0;
-                                POP_LB = 1'b0;
-                                SP_FLAG = 1'b0;
-                                NS = FETCH;
+                        // Reset the Stack Pointer Low Byte Flag
+                        SP_LOW_FLAG = 1'b0;
+                        // Transition to the Stack Pointer High Byte state to push the High Byte
+                        NS = SP_HIGH;                                                                                              
+                    end       
+                        
+                else if (POP_FLAG)  // Pops the High Byte and then the Low Byte
+                    begin
+                        // Reg File select set to memory
+                        RF_WR_SEL = RF_MUX_MEM;
+                        // Register File writes on a POP
+                        RF_WR = 1'b1; 
+                        // SP is incremented after popping the Low Byte
+                        SP_INCR = 1'b1;                       
+                        // Memory address select set to SP
+                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        // Read the popped value from memory &(SP)
+                        MEM_RE = 1'b1;
+                        // Low Byte used set by RF_ADRX except for the Flag Register Values
+                        case (SP_OPCODE[5:4])
+                                2'b00: // BC
+                                begin                                                                   
+                                    RF_ADRX = REG_C;                                    
+                                end
+                                
+                                2'b01: // DE
+                                begin                                    
+                                    RF_ADRX = REG_E;
+                                end
+                                
+                                2'b10: // HL
+                                begin
+                                    RF_ADRX = REG_L;
+                                end
+                                
+                                2'b11: // AF
+                                begin
+                                    // Register File does not write when popping the Flag Register values
+                                    RF_WR = 1'b0;                                   
+                                    // Load the popped Low Byte values from the stack into the flag register
+                                    C_FLAG_LD = 1'b1;
+                                    Z_FLAG_LD = 1'b1;
+                                    N_FLAG_LD = 1'b1;
+                                    H_FLAG_LD = 1'b1; 
+                                    // Flag register data select
+                                    FLAGS_DATA_SEL =  FLAGS_DATA_MEM;                                   
+                                    // Memory Data select set to Flag Register values
+                                    MEM_DATA_SEL = MEM_DATA_FLAGS;
+                                end
+                            endcase                                               
+                        // Reset the Stack Pointer Low flag and the POP flag
+                        
+                        SP_LOW_FLAG = 1'b0;
+                        POP_FLAG = 1'b0;
+                        // Transition to the FETCH state once both bytes are popped
+                        NS = FETCH;             
+                end                            
+            end // SP_LOW               
+                
+            SP_HIGH: begin   // Stack Pointer High Byte state
+                if (PUSH_FLAG) // Pushes the Low Byte and then the High Byte
+                    begin
+                        // Register File does not write on a PUSH
+                        RF_WR = 0;
+                        // Memory address select set to SP
+                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        // Write the pushed value to memory &(SP)
+                        MEM_WE = 1'b1;
+                        // High Byte used set by RF_ADRX
+                        case (SP_OPCODE[5:4])
+                            2'b00: // BC
+                            begin                                                          
+                                RF_ADRX = REG_B;                                
                             end
-                        end                            
-                end // SP
+                            
+                            2'b01: // DE
+                            begin
+                                RF_ADRX = REG_D;                        
+                            end
+                            
+                            2'b10: // HL
+                            begin
+                                RF_ADRX = REG_H;
+                            end
+                            
+                            2'b11: // AF 
+                            begin
+                                RF_ADRX = REG_A;
+                            end
+                        endcase                                
+                        // Reset the Stack Pointer High Byte Flag and the PUSH Flag
+                        SP_HIGH_FLAG = 1'b0;
+                        PUSH_FLAG = 1'b0;
+                        // Transition to the FETCH state once both bytes are pushed
+                        NS = FETCH;                                                                                              
+                    end       
+                        
+                else if (POP_FLAG)  // Pops the High Byte and then the Low Byte
+                    begin
+                        // Reg File select set to memory
+                        RF_WR_SEL = RF_MUX_MEM;
+                        // Register File writes on a POP
+                        RF_WR = 1'b1;
+                        // SP is incremented before popping the Low Byte
+                        SP_INCR = 1'b1;
+                        // Memory address select set to SP
+                        MEM_ADDR_SEL = MEM_ADDR_SP;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        // Read the popped value from memory &(SP)
+                        MEM_RE = 1'b1;
+                        // High Byte used set by RF_ADRX
+                        case (SP_OPCODE[5:4])
+                                2'b00: // BC
+                                begin                                                                   
+                                    RF_ADRX = REG_B;                                    
+                                end
+                                
+                                2'b01: // DE
+                                begin                                    
+                                    RF_ADRX = REG_D;
+                                end
+                                
+                                2'b10: // HL
+                                begin
+                                    RF_ADRX = REG_H;
+                                end
+                                
+                                2'b11: // AF
+                                begin
+                                    RF_ADRX = REG_A;
+                                end
+                            endcase                                                
+                        // Reset the Stack Pointer High Byte Flag
+                        SP_HIGH_FLAG = 1'b0;
+                        // Transition to the Stack Pointer Low Byte state to pop the Low Byte
+                        NS = SP_LOW;             
+                end                            
+             end // SP_HIGH
+                
             
             CB_EXEC: //CB prefix opcodes
             begin   

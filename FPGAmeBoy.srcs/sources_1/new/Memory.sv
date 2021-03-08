@@ -43,10 +43,10 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
     mem[ADDR] <= DIN;
     end
     
-    always_ff@(posedge CLK)
+    always_ff@(negedge CLK)
     begin
     if(RE == 1)
-    assign DOUT = mem[ADDR];
+    DOUT <= mem[ADDR];
     end
     
 endmodule

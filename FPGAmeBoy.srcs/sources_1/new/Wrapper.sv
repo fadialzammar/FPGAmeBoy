@@ -125,10 +125,9 @@ module Wrapper(
         .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
-    MUX6to1 RegFile_MUX(
-        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
-        .In3(), .In4(), .In5(),
-         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
+    MUX4to1 RegFile_MUX(
+        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), .In3(),
+        .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     
     RegFile RegFile(

@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1915325fs"></ZoomStartTime>
-      <ZoomEndTime time="2025026fs"></ZoomEndTime>
-      <Cursor1Time time="1970000fs"></Cursor1Time>
+      <ZoomStartTime time="250774fs"></ZoomStartTime>
+      <ZoomEndTime time="371575fs"></ZoomEndTime>
+      <Cursor1Time time="330000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="139"></NameColumnWidth>
       <ValueColumnWidth column_width="72"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="48" />
+   <WVObjectSize size="71" />
    <wvobject fp_name="/CPU_TEST_BENCH/CLK" type="logic">
       <obj_property name="ElementShortName">CLK</obj_property>
       <obj_property name="ObjectShortName">CLK</obj_property>
@@ -223,7 +223,101 @@
       <obj_property name="ObjectShortName">ALU_B_SEL[1:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/IMMED_SEL" type="array">
-      <obj_property name="ElementShortName">IMMED_SEL[3:0]</obj_property>
-      <obj_property name="ObjectShortName">IMMED_SEL[3:0]</obj_property>
+      <obj_property name="ElementShortName">IMMED_SEL[7:0]</obj_property>
+      <obj_property name="ObjectShortName">IMMED_SEL[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/SP_DOUT" type="array">
+      <obj_property name="ElementShortName">SP_DOUT[15:0]</obj_property>
+      <obj_property name="ObjectShortName">SP_DOUT[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/MEM_DIN" type="array">
+      <obj_property name="ElementShortName">MEM_DIN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">MEM_DIN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/MEM_DOUT" type="array">
+      <obj_property name="ElementShortName">MEM_DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">MEM_DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/MEM_ADDR_IN" type="array">
+      <obj_property name="ElementShortName">MEM_ADDR_IN[15:0]</obj_property>
+      <obj_property name="ObjectShortName">MEM_ADDR_IN[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/WE" type="logic">
+      <obj_property name="ElementShortName">WE</obj_property>
+      <obj_property name="ObjectShortName">WE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/RE" type="logic">
+      <obj_property name="ElementShortName">RE</obj_property>
+      <obj_property name="ObjectShortName">RE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/SP_OPCODE" type="array">
+      <obj_property name="ElementShortName">SP_OPCODE[7:0]</obj_property>
+      <obj_property name="ObjectShortName">SP_OPCODE[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/PUSH_FLAG" type="logic">
+      <obj_property name="ElementShortName">PUSH_FLAG</obj_property>
+      <obj_property name="ObjectShortName">PUSH_FLAG</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/PUSH_HB" type="logic">
+      <obj_property name="ElementShortName">PUSH_HB</obj_property>
+      <obj_property name="ObjectShortName">PUSH_HB</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/PUSH_LB" type="logic">
+      <obj_property name="ElementShortName">PUSH_LB</obj_property>
+      <obj_property name="ObjectShortName">PUSH_LB</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/POP_HB" type="logic">
+      <obj_property name="ElementShortName">POP_HB</obj_property>
+      <obj_property name="ObjectShortName">POP_HB</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ControlUnit/POP_LB" type="logic">
+      <obj_property name="ElementShortName">POP_LB</obj_property>
+      <obj_property name="ObjectShortName">POP_LB</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Stack_Pointer/DOUT" type="array">
+      <obj_property name="ElementShortName">DOUT[15:0]</obj_property>
+      <obj_property name="ObjectShortName">DOUT[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Stack_Pointer/RST" type="logic">
+      <obj_property name="ElementShortName">RST</obj_property>
+      <obj_property name="ObjectShortName">RST</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Stack_Pointer/SP_DECR" type="logic">
+      <obj_property name="ElementShortName">SP_DECR</obj_property>
+      <obj_property name="ObjectShortName">SP_DECR</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Stack_Pointer/SP_INCR" type="logic">
+      <obj_property name="ElementShortName">SP_INCR</obj_property>
+      <obj_property name="ObjectShortName">SP_INCR</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Stack_Pointer/SP_LD" type="logic">
+      <obj_property name="ElementShortName">SP_LD</obj_property>
+      <obj_property name="ObjectShortName">SP_LD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[65533]" type="array">
+      <obj_property name="ElementShortName">[65533][7:0]</obj_property>
+      <obj_property name="ObjectShortName">[65533][7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[65532]" type="array">
+      <obj_property name="ElementShortName">[65532][7:0]</obj_property>
+      <obj_property name="ObjectShortName">[65532][7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/DOUT" type="array">
+      <obj_property name="ElementShortName">DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/RF_DIN_SEL" type="array">
+      <obj_property name="ElementShortName">RF_DIN_SEL[2:0]</obj_property>
+      <obj_property name="ObjectShortName">RF_DIN_SEL[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/RF_WR" type="logic">
+      <obj_property name="ElementShortName">RF_WR</obj_property>
+      <obj_property name="ObjectShortName">RF_WR</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/RegFile_MUX/Sel" type="array">
+      <obj_property name="ElementShortName">Sel[1:0]</obj_property>
+      <obj_property name="ObjectShortName">Sel[1:0]</obj_property>
    </wvobject>
 </wave_config>
