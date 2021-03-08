@@ -113,7 +113,6 @@ module ControlUnit(
     localparam SBC_IMMED   = 4'b0101;
     localparam XOR_IMMED   = 4'b0110;
     localparam CP_IMMED    = 4'b0111;
-    // localparam LD_IMMEED   = 4'b1000;
     
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_PTR, SP, IMMED} STATE;
 
@@ -460,7 +459,6 @@ module ControlUnit(
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
                                 MEM_ADDR_SEL =  MEM_ADDR_DY;
-                                //hold_exec = 1;
                             end
                             if (mcycle == 1) begin
                                 RF_WR = 1;
@@ -474,7 +472,6 @@ module ControlUnit(
                             RF_WR_SEL = RF_MUX_DY;
                             RF_ADRX = OPCODE[5:3];  // copies from Y into X
                             RF_ADRY = OPCODE[2:0];
-                            // SCR_ADDR_SEL = 0;
                         end
                     end
 
