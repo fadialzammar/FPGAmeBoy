@@ -29,8 +29,9 @@ module ControlUnit(
         output logic [2:0] RF_WR_SEL,
         output logic [4:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,                     // ALU
-        output logic ALU_OPX_SEL,
-        output logic [1:0] ALU_OPY_SEL,
+        output logic [1:0] ALU_16_SEL,
+        output logic ALU_OPX_SEL, ALU_16_A_SEL,
+        output logic [1:0] ALU_OPY_SEL, ALU_16_B_SEL,
         output logic MEM_WE, MEM_RE,                    // memory
         output logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
@@ -52,6 +53,7 @@ module ControlUnit(
     parameter RF_MUX_IN = 3;    // external input
     parameter RF_MUX_IMM = 4;   // immediate value from instruction
     parameter RF_MUX_DY = 5;    // DY output of reg file
+    parameter RF_MUX_ALU_16 = 6;// ALU 16 output
 
     parameter MEM_ADDR_DY = 0;      // DY output of reg file
     parameter MEM_ADDR_ADRY = 1;    // ADRY of reg file
@@ -105,6 +107,9 @@ module ControlUnit(
     localparam SET_ALU  = 5'b10111;
     localparam RES_ALU  = 5'b11000;
     
+    localparam ADD_16_ALU = 2'b00;
+    localparam INC_16_ALU = 2'b01;
+    localparam DEC_16_ALU = 2'b10;
     // Immediate Value Defines
     localparam ADD_IMMED   = 4'b0000;
     localparam SUB_IMMED   = 4'b0001;
@@ -115,7 +120,7 @@ module ControlUnit(
     localparam XOR_IMMED   = 4'b0110;
     localparam CP_IMMED    = 4'b0111;
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP, IMMED} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP, IMMED, ALU16} STATE;
 
     STATE NS, PS = INIT;
     
@@ -135,6 +140,8 @@ module ControlUnit(
      logic PUSH_FLAG = 1'b0;
      logic PUSH_LB = 1'b0;
      logic PUSH_HB = 1'b0;
+     // FLag for 16 bit ALU state
+     logic ALU_16=1'b0;
      
      // Store ALU function for HL States
      logic [4:0] HL_ALU_FUN = 5'b00000;
@@ -161,6 +168,7 @@ module ControlUnit(
         SP_LD=0; SP_INCR=0; SP_DECR=0;
         MEM_WE=0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
         ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
+        ALU_16_A_SEL=0; ALU_16_B_SEL=0; ALU_16_SEL=0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
@@ -924,11 +932,137 @@ module ControlUnit(
                         CB_FLAG = 1'b1;
                     end
                     
+                    //16 bit ALU
+                    8'b00??0011: // INC BC, DE, HL, SP
+                    begin
+                        // ALU A input mux select                                
+                        ALU_16_A_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_16_B_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_16_SEL = INC_16_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU_16;                                
+                        // Write operation back into register ??
+                        //RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        
+                        case (OPCODE[5:4])
+                            2'b00: // INC BC
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_B;
+                                RF_ADRY = REG_C;
+                            end
+                            
+                             2'b01: // INC DE
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_D;
+                                RF_ADRY = REG_E;
+                            end
+                            
+                             2'b10: // INC HL
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_H;
+                                RF_ADRY = REG_L;
+                            end
+                            
+                             2'b11: // INC SPam ??? do i need this
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_A;
+                            end
+                        endcase
+                    end
+                    
+                    8'b00??1011: // DEC BC, DE, HL, SP
+                    begin
+                        // ALU A input mux select                                
+                        ALU_16_A_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_16_B_SEL = 2'b00;                                
+                        // ALU Operation Select
+                        ALU_16_SEL = DEC_16_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU_16;                                
+                        // Write operation back into register ??
+                       // RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        case (OPCODE[5:4])
+                            2'b00: // DEC BC
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_B;
+                                RF_ADRY = REG_C;
+                            end
+                            
+                             2'b01: // DEC DE
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_D;
+                                RF_ADRY = REG_E;
+                            end
+                            
+                             2'b10: // DEC HL
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_H;
+                                RF_ADRY = REG_L;
+                            end
+                            
+                             2'b11: // DEC SPam ??? do i need this
+                            begin
+                                // Register File Addresses
+                                RF_ADRX = REG_A;
+                            end
+                        endcase
+                    end
+                    
+                    8'b00??1001: // ADD HL to BC, DE, HL, and SP
+                    begin
+                        // ALU A input mux select                                
+                        ALU_16_A_SEL = 1'b0;
+                        // ALU B input mux select
+                        ALU_16_B_SEL = 2'b01;                                
+                        // ALU Operation Select
+                        ALU_16_SEL = ADD_16_ALU;                                
+                        // Input to the Reg File is the ALU output
+                        RF_WR_SEL = RF_MUX_ALU_16;                                
+                        // Write operation back into register ??
+                       // RF_WR = 1;  
+                        // Flags
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                        // Register File Addresses
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        // Flag register data select
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                        ALU_16=1'b1;
+                        
+                    end
+                    
                     default: begin
                         // literally crashes on a real game boy
                     end
 
-
+                
                 endcase // OPCODE
 
                 if (INTR == 1)
@@ -936,16 +1070,67 @@ module ControlUnit(
                     
                 if (INTR)
                     NS = INTERRUPT;
+                    
+                                   
                 else
                     if(SP_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
                         NS = SP;
                     else if(HL_FLAG) // Transition to HL state
                         NS = HL_FETCH;
+                    else if (ALU_16)
+                        NS= ALU16;  
                     else 
                         NS = FETCH;
                         
                 mcycle++;
             end // EXEC
+            
+            ALU16: begin // 16 bit ALU
+                ALU_16_B_SEL = 2'b00; 
+                ALU_16_SEL = ADD_16_ALU;                                
+                // Input to the Reg File is the ALU output
+                RF_WR_SEL = RF_MUX_ALU_16;                                
+                // Write operation back into register ??
+               // RF_WR = 1;  
+                // Flags
+                C_FLAG_LD = 1;
+                Z_FLAG_LD = 1;
+                N_FLAG_LD = 1;
+                H_FLAG_LD = 1;
+                
+                // Flag register data select
+                FLAGS_DATA_SEL = FLAGS_DATA_ALU;
+                case (OPCODE[5:4]) inside
+                    2'b00: // ADD BC
+                    begin 
+                        // Register File Addresses
+                        RF_ADRX = REG_B;
+                        RF_ADRY = REG_C;
+                    end
+                    
+                     2'b01: // ADD DE
+                    begin
+                        // Register File Addresses
+                        RF_ADRX = REG_D;
+                        RF_ADRY = REG_E;
+                    end
+                    
+                     2'b10: // ADD HL
+                    begin
+                        // Register File Addresses
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                    end
+                    
+                     2'b11: // ADD SPam ??? do i need this
+                    begin
+                        // Register File Addresses
+                        RF_ADRX = REG_A;
+                    end
+                endcase
+                ALU_16=1'b0;
+                NS= FETCH;
+            end
             
             IMMED: begin  // Immediate Value Instrutions
                 // Same for each case

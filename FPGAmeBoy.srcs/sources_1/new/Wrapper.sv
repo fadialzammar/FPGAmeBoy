@@ -34,12 +34,15 @@ module Wrapper(
     
     // ALU Signals
     logic [4:0] ALU_FUN;
+    logic [1:0] ALU_16_FUN;
     logic [7:0] ALU_A,ALU_B;
     logic [3:0] ALU_FLAGS_IN;
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
     logic [1:0] ALU_B_SEL;
-    
+    // ALU 16 bit signals
+    logic [15:0] ALU_16_A,ALU_16_B,ALU_16_OUT;
+    logic [1:0] ALU_16_B_SEL;
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
@@ -97,7 +100,7 @@ module Wrapper(
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic MEM_WE, MEM_RE;            // memory
     logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL;
-      
+    
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -113,9 +116,17 @@ module Wrapper(
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
+    MUX4to1#(.DATA_SIZE(16)) ALU_16_B_MUX(
+        .In0(ALU_16_OUT), .In1(16'h0000), .In2(), .In3(),
+        .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
+    );
     ALU ALU(
         .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
+    );
+    ALU_16 ALU_16(
+        .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(ALU_16_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
     
     MUX2to1 Flag_Reg_MUX(
@@ -133,7 +144,7 @@ module Wrapper(
     
     MUX6to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
-        .In3(), .In4(), .In5(),
+        .In3(ALU_16_OUT), .In4(), .In5(),
          .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     
@@ -192,7 +203,9 @@ module Wrapper(
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),
         .ALU_SEL(ALU_FUN),     // ALU
+        .ALU_16_SEL(ALU_16_FUN),
         .ALU_OPY_SEL(ALU_B_SEL),
+        .ALU_16_B_SEL(ALU_16_B_SEL),
         .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
         .SP_LD(SP_LD), .SP_INCR(SP_INCR), .SP_DECR(SP_DECR),   // stack pointer

@@ -49,6 +49,8 @@ initial begin
     mem[4] = 8'h02;
     mem[5] = 8'h05;
     mem[7] = 8'h2D; // REG A
+    mem[8] = 8'h11; // REG H
+    mem[9] = 8'h22; // REG L
 end
 
 //create synchronous write to port X
