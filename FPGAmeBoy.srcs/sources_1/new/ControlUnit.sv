@@ -32,8 +32,11 @@ module ControlUnit(
         output logic ALU_OPX_SEL,
         output logic [1:0] ALU_OPY_SEL,
         output logic MEM_WE, MEM_RE,                    // memory
-        output logic [1:0] MEM_ADDR_SEL, MEM_DATA_SEL,
+        output logic [1:0] MEM_ADDR_SEL, 
+        output logic [2:0] MEM_DATA_SEL,
+        output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
+        output logic SP_DIN_SEL,
         output logic C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, // C Flag control
         output logic Z_FLAG_LD, Z_FLAG_SET, Z_FLAG_CLR, // Z Flag control
         output logic N_FLAG_LD, N_FLAG_SET, N_FLAG_CLR, // N Flag control
@@ -52,14 +55,19 @@ module ControlUnit(
     parameter RF_MUX_IMM = 4;   // immediate value from instruction
     parameter RF_MUX_DY = 5;    // DY output of reg file
 
-    parameter MEM_ADDR_DY = 0;      // DY output of reg file
-    parameter MEM_ADDR_ADRY = 1;    // ADRY of reg file
-    parameter MEM_ADDR_SP = 2;      // stack pointer output
-    parameter MEM_ADDR_SP_SUB = 3;  // stack pointer output minus 1?
+    parameter MEM_ADDR_SP = 0;       // stack pointer output
+    parameter MEM_ADDR_IMMED = 1;    // Immediate Value address input
+    parameter MEM_ADDR_IMMED_1 = 2;  // Immediate Value address input + 1  
+    parameter MEM_ADDR_16_RF = 3;    // 16 bit output of the Reg File
     
     parameter MEM_DATA_DX = 0;      // DX output of the Reg File
     parameter MEM_DATA_PC = 1;      // PC value output 
     parameter MEM_DATA_FLAGS = 2;   // Flags Register values
+    parameter MEM_DATA_SP_LOW = 3;  // Stack Pointer Low Byte output
+    parameter MEM_DATA_SP_HIGH = 4; // Stack Pointer High Byte output
+    
+    parameter SP_DIN_RF_16 = 0;     // 16 bit output of Reg File 
+    parameter SP_DIN_MEM = 1;       // Memory output
     
     parameter FLAGS_DATA_ALU = 0;   // ALU Flags Output
     parameter FLAGS_DATA_MEM = 1;   // Memory Flags Output 
@@ -119,17 +127,15 @@ module ControlUnit(
      logic CB_FLAG = 1'b0;
      // Flag for Immediate value usage
      logic IMMED_FLAG = 1'b0;
+     // Flag for Immediate Low Byte Load
+     logic LOW_IMMED = 1'b0;
+     //Used for saving the last immediate address values
+     logic [7:0] LAST_IMMED_ADDR_LOW, LAST_IMMED_ADDR_HIGH;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
-     logic POP_LB = 1'b0;
-     logic POP_HB = 1'b0;
-     logic PUSH_FLAG = 1'b0;
-     logic PUSH_LB = 1'b0;
-     logic PUSH_HB = 1'b0;
-     
+     logic PUSH_FLAG = 1'b0;       
      // Immediate Value Select 
-     logic [7:0] IMMED_SEL = 4'b0000;     
-     
+     logic [7:0] IMMED_SEL = 4'b0000;       
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
@@ -146,8 +152,9 @@ module ControlUnit(
         I_SET = 0; I_CLR =0; RST=0; IO_STRB = 0;
         PC_LD=0; PC_INC=0; PC_MUX_SEL=0;
         RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;  RF_WR_SEL=0;
-        SP_LD=0; SP_INCR=0; SP_DECR=0;
+        SP_LD=0; SP_INCR=0; SP_DECR=0; SP_DIN_SEL = 0;
         MEM_WE=0; MEM_RE = 0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
+        IMMED_ADDR_LOW = 0; IMMED_ADDR_HIGH = 0;
         ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
@@ -167,7 +174,9 @@ module ControlUnit(
                 if (CB_FLAG == 1)
                     NS = CB_EXEC;
                 else if (IMMED_FLAG == 1)
-                    NS = IMMED;
+                    begin
+                        NS = IMMED;
+                    end               
                 else
                     NS = EXEC;
             end
@@ -191,6 +200,16 @@ module ControlUnit(
                         N_FLAG_LD = 0;
                         H_FLAG_LD = 0;
                        
+                    end
+                    
+                    // ============== Very Whack ============== //
+                    // Load Stack Pointer Value into 16 bit immediate address location
+                    8'b00001000: // LD (a16), SP
+                    begin                               
+                        // Set the Immediate flag high to transition to the Immediate state after the next fetch
+                        IMMED_FLAG = 1'b1;                        
+                        // Set the Immediate Select to the OPCODE
+                        IMMED_SEL = OPCODE;
                     end
                     
                     //
@@ -569,7 +588,7 @@ module ControlUnit(
                             if (mcycle == 0) begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             if (mcycle == 1) begin
                                 RF_WR = 1;
@@ -642,7 +661,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -684,7 +703,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -726,7 +745,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -768,7 +787,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -853,7 +872,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -896,7 +915,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -938,7 +957,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -988,10 +1007,23 @@ module ControlUnit(
                         CB_FLAG = 1'b1;
                     end
                     
+                    // =========== Only takes 1 cycle instead of 2 ============ //
+                    8'b11111001: // LD SP, HL
+                    begin                               
+                        // Does not write operation back into Reg File
+                        RF_WR = 1'b0;                                                      
+                        // Register File Addresses
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;                        
+                        // Stack Pointer Data Select set to the 16-bit Reg File Output
+                        SP_DIN_SEL = SP_DIN_RF_16;
+                        // Load the HL values into the Sack Pointer
+                        SP_LD = 1'b1;
+                    end
+                    
                     default: begin
                         // literally crashes on a real game boy
                     end
-
 
                 endcase // OPCODE
                     
@@ -1009,7 +1041,7 @@ module ControlUnit(
             end // EXEC
             
             IMMED: begin  // Immediate Value Instrutions
-                // Same for each case
+                // Same for each ALU case
                 // ALU A input mux select                                
                 ALU_OPX_SEL = 1'b0;
                 // ALU B input mux select
@@ -1029,7 +1061,25 @@ module ControlUnit(
                 RF_ADRX = REG_A;
                 
                 case(IMMED_SEL) inside
-                     
+                    8'b00001000: // LD (a16), SP
+                    begin
+                        // Reg File does not write
+                        RF_WR = 0; 
+                        //HIGH_IMMED = 
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
+                        // Saves the new Immediate Value Address Low Byte for writing
+                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
+                        // Saves the new Immediate Value Address High Byte for writing
+                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
+                        // Set the Stack Pointer Low Flag to Write the Low byte of the Stack Pointer Data
+                        SP_LOW_FLAG = ~LOW_IMMED ? 1'b1 : 1'b0;
+                    end
+                    
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values
                     begin 
                         case(IMMED_SEL[5:4])
@@ -1091,10 +1141,13 @@ module ControlUnit(
                         endcase               
                     end                                     
                 endcase
-                // Reset Immediate Flag and Immediate select and transition back to the fetch state
-                IMMED_FLAG = 1'b0;
-                //IMMED_SEL = 4'b0000;
-                NS = FETCH;
+                // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
+                IMMED_FLAG = IMMED_SEL == 8'b00001000 && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
+                // Transition to the SP_LOW state if the Stack Pointer Low Flag is High 
+                if (SP_LOW_FLAG)
+                    NS = SP_LOW;
+                else
+                    NS = FETCH;
             end // IMMED
             
             
@@ -1192,7 +1245,26 @@ module ControlUnit(
                         POP_FLAG = 1'b0;
                         // Transition to the FETCH state once both bytes are popped
                         NS = FETCH;             
-                end                            
+                end
+                // LD (a16), SP ( Write Low Byte)
+                else                
+                    begin
+                        // Set the Immediate address values to the proper outouts
+                        IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;
+                        IMMED_ADDR_HIGH = LAST_IMMED_ADDR_HIGH;
+                        // Memory address select set to IMMED
+                        MEM_ADDR_SEL = MEM_ADDR_IMMED;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_SP_LOW;
+                        // Read the popped value from memory &(SP)
+                        MEM_WE = 1'b1;
+                        // Reset the Stack Pointer Low Byte Flag
+                        SP_LOW_FLAG = 1'b0;
+                        // Reset the Immediate Flag
+                        IMMED_FLAG =1'b0;
+                        // Transition to the SP_HIGH state to write the Higj byte of the Stack Pointer
+                        NS = SP_HIGH;
+                    end                            
             end // SP_LOW               
                 
             SP_HIGH: begin   // Stack Pointer High Byte state
@@ -1275,7 +1347,26 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b0;
                         // Transition to the Stack Pointer Low Byte state to pop the Low Byte
                         NS = SP_LOW;             
-                end                            
+                end                
+                // LD (a16), SP ( Write High Byte)
+                else                
+                    begin
+                        // Set the Immediate address values to the proper outouts
+                        IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;
+                        IMMED_ADDR_HIGH = LAST_IMMED_ADDR_HIGH;
+                        // Memory address select set to IMMED
+                        MEM_ADDR_SEL = MEM_ADDR_IMMED_1;
+                        // Memory Data select set to DX output of the Reg File
+                        MEM_DATA_SEL = MEM_DATA_SP_HIGH;
+                        // Read the popped value from memory &(SP)
+                        MEM_WE = 1'b1;
+                        // Reset the Stack Pointer High Byte Flag
+                        SP_HIGH_FLAG = 1'b0;
+                        // Reset the Immediate Flag
+                        IMMED_FLAG =1'b0;
+                        // Transition to the SP_HIGH state to write the Higj byte of the Stack Pointer
+                        NS = FETCH;
+                    end                                     
              end // SP_HIGH
                 
             
@@ -1314,7 +1405,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1357,7 +1448,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1400,7 +1491,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1443,7 +1534,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1486,7 +1577,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1529,7 +1620,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1570,7 +1661,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
@@ -1613,7 +1704,7 @@ module ControlUnit(
                             begin
                                 RF_WR = 0;
                                 RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
+                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
                             end
                             
                             if (mcycle == 1) 
