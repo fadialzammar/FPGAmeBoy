@@ -45,7 +45,7 @@ module Wrapper(
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
     logic RF_WR;
     logic [2:0] RF_DIN_SEL;
-    // 16 but output from the Reg File
+    // 16 bit output from the Reg File
     logic [15:0] RF_16_OUT;
     assign RF_16_OUT = {RF_DX_OUT, RF_DY_OUT};
 
@@ -97,17 +97,16 @@ module Wrapper(
     logic [1:0] MEM_ADDR_SEL;
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
-    //logic OPCODE_LOW_BYTE, OPCODE_HIGH_BYTE;
-      
+    logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
+
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
-//    logic [7:0] IMMED_ADDR_LOW = 8'h00;
-//    logic [7:0] IMMED_ADDR_HIGH = 8'h00;
-//    // Assign the High or Low Byte equal to the OPCODE (immediate value) if the corresponding control signal is high
-//    assign IMMED_ADDR_LOW = OPCODE_LOW_BYTE ? OPCODE : IMMED_ADDR_LOW;
-//    assign IMMED_ADDR_HIGH = OPCODE_HIGH_BYTE ? OPCODE : IMMED_ADDR_HIGH;
     // Concatenate the High and Low Bytes of the Immediate Address Values
     assign IMMED_ADDR = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
     assign IMMED_ADDR_1 = IMMED_ADDR + 1;
+    
+    logic [15:0] IMMED_DATA_16;
+    // Concatenate the High and Low Bytes of the Immediate Data Values
+    assign IMMED_DATA_16 = {IMMED_DATA_HIGH,IMMED_DATA_LOW};
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -141,8 +140,8 @@ module Wrapper(
         .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
-    MUX4to1 RegFile_MUX(
-        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), .In3(),
+    MUX6to1 RegFile_MUX(
+        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(IMMED_DATA_LOW), .In5(IMMED_DATA_HIGH),
         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     
@@ -159,7 +158,7 @@ module Wrapper(
     );
 
     MUX2to1#(.DATA_SIZE(16)) SP_MUX(
-        .In0(RF_16_OUT), .In1({8'h00,MEM_DOUT}),
+        .In0(RF_16_OUT), .In1(IMMED_DATA_16),
         .Sel(SP_DIN_SEL), .Out(SP_DIN)
     );
 
@@ -210,6 +209,7 @@ module Wrapper(
         .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
         .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH),
+        .IMMED_DATA_LOW(IMMED_DATA_LOW), .IMMED_DATA_HIGH(IMMED_DATA_HIGH),
         .SP_LD(SP_LD), .SP_INCR(SP_INCR), .SP_DECR(SP_DECR), .SP_DIN_SEL(SP_DIN_SEL), // stack pointer
         .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), // Flags 
         .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), // Z Flag control

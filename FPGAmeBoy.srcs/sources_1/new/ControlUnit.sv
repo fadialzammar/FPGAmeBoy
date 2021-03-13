@@ -34,7 +34,8 @@ module ControlUnit(
         output logic MEM_WE, MEM_RE,                    // memory
         output logic [1:0] MEM_ADDR_SEL, 
         output logic [2:0] MEM_DATA_SEL,
-        output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,
+        output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
+        output logic [7:0] IMMED_DATA_LOW,  IMMED_DATA_HIGH,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
         output logic SP_DIN_SEL,
         output logic C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, // C Flag control
@@ -48,33 +49,33 @@ module ControlUnit(
     );
     
 
-    parameter RF_MUX_ALU = 0;   // ALU output
-    parameter RF_MUX_MEM = 1;   // scratch RAM output
-    parameter RF_MUX_SP = 2;    // stack pointer output
-    parameter RF_MUX_IN = 3;    // external input
-    parameter RF_MUX_IMM = 4;   // immediate value from instruction
-    parameter RF_MUX_DY = 5;    // DY output of reg file
+    parameter RF_MUX_ALU        = 0; // ALU output
+    parameter RF_MUX_MEM        = 1; // Memory output
+    parameter RF_MUX_SP_LOW     = 2; // Stack Pointer Low Byte
+    parameter RF_MUX_SP_HIGH    = 3; // Stack Pointer High Byte
+    parameter RF_MUX_IMMED_LOW  = 4; // Immediate value Low Byte
+    parameter RF_MUX_IMMED_HIGH = 5; // Immediate value High Byte
 
-    parameter MEM_ADDR_SP = 0;       // stack pointer output
-    parameter MEM_ADDR_IMMED = 1;    // Immediate Value address input
-    parameter MEM_ADDR_IMMED_1 = 2;  // Immediate Value address input + 1  
-    parameter MEM_ADDR_16_RF = 3;    // 16 bit output of the Reg File
+    parameter MEM_ADDR_SP      = 0; // stack pointer output
+    parameter MEM_ADDR_IMMED   = 1; // Immediate Value address input
+    parameter MEM_ADDR_IMMED_1 = 2; // Immediate Value address input + 1  
+    parameter MEM_ADDR_16_RF   = 3; // 16 bit output of the Reg File
     
-    parameter MEM_DATA_DX = 0;      // DX output of the Reg File
-    parameter MEM_DATA_PC = 1;      // PC value output 
-    parameter MEM_DATA_FLAGS = 2;   // Flags Register values
-    parameter MEM_DATA_SP_LOW = 3;  // Stack Pointer Low Byte output
+    parameter MEM_DATA_DX      = 0; // DX output of the Reg File
+    parameter MEM_DATA_PC      = 1; // PC value output 
+    parameter MEM_DATA_FLAGS   = 2; // Flags Register values
+    parameter MEM_DATA_SP_LOW  = 3; // Stack Pointer Low Byte output
     parameter MEM_DATA_SP_HIGH = 4; // Stack Pointer High Byte output
     
-    parameter SP_DIN_RF_16 = 0;     // 16 bit output of Reg File 
-    parameter SP_DIN_MEM = 1;       // Memory output
+    parameter SP_DIN_RF_16 = 0; // 16 bit output of Reg File 
+    parameter SP_DIN_IMMED = 1; // Immediate value input
     
-    parameter FLAGS_DATA_ALU = 0;   // ALU Flags Output
-    parameter FLAGS_DATA_MEM = 1;   // Memory Flags Output 
+    parameter FLAGS_DATA_ALU = 0; // ALU Flags Output
+    parameter FLAGS_DATA_MEM = 1;  // Memory Flags Output 
     
-    parameter ALU_B_MUX_DY = 0;     // DY output of the Reg File
-    parameter ALU_B_MUX_MEM = 1;    // Memory output
-    parameter ALU_B_MUX_PROG = 2;   // PROGOM output
+    parameter ALU_B_MUX_DY   = 0; // DY output of the Reg File
+    parameter ALU_B_MUX_MEM  = 1; // Memory output
+    parameter ALU_B_MUX_PROG = 2; // PROGOM output
 
     parameter REG_B = 3'b000;
     parameter REG_C = 3'b001;
@@ -127,10 +128,13 @@ module ControlUnit(
      logic CB_FLAG = 1'b0;
      // Flag for Immediate value usage
      logic IMMED_FLAG = 1'b0;
+     logic IMMED_16_FLAG = 1'b0;
      // Flag for Immediate Low Byte Load
      logic LOW_IMMED = 1'b0;
      //Used for saving the last immediate address values
      logic [7:0] LAST_IMMED_ADDR_LOW, LAST_IMMED_ADDR_HIGH;
+     //Used for saving the last immediate address values
+     logic [7:0] LAST_IMMED_DATA_LOW, LAST_IMMED_DATA_HIGH;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
      logic PUSH_FLAG = 1'b0;       
@@ -155,6 +159,7 @@ module ControlUnit(
         SP_LD=0; SP_INCR=0; SP_DECR=0; SP_DIN_SEL = 0;
         MEM_WE=0; MEM_RE = 0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
         IMMED_ADDR_LOW = 0; IMMED_ADDR_HIGH = 0;
+        IMMED_DATA_LOW = 0; IMMED_DATA_LOW = 0;
         ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
@@ -202,7 +207,7 @@ module ControlUnit(
                        
                     end
                     
-                    // ============== Very Whack ============== //
+                    // ============== Takes 8 cycles ============== //
                     // Load Stack Pointer Value into 16 bit immediate address location
                     8'b00001000: // LD (a16), SP
                     begin                               
@@ -210,6 +215,15 @@ module ControlUnit(
                         IMMED_FLAG = 1'b1;                        
                         // Set the Immediate Select to the OPCODE
                         IMMED_SEL = OPCODE;
+                    end
+                    
+                    // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
+                    8'b00??0001:
+                    begin
+                        // Set the Immediate Select to the OPCODE
+                        IMMED_SEL = OPCODE; 
+                        // Set the Immediate flag high to transition to the Immediate state after the next fetch
+                        IMMED_FLAG = 1'b1;      
                     end
                     
                     //
@@ -564,7 +578,7 @@ module ControlUnit(
                         end
                         else begin  // normal LD r8, n8
                             RF_WR = 1;
-                            RF_WR_SEL = RF_MUX_IMM;
+                            RF_WR_SEL = RF_MUX_IMMED_LOW;
                             RF_ADRX = OPCODE[5:3];
                             // SCR_ADDR_SEL = 1;
                         end
@@ -599,7 +613,7 @@ module ControlUnit(
 
                         else begin  // normal LD r8, r8
                             RF_WR = 1;
-                            RF_WR_SEL = RF_MUX_DY;
+                            //RF_WR_SEL = RF_MUX_DY;
                             RF_ADRX = OPCODE[5:3];  // copies from Y into X
                             RF_ADRY = OPCODE[2:0];
                             // SCR_ADDR_SEL = 0;
@@ -1072,7 +1086,7 @@ module ControlUnit(
                         IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
                         // Saves the new Immediate Value Address Low Byte for writing
                         LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
-                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
                         IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
                         // Saves the new Immediate Value Address High Byte for writing
                         LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
@@ -1080,6 +1094,86 @@ module ControlUnit(
                         SP_LOW_FLAG = ~LOW_IMMED ? 1'b1 : 1'b0;
                     end
                     
+                    8'b00??0001: // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
+                    begin
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                        case(IMMED_SEL[5:4])                            
+                            2'b00: // LD BC, d16
+                            begin
+                                // Reg File writes either the High or Low Byte
+                                RF_WR = 1'b1; 
+                                // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                                // Saves the new Immediate Value Data Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                                // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                                // Saves the new Immediate Value Data High Byte for writing
+                                LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                                // Write the High Byte to B and the Low Byte to C
+                                RF_ADRX = ~LOW_IMMED ? REG_B : REG_C;
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH;
+                            end
+                            
+                            2'b01: // LD DE, d16
+                            begin
+                                // Reg File writes either the High or Low Byte
+                                RF_WR = 1'b1; 
+                                // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                                // Saves the new Immediate Value Data Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                                // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                                // Saves the new Immediate Value Data High Byte for writing
+                                LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                                // Write the High Byte to D and the Low Byte to E
+                                RF_ADRX = ~LOW_IMMED ? REG_D : REG_E;
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH; 
+                            end
+                            
+                            2'b10: // LD HL, d16
+                            begin
+                                // Reg File writes either the High or Low Byte
+                                RF_WR = 1'b1; 
+                                // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                                // Saves the new Immediate Value Data Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                                // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                                // Saves the new Immediate Value Data High Byte for writing
+                                LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                                // Write the High Byte to H and the Low Byte to L
+                                RF_ADRX = ~LOW_IMMED ? REG_H : REG_L;
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH; 
+                            end  
+                              
+                            2'b11: // LD SP, d16
+                            begin
+                                // Reg File does not write
+                                RF_WR = 1'b0; 
+                                // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                                // Saves the new Immediate Value Data Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                                // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                                // Saves the new Immediate Value Data High Byte for writing
+                                LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                SP_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
+                                // Set the Stack Pointer
+                                SP_DIN_SEL = SP_DIN_IMMED;
+                            end                        
+                        endcase
+                    end
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values
                     begin 
                         case(IMMED_SEL[5:4])
@@ -1142,7 +1236,7 @@ module ControlUnit(
                     end                                     
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
-                IMMED_FLAG = IMMED_SEL == 8'b00001000 && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
+                IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
                 // Transition to the SP_LOW state if the Stack Pointer Low Flag is High 
                 if (SP_LOW_FLAG)
                     NS = SP_LOW;
