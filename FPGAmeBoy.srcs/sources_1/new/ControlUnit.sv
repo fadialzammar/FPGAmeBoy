@@ -27,7 +27,7 @@ module ControlUnit(
         output logic [1:0] PC_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
-        output logic [4:0] RF_ADRX, RF_ADRY,
+        output logic [2:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,                     // ALU
         output logic [1:0] ALU_16_SEL,
         output logic ALU_OPX_SEL, ALU_16_A_SEL,
@@ -161,7 +161,7 @@ module ControlUnit(
      logic POP_FLAG = 1'b0;
      logic PUSH_FLAG = 1'b0;       
      // Immediate Value Select 
-     logic [7:0] IMMED_SEL = 8'b0000;       
+     logic [7:0] IMMED_SEL = 8'h00;       
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
@@ -601,10 +601,9 @@ module ControlUnit(
                             
                         end
                         else begin  // normal LD r8, n8
-                            RF_WR = 1;
-                            RF_WR_SEL = RF_MUX_IMMED_LOW;
-                            RF_ADRX = OPCODE[5:3];
-                            // SCR_ADDR_SEL = 1;
+                            // RF_WR = 0;
+                            IMMED_FLAG = 1;
+                            IMMED_SEL = OPCODE;
                         end
                     end
 
@@ -640,7 +639,6 @@ module ControlUnit(
                             //RF_WR_SEL = RF_MUX_DY;
                             RF_ADRX = OPCODE[5:3];  // copies from Y into X
                             RF_ADRY = OPCODE[2:0];
-                            // SCR_ADDR_SEL = 0;
                         end
                     end
 
@@ -1224,6 +1222,45 @@ module ControlUnit(
                     default: begin
                         // literally crashes on a real game boy
                     end
+                    8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
+                        PC_LD = 1; 
+                    end
+                    
+                    8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
+                        if(Z == 0) PC_LD = 1;                        
+                    end
+                    8'b11001010: begin //JP if Z flag is set (opcode CA)
+                        if(Z == 1) PC_LD = 1;
+                    end
+                    8'b11010010: begin //JP if C flag is reset (opcode D2)
+                        if(C == 1) PC_LD = 1;
+                    end
+                    8'b11011010: begin // JP if C flat is set (opcode DA)
+                        if(C == 0) PC_LD = 1;
+                    end
+                    8'b11101001: begin //JP to address contained in HL (opcode E9)
+                    end
+                    8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
+                    end
+                    8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
+                    end
+                    8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
+                    end
+                    8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
+                    end
+                    8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
+                    end
+                    8'b11001101: begin //CALL : push addr of next instruction onto stack and then jump to address nn (opcode CD)
+                    end
+                    8'b11000100: begin //CALL cc, nn : call address n if Z flag is reset (opcode C4)
+                    end
+                    8'b11001100: begin //CALL cc, nn : call address n if Z flag is set (opcode CC)
+                    end
+                    8'b11010100: begin //CALL cc, nn : call address n if C flag is reset(opcode D4)
+                    end
+                    8'b11011100: begin //CALL cc, nn: call address n if C flag is set (opcode DC)
+                    end
+                
 
                 endcase // OPCODE
                     
@@ -1385,7 +1422,7 @@ module ControlUnit(
             end // ALU16
             
             IMMED: begin  // Immediate Value Instrutions
-                // Same for each ALU case
+                // Same for each ALU case, LD cases will overwrite when necessary
                 // ALU A input mux select                                
                 ALU_OPX_SEL = 1'b0;
                 // ALU B input mux select
@@ -1405,6 +1442,7 @@ module ControlUnit(
                 RF_ADRX = REG_A;
                 
                 case(IMMED_SEL) inside
+
                     8'b00001000: // LD (a16), SP
                     begin
                         // Reg File does not write
@@ -1422,6 +1460,11 @@ module ControlUnit(
                         LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
                         // Set the Stack Pointer Low Flag to Write the Low byte of the Stack Pointer Data
                         SP_LOW_FLAG = ~LOW_IMMED ? 1'b1 : 1'b0;
+                    end
+                    8'b00???110: begin  // LD r, n
+                        RF_WR = 1;
+                        RF_WR_SEL = RF_MUX_IMM;
+                        RF_ADRX = IMMED_SEL[5:3];
                     end
                     
                     8'b00??0001: // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16

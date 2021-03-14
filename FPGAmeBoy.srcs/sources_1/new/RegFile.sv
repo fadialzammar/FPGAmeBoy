@@ -28,7 +28,7 @@
 //005: L 
 //007: A
 
-module RegFile #(parameter ADDR_SIZE = 5, DATA_SIZE = 8)(
+module RegFile #(parameter ADDR_SIZE = 3, DATA_SIZE = 8)(
     input [ADDR_SIZE-1:0] ADRX, ADRY,
     input [DATA_SIZE-1:0] DIN,
     input CLK, WE,
@@ -49,7 +49,6 @@ initial begin
     mem[4] = 8'h45; // REG H
     mem[5] = 8'h45; // REG L
     mem[7] = 8'h2D; // REG A
-
 end
 
 //create synchronous write to port X
