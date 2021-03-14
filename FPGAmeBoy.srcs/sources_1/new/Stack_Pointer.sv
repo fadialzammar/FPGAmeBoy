@@ -27,16 +27,16 @@ module Stack_Pointer(
     input RST,
     input CLK,
     input [15:0] DIN,
-    output logic [15:0] DOUT
+    output logic [15:0] DOUT = 16'hFFFE
     );
         
         //Synchronous register logic
-        always_ff @(posedge CLK) begin
+        always_ff @(posedge CLK) begin           
+            
             if (RST == 1)			//Reset to 0xFFFE (top of memory)
                 DOUT <= 16'hFFFE;                
-            else if(SP_LD == 1)		//Loads input data
-                //(The Stack Pointer automatically decrements before it puts something onto the stack
-                DOUT <= DIN - 16'h0001;
+            else if(SP_LD == 1)		//Loads input data               
+                DOUT <= DIN;
             else if(SP_INCR == 1) 	//Increments output by one byte
                 DOUT <= DOUT + 16'h0001;
             else if(SP_DECR == 1) 	//decrements output by one byte

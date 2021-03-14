@@ -524,7 +524,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             // No Change in the Carry Flag
                             FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG];
                             // Z Flag set if bit is 0, it is cleared otherwise                            
-                            FLAGS_OUT[Z_FLAG] = ~A[B]; 
+                            FLAGS_OUT[Z_FLAG] = ~A[B[2:0]]; 
                             // Outputs index bit 
                             ALU_OUT = B;                                               
                         end
@@ -536,7 +536,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                            // Sets the output equal to A
                            ALU_OUT = A;
                            // Sets the specified bit
-                           ALU_OUT[B] = 1'b1; 
+                           ALU_OUT[B[2:0]] = 1'b1; 
                         end
                     // Clears bit [input B: 0-7] of input register [input A]
                     RES:
@@ -546,7 +546,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                            // Sets the output equal to A
                            ALU_OUT = A;
                            // Clears the specified bit
-                           ALU_OUT[B] = 1'b0; 
+                           ALU_OUT[B[2:0]] = 1'b0; 
                         end                                 
                                                       
                 default: 
