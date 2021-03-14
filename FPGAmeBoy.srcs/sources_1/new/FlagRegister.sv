@@ -55,13 +55,6 @@ module Flag_Reg(
     
     );
     
-    // Initialize all flags to zero
-//    initial begin
-//        Z_OUT <= 0;
-//        N_OUT <= 0;
-//        H_OUT <= 0;
-//        C_OUT <= 0;        
-//    end
     // Zero Flag Register
     always_ff @(posedge CLK) begin
         //RESET

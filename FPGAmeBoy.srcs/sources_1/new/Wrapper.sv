@@ -44,7 +44,7 @@ module Wrapper(
     logic [4:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
     logic RF_WR;
-    logic [2:0] RF_DIN_SEL;
+    logic [3:0] RF_DIN_SEL;
     // 16 bit output from the Reg File
     logic [15:0] RF_16_OUT;
     assign RF_16_OUT = {RF_DX_OUT, RF_DY_OUT};
@@ -107,6 +107,10 @@ module Wrapper(
     logic [15:0] IMMED_DATA_16;
     // Concatenate the High and Low Bytes of the Immediate Data Values
     assign IMMED_DATA_16 = {IMMED_DATA_HIGH,IMMED_DATA_LOW};
+    
+    logic [15:0] SP_IMMED_VAL;
+    // Set equal to the Stack Pointer DOUT + an Immediate Value
+    assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -140,8 +144,10 @@ module Wrapper(
         .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
-    MUX6to1 RegFile_MUX(
-        .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(IMMED_DATA_LOW), .In5(IMMED_DATA_HIGH),
+    MUX9to1 RegFile_MUX(
+        .In0(ALU_OUT), .In1(MEM_DOUT), 
+        .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
+        .In6(IMMED_DATA_LOW), .In7(IMMED_DATA_HIGH), .In8(RF_DY_OUT),
         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     

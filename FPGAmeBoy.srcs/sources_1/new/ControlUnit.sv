@@ -26,7 +26,7 @@ module ControlUnit(
         output logic PC_LD, PC_INC,                     // program counter
         output logic [1:0] PC_MUX_SEL,
         output logic RF_WR,                             // register file
-        output logic [2:0] RF_WR_SEL,
+        output logic [3:0] RF_WR_SEL,
         output logic [4:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,                     // ALU
         output logic ALU_OPX_SEL,
@@ -49,12 +49,15 @@ module ControlUnit(
     );
     
 
-    parameter RF_MUX_ALU        = 0; // ALU output
-    parameter RF_MUX_MEM        = 1; // Memory output
-    parameter RF_MUX_SP_LOW     = 2; // Stack Pointer Low Byte
-    parameter RF_MUX_SP_HIGH    = 3; // Stack Pointer High Byte
-    parameter RF_MUX_IMMED_LOW  = 4; // Immediate value Low Byte
-    parameter RF_MUX_IMMED_HIGH = 5; // Immediate value High Byte
+    parameter RF_MUX_ALU             = 0; // ALU output
+    parameter RF_MUX_MEM             = 1; // Memory output
+    parameter RF_MUX_SP_LOW          = 2; // Stack Pointer Low Byte
+    parameter RF_MUX_SP_HIGH         = 3; // Stack Pointer High Byte
+    parameter RF_MUX_SP_IMMED_LOW    = 4; // Stack Pointer + Immediate value Low Byte
+    parameter RF_MUX_SP_IMMED_HIGH   = 5; // Stack Pointer + Immediate value High Byte
+    parameter RF_MUX_IMMED_LOW       = 6; // Immediate value Low Byte
+    parameter RF_MUX_IMMED_HIGH      = 7; // Immediate value High Byte
+    parameter RF_MUX_DY              = 8; // DY output of the Reg File
 
     parameter MEM_ADDR_SP      = 0; // stack pointer output
     parameter MEM_ADDR_IMMED   = 1; // Immediate Value address input
@@ -1019,6 +1022,15 @@ module ControlUnit(
                     8'b11001011: // CB Prefix command
                     begin
                         CB_FLAG = 1'b1;
+                    end                    
+                    
+                    // =========== Only takes 4 cycle instead of 6 ============ //
+                    8'b11111000: // LD HL, SP + r8
+                    begin                               
+                        // Save opcode for the next cycle
+                        IMMED_SEL = OPCODE;
+                        // Set the Immediate flag high to transition to the Immediate state after the next fetch
+                        IMMED_FLAG = 1'b1;
                     end
                     
                     // =========== Only takes 1 cycle instead of 2 ============ //
@@ -1169,11 +1181,28 @@ module ControlUnit(
                                 LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 SP_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
-                                // Set the Stack Pointer
+                                // Set the Stack Pointer input 
                                 SP_DIN_SEL = SP_DIN_IMMED;
                             end                        
                         endcase
                     end
+                    
+                    8'b11111000: // LD HL, SP + r8
+                    begin
+                        // Reg File writes either the High or Low Byte
+                        RF_WR = 1'b1; 
+                        // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) 
+                        IMMED_DATA_LOW = OPCODE;
+                        // Saves the new Immediate Value Data Low Byte for writing to the H register
+                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;
+                        // Set Reg File DIN select to the Stack Pointer + immediate value
+                        RF_WR_SEL = RF_MUX_SP_IMMED_LOW; 
+                        // Write the Low Byte to register L
+                        RF_ADRX = REG_L;   
+                        // Set the Stack Pointer High Flag to Write the High byte of the Stack Pointer + Immediate Data
+                        SP_HIGH_FLAG = 1'b1;                                           
+                    end
+                    
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values
                     begin 
                         case(IMMED_SEL[5:4])
@@ -1237,9 +1266,11 @@ module ControlUnit(
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
                 IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
-                // Transition to the SP_LOW state if the Stack Pointer Low Flag is High 
+                // Transition to the SP_LOW state if the Stack Pointer Low Flag is High or the SP_HIGH state if the Stack Pointer High Flag is High
                 if (SP_LOW_FLAG)
                     NS = SP_LOW;
+                else if (SP_HIGH_FLAG)
+                    NS = SP_HIGH;
                 else
                     NS = FETCH;
             end // IMMED
@@ -1356,7 +1387,7 @@ module ControlUnit(
                         SP_LOW_FLAG = 1'b0;
                         // Reset the Immediate Flag
                         IMMED_FLAG =1'b0;
-                        // Transition to the SP_HIGH state to write the Higj byte of the Stack Pointer
+                        // Transition to the SP_HIGH state to write the High byte of the Stack Pointer
                         NS = SP_HIGH;
                     end                            
             end // SP_LOW               
@@ -1441,7 +1472,25 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b0;
                         // Transition to the Stack Pointer Low Byte state to pop the Low Byte
                         NS = SP_LOW;             
-                end                
+                    end 
+                // LD HL, SP + r8    
+                else if (IMMED_SEL == 8'b11111000) 
+                    begin 
+                        // Reg File writes either the High or Low Byte
+                        RF_WR = 1'b1; 
+                        // Set the IMMED_DATA_LOW output value to the Immediate value from the previous state 
+                        IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                        
+                        // Set Reg File DIN select to the Stack Pointer + immediate value High Byte
+                        RF_WR_SEL = RF_MUX_SP_IMMED_HIGH; 
+                        // Write the High Byte to register H 
+                        RF_ADRX = REG_H; 
+                        // Reset the Stack Pointer High Byte Flag
+                        SP_HIGH_FLAG = 1'b0;
+                        // Reset the Immediate Flag
+                        IMMED_FLAG =1'b0;
+                        // Transition to the FETCH once both bytes have been written
+                        NS = FETCH;
+                    end               
                 // LD (a16), SP ( Write High Byte)
                 else                
                     begin
@@ -1458,7 +1507,7 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b0;
                         // Reset the Immediate Flag
                         IMMED_FLAG =1'b0;
-                        // Transition to the SP_HIGH state to write the Higj byte of the Stack Pointer
+                        // Transition to the FETCH state once both bytes have been written
                         NS = FETCH;
                     end                                     
              end // SP_HIGH
