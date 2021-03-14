@@ -3,6 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.   -->
 
+
 <Project Version="7" Minor="54" Path="C:/Users/izakw/OneDrive/Documents/GitHub/FPGAmeBoy/FPGAmeBoy.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
@@ -81,6 +82,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/new/ALU_16.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/ControlUnit.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -147,16 +155,15 @@
       </File>
       <File Path="$PSRCDIR/sources_1/new/Wrapper.sv">
         <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/memory_map.sv">
+      <File Path="$PSRCDIR/sources_1/new/nintendographic.mem">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>

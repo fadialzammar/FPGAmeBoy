@@ -34,12 +34,15 @@ module Wrapper(
     
     // ALU Signals
     logic [4:0] ALU_FUN;
+    logic [1:0] ALU_16_FUN;
     logic [7:0] ALU_A,ALU_B;
     logic [3:0] ALU_FLAGS_IN;
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
-    logic [1:0] ALU_B_SEL;
-    
+    logic [2:0] ALU_B_SEL;
+    // ALU 16 bit signals
+    logic [15:0] ALU_16_A,ALU_16_B,ALU_16_OUT;
+    logic [1:0] ALU_16_B_SEL;
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
@@ -60,6 +63,7 @@ module Wrapper(
     localparam H_IDX = 3'd5;
     localparam C_IDX = 3'd4;
     
+    localparam eightbitzero = 8'h00;
     // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
@@ -130,9 +134,17 @@ module Wrapper(
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
+    MUX4to1#(.DATA_SIZE(16)) ALU_16_B_MUX(
+        .In0(ALU_16_OUT), .In1(16'h0000), .In2(), .In3(),
+        .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
+    );
     ALU ALU(
         .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
+    );
+    ALU_16 ALU_16(
+        .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
     
     MUX2to1 Flag_Reg_MUX(
@@ -148,11 +160,13 @@ module Wrapper(
         .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
+    // Change Control Unit
     MUX9to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), 
-        .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
+        .In2(SP_DOUT[7:0]), .In3(ALU_16_OUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
         .In6(IMMED_DATA_LOW), .In7(IMMED_DATA_HIGH), .In8(RF_DY_OUT),
         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
+
     );
     
     RegFile RegFile(
@@ -215,7 +229,9 @@ module Wrapper(
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),
         .ALU_SEL(ALU_FUN),     // ALU
+        .ALU_16_SEL(ALU_16_FUN),
         .ALU_OPY_SEL(ALU_B_SEL),
+        .ALU_16_B_SEL(ALU_16_B_SEL),
         .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
         .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH),
