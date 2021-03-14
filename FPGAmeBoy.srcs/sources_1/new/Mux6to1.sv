@@ -19,11 +19,52 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+module MUX9to1
+    #(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, In6, In7, In8, //8-bit inputs 
+    input [3:0] Sel, //selector signal
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
+    );
+    always_comb
+        case (Sel) // 9->1 multiplexor
+            0: Out <= In0; 
+            1: Out <= In1; 
+            2: Out <= In2;
+            3: Out <= In3;
+            4: Out <= In4;
+            5: Out <= In5;
+            6: Out <= In6;
+            7: Out <= In7;
+            8: Out <= In8;
+            default: Out <= In0; 
+        endcase
+endmodule
 
-module MUX6to1(
-    input [7:0] In0, In1, In2, In3, In4, In5, //8-bit inputs 
+module MUX8to1
+    #(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, In6, In7, //8-bit inputs 
     input [2:0] Sel, //selector signal
-    output logic [8:0] Out //8-bit output
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
+    );
+    always_comb
+        case (Sel) // 8->1 multiplexor
+            0: Out <= In0; 
+            1: Out <= In1; 
+            2: Out <= In2;
+            3: Out <= In3;
+            4: Out <= In4;
+            5: Out <= In5;
+            6: Out <= In6;
+            7: Out <= In7;
+            default: Out <= In0; 
+        endcase
+endmodule
+
+module MUX6to1
+    #(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, //8-bit inputs 
+    input [2:0] Sel, //selector signal
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
     );
     always_comb
         case (Sel) // 6->1 multiplexor
@@ -37,10 +78,11 @@ module MUX6to1(
         endcase
 endmodule
 
-module MUX5to1(
-    input [7:0] In0, In1, In2, In3, In4, //8-bit inputs
+module MUX5to1
+    #(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, //8-bit inputs
     input [2:0] Sel, //selector signal
-    output logic [7:0] Out //8-bit output
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
     );
     always_comb
         case (Sel) // 5->1 multiplexor
@@ -69,10 +111,11 @@ module MUX4to1
         endcase
 endmodule
 
-module MUX3to1(
-    input [7:0] In0, In1, In2, //8-bit inputs 
+module MUX3to1
+#(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, In2, //8-bit inputs 
     input [1:0] Sel, //selector signal
-    output logic [7:0] Out //8-bit output
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
     );
     always_comb
         case (Sel) // 3->1 multiplexor
@@ -83,10 +126,11 @@ module MUX3to1(
         endcase
 endmodule
 
-module MUX2to1(
-    input [7:0] In0, In1, //8-bit inputs 
+module MUX2to1
+    #(parameter DATA_SIZE = 8)(
+    input [DATA_SIZE - 1:0] In0, In1, //8-bit inputs 
     input Sel, //selector signal
-    output logic [7:0] Out //8-bit output
+    output logic [DATA_SIZE - 1:0] Out //8-bit output
     );
     always_comb
         case (Sel) // 2->1 multiplexor
