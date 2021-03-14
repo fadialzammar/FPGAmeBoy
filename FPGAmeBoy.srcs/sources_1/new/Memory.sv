@@ -21,6 +21,9 @@
 
 ///synchronous memory
 
+
+
+
 module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
 // main RAM 8KByte
 //video RAM 8KByte
@@ -37,6 +40,13 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
 //    initial begin
 //        $readmemh("nintendographic.mem", memory, )
      
+    initial begin
+        for (int i = 0; i < (1<<16); i++) begin
+            mem[i] = 0;
+         end
+      mem[17733] = 8'h1A; // REG A
+    end
+  
     always_ff@(posedge CLK)
     begin
     if(WE==1)

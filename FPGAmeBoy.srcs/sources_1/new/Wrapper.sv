@@ -22,7 +22,7 @@
 
 module Wrapper(
     input CLK,
-    input RST
+    input CPU_RESET
     );
     
     // Program Counter Signals
@@ -63,6 +63,7 @@ module Wrapper(
     // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
+    logic [2:0] BIT_SEL = 3'b000;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];
@@ -83,6 +84,9 @@ module Wrapper(
     
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
+
+    logic [7:0] BIT_SEL_8;
+    assign BIT_SEL_8 = {5'b00000, BIT_SEL};
     
     // Control signals
     logic [7:0] OPCODE;
@@ -121,8 +125,8 @@ module Wrapper(
         .PC_COUNT(PC)
     );
     
-    MUX3to1 ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE),
+    MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL_8),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
@@ -201,7 +205,7 @@ module Wrapper(
     
     ControlUnit ControlUnit(
         // Inputs
-        .CLK(CLK), .INTR(), .RESET(RST),
+        .CLK(CLK), .INTR(), .RESET(CPU_RESET),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs
@@ -224,7 +228,8 @@ module Wrapper(
         .FLAGS_DATA_SEL(FLAGS_DATA_SEL),        
         .I_CLR(), .I_SET(), .FLG_LD_SEL(), // interrupts
         .RST(RST),       // reset
-        .IO_STRB()    // IO
+        .IO_STRB(),    // IO
+        .BIT_SEL(BIT_SEL)
     );
    
 endmodule
