@@ -35,7 +35,7 @@ initial begin
     for (int i = 0; i < (1<<16); i++) begin
         mem[i] = 0;
     end
-    mem[517] = 8'h2D; // REG A
+    mem[517] = 8'h1A; // REG A
 end
     always_ff@(posedge CLK)
     begin

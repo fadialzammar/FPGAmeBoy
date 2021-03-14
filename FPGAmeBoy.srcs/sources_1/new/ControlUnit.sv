@@ -532,23 +532,26 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
 
-                        // CP A, (HL)  /// FIX Later 
+                        // ADD A, (HL) 
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = ADD_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
-                        end                                                        
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                       
                     end
                     
                     8'b10001???:  // ADC A, n
@@ -574,23 +577,26 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
 
-                        // CP A, (HL)  /// FIX Later 
+                        // ADC A, (HL)
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = ADC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
-                        end                                                        
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                       
                     end
                     
                     8'b10100???:  // AND A, n
@@ -616,23 +622,26 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
 
-                        // CP A, (HL)  /// FIX Later 
+                        // AND A, (HL) 
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = AND_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
-                        end                                                        
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                     
                     end
                     
                     8'b10111???:  // CP A, n
@@ -660,21 +669,24 @@ module ControlUnit(
 
                         // CP A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = CP_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
-                        end                                                        
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                         
                     end
                     
                      8'b10110???:  // OR A, n
@@ -745,23 +757,26 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0];
 
-                        // SBC A, (HL)  /// FIX Later
+                        // SBC A, (HL)
                         if (OPCODE[2:0] == 3'b110)
-                        begin                         
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = SBC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end
-                        end                                                         
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                            
                     end
                     
                     
@@ -790,21 +805,24 @@ module ControlUnit(
                                                         
                         // SUB A, (HL)  /// FIX Later  
                         if (OPCODE[2:0] == 3'b110)
-                        begin                        
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = SUB_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end
-                        end                                                  
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end                                                    
                     end
                     
                     8'b10101???:  // XOR A, n
@@ -830,23 +848,26 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_ADRY = OPCODE[2:0]; 
                            
-                        // XOR A, (HL)  /// FIX Later 
+                        // XOR A, (HL)
                         if (OPCODE[2:0] == 3'b110)
-                        begin                  
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_DY;
-                            end
+                        begin
+                            HL_ALU_FUN = XOR_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end
-                        end
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end   
                     end  
                     
                     8'b11??0001: // POP
@@ -1570,25 +1591,24 @@ module ControlUnit(
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0; // PLACEHOLDER
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        ALU_OPY_SEL = 2'b11; // PLACEHOLDER
+                        BIT_SEL = OPCODE[5:3];                                 
                         // ALU Operation Select
                         ALU_SEL = BIT_ALU;   
                         // Flags
-                        C_FLAG_LD = 1;
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;                            
                         // Register File Addresses
-                        RF_ADRX = OPCODE[2:0];
-                        RF_ADRY = OPCODE[5:3]; 
+                        RF_ADRX = OPCODE[2:0]; 
                         // ADD HL CASE
                     end
                     8'b11??????:  // SET K, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0; // PLACEHOLDER
+                        ALU_OPX_SEL = 1'b0;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b11; // PLACEHOLDER
+                        ALU_OPY_SEL = 2'b11;
                         BIT_SEL = OPCODE[5:3];                                
                         // ALU Operation Select
                         ALU_SEL = SET_ALU;                                
@@ -1598,24 +1618,24 @@ module ControlUnit(
                         RF_WR = 1;                            
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
-                        RF_ADRY = OPCODE[5:3]; 
                         // ADD HL CASE
                     end
                     8'b10??????:  // RES K, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0; // PLACEHOLDER
+                        ALU_OPX_SEL = 1'b0;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00; // PLACEHOLDER                                
+                        ALU_OPY_SEL = 2'b11;                               
                         // ALU Operation Select
                         ALU_SEL = RES_ALU;                                
                         // Input to the Reg File is the ALU output
                         RF_WR_SEL = RF_MUX_ALU;                                
                         // Write operation back into Register A
-                        RF_WR = 1;                            
+                        RF_WR = 1;         
+                        // Set bit selector
+                        BIT_SEL = OPCODE[5:3];                   
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
-                        RF_ADRY = OPCODE[5:3];
                         // ADD HL CASE
                     end
                   
@@ -1642,7 +1662,6 @@ module ControlUnit(
                 //RF_ADRX = REG_A;
                 ALU_SEL = HL_ALU_FUN;
                 ALU_OPY_SEL = 'b01;
-                RF_WR = 1;
                 C_FLAG_LD = 1;
                 Z_FLAG_LD = 1;
                 N_FLAG_LD = 1;

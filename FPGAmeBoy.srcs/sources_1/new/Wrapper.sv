@@ -82,7 +82,9 @@ module Wrapper(
     
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
-    
+    // 
+    logic [7:0] BIT_SEL_8;
+    assign BIT_SEL_8 = {5'b00000, BIT_SEL};
 
     
     // Control signals
@@ -109,7 +111,7 @@ module Wrapper(
     );
     
     MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL),
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL_8),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
