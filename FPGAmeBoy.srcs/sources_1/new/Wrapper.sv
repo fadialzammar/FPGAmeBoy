@@ -124,7 +124,7 @@ module Wrapper(
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
         
     ProgCount ProgCount( 
-        .PC_CLK(CLK),
+        .PC_CLK(CLK_DIV),
         .PC_RST(RST),
         .PC_LD(PC_LD),
         .PC_INC(PC_INC),
@@ -266,7 +266,7 @@ module Wrapper(
     assign DISP_DATA = {OPCODE, RF_DX_OUT};
     
     SevSegDisp display(
-        .CLK(CLK_DIV_DISP),
+        .CLK(CLK),
         .MODE(1'b0),
         .DATA_IN(DISP_DATA),
         .CATHODES(CATHODES),
