@@ -1463,7 +1463,7 @@ module ControlUnit(
                     end
                     8'b00???110: begin  // LD r, n
                         RF_WR = 1;
-                        RF_WR_SEL = RF_MUX_IMM;
+                        //RF_WR_SEL = RF_MUX_IMM;
                         RF_ADRX = IMMED_SEL[5:3];
                     end
                     
@@ -2292,13 +2292,9 @@ module ControlUnit(
                 RF_ADRY = REG_L;
                 
                 MEM_ADDR_SEL = 'b011;
-                //RF_ADRX = REG_A;
                 ALU_SEL = HL_ALU_FUN;
                 ALU_OPY_SEL = 'b01;
-                C_FLAG_LD = 1;
-                Z_FLAG_LD = 1;
-                N_FLAG_LD = 1;
-                H_FLAG_LD = 1;                  
+                
             end
             HL_EXEC: begin
                 NS = FETCH;
@@ -2306,6 +2302,10 @@ module ControlUnit(
                 RF_ADRX = REG_A;
                 ALU_OPY_SEL = 'b01;
                 RF_WR = 1;
+                C_FLAG_LD = 1;
+                Z_FLAG_LD = 1;
+                N_FLAG_LD = 1;
+                H_FLAG_LD = 1;  
                 
             end
         endcase // PS

@@ -22,9 +22,12 @@
 
 module Wrapper(
     input CLK,
-    input CPU_RESET
+    input CPU_RESET,
+    output[7:0] CATHODES,
+    output[3:0] ANODES,
+    output CLK_DIV,
+    output CLK_DIV_DISP
     );
-    
     // Program Counter Signals
     logic PC_LD;
     logic [15:0] PC_DIN;
@@ -144,7 +147,7 @@ module Wrapper(
     );
     ALU_16 ALU_16(
         .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
-        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
+        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT() // Multiple drivers on Flags_OUT
     );
     
     MUX2to1 Flag_Reg_MUX(
@@ -153,7 +156,7 @@ module Wrapper(
     );
     
     Flag_Reg Flag_Reg(
-        .CLK(CLK), .RST(RST),
+        .CLK(CLK_DIV), .RST(RST),
         .Z_IN(Z_IN), .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), .Z_OUT(Z_FLAG),
         .N_IN(N_IN), .N_FLAG_LD(N_FLAG_LD), .N_FLAG_SET(N_FLAG_SET), .N_FLAG_CLR(N_FLAG_CLR), .N_OUT(N_FLAG),
         .H_IN(H_IN), .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), .H_OUT(H_FLAG),
@@ -177,11 +180,11 @@ module Wrapper(
     RegFile RegFile(
         .ADRX(RF_ADRX), .ADRY(RF_ADRY), .DIN(RF_DIN),
         .DX_OUT(RF_DX_OUT), .DY_OUT(RF_DY_OUT), 
-        .WE(RF_WR), .CLK(CLK)
+        .WE(RF_WR), .CLK(CLK_DIV)
     );
     
     ProgRom ProgRom(
-        .PROG_CLK(CLK),
+        .PROG_CLK(CLK_DIV),
         .PROG_ADDR(PC),
         .PROG_IR(OPCODE)
     );
@@ -196,7 +199,7 @@ module Wrapper(
         .SP_INCR(SP_INCR),
         .SP_DECR(SP_DECR),
         .RST(RST),
-        .CLK(CLK),
+        .CLK(CLK_DIV),
         .DIN(SP_DIN),
         .DOUT(SP_DOUT)
     );
@@ -214,7 +217,7 @@ module Wrapper(
     );
     
     Memory Memory(
-        .CLK(CLK), 
+        .CLK(CLK_DIV), 
         .WE(MEM_WE), 
         .RE(MEM_RE), 
         .ADDR(MEM_ADDR_IN), 
@@ -224,7 +227,7 @@ module Wrapper(
     
     ControlUnit ControlUnit(
         // Inputs
-        .CLK(CLK), .INTR(), .RESET(CPU_RESET),
+        .CLK(CLK_DIV), .INTR(), .RESET(CPU_RESET),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs
@@ -251,6 +254,23 @@ module Wrapper(
         .RST(RST),       // reset
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL)
+    );
+    // CLK DIV
+    clk_div CLK_DIVIDER(
+        .CLK(CLK),
+        .CLK_DIV(CLK_DIV),
+        .CLK_DIV_DISP(CLK_DIV_DISP)
+    );
+    
+    logic[15:0] DISP_DATA;
+    assign DISP_DATA = {OPCODE, RF_DX_OUT};
+    
+    SevSegDisp display(
+        .CLK(CLK_DIV_DISP),
+        .MODE(1'b0),
+        .DATA_IN(DISP_DATA),
+        .CATHODES(CATHODES),
+        .ANODES(ANODES)
     );
    
 endmodule

@@ -24,8 +24,8 @@ module CPU_TEST_BENCH();
 
      logic CLK=0, CPU_RESET=0;
      logic [15:0] SWITCHES,LEDS;
-     logic [7:0] CATHODES,VGA_RGB;
-     logic [3:0] ANODES;
+     logic [7:0] CATHODES =8'h00,VGA_RGB;
+     logic [3:0] ANODES=4'h0;
      logic [4:0] counter;
      
      Wrapper DUT (.*);

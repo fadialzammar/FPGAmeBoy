@@ -524,7 +524,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             // No Change in the Carry Flag
                             FLAGS_OUT[C_FLAG] = FLAGS_IN[C_FLAG];
                             // Z Flag set if bit is 0, it is cleared otherwise                            
-                            FLAGS_OUT[Z_FLAG] = ~A[B[2:0]]; 
+                            FLAGS_OUT[Z_FLAG] = ~A[B]; 
                             // Outputs index bit 
                             ALU_OUT = B;                                               
                         end
