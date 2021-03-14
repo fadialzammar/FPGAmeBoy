@@ -161,7 +161,7 @@ module ControlUnit(
      logic POP_FLAG = 1'b0;
      logic PUSH_FLAG = 1'b0;       
      // Immediate Value Select 
-     logic [7:0] IMMED_SEL = 8'h00;       
+     logic [7:0] OPCODE_HOLD = 8'h00;       
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
@@ -238,14 +238,14 @@ module ControlUnit(
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
                         IMMED_FLAG = 1'b1;                        
                         // Set the Immediate Select to the OPCODE
-                        IMMED_SEL = OPCODE;
+                        OPCODE_HOLD = OPCODE;
                     end
                     
                     // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
                     8'b00??0001:
                     begin
                         // Set the Immediate Select to the OPCODE
-                        IMMED_SEL = OPCODE; 
+                        OPCODE_HOLD = OPCODE; 
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
                         IMMED_FLAG = 1'b1;      
                     end
@@ -603,7 +603,7 @@ module ControlUnit(
                         else begin  // normal LD r8, n8
                             // RF_WR = 0;
                             IMMED_FLAG = 1;
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                         end
                     end
 
@@ -622,16 +622,12 @@ module ControlUnit(
                         end
 
                         else if (OPCODE[2:0] == 3'b110) begin   // LD r, (HL)
-                            if (mcycle == 0) begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
-                            if (mcycle == 1) begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+                            MEM_ADDR_SEL = MEM_ADDR_16_RF;
+                            MEM_RE = 1;
+                            HL_FLAG = 1;
+                            OPCODE_HOLD = OPCODE;
                         end
 
                         else begin  // normal LD r8, r8
@@ -697,7 +693,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                           
                             // ALU B input mux select
@@ -744,7 +740,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -790,7 +786,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -835,7 +831,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -880,7 +876,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 3'b001; // Select data from memory
@@ -925,7 +921,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -971,7 +967,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -1016,7 +1012,7 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
-                            MEM_ADDR_SEL = 3'b011;
+                            MEM_ADDR_SEL = 2'b11;
                             MEM_RE = 1;
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -1051,7 +1047,7 @@ module ControlUnit(
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values 
                     begin
                         // Save opcode for the next cycle 
-                        IMMED_SEL = OPCODE;  
+                        OPCODE_HOLD = OPCODE;  
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
                         IMMED_FLAG = 1'b1;                                                             
                     end   
@@ -1059,7 +1055,7 @@ module ControlUnit(
                     8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
                     begin
                         // Save opcode for the next cycle
-                        IMMED_SEL = OPCODE;
+                        OPCODE_HOLD = OPCODE;
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
                         IMMED_FLAG = 1'b1;
                     end
@@ -1073,7 +1069,7 @@ module ControlUnit(
                     8'b11111000: // LD HL, SP + r8
                     begin                               
                         // Save opcode for the next cycle
-                        IMMED_SEL = OPCODE;
+                        OPCODE_HOLD = OPCODE;
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
                         IMMED_FLAG = 1'b1;
                     end
@@ -1441,7 +1437,7 @@ module ControlUnit(
                 // Register File Addresses
                 RF_ADRX = REG_A;
                 
-                case(IMMED_SEL) inside
+                case(OPCODE_HOLD) inside
 
                     8'b00001000: // LD (a16), SP
                     begin
@@ -1465,7 +1461,7 @@ module ControlUnit(
                         RF_WR = 1;
                         RF_WR_SEL = RF_MUX_IMMED_LOW;
                         IMMED_DATA_LOW = OPCODE;
-                        RF_ADRX = IMMED_SEL[5:3];
+                        RF_ADRX = OPCODE_HOLD[5:3];
                     end
                     
                     8'b00??0001: // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
@@ -1474,7 +1470,7 @@ module ControlUnit(
                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
                         // Flag for 16 bit Immediates
                         IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
-                        case(IMMED_SEL[5:4])                            
+                        case(OPCODE_HOLD[5:4])                            
                             2'b00: // LD BC, d16
                             begin
                                 // Reg File writes either the High or Low Byte
@@ -1567,7 +1563,7 @@ module ControlUnit(
                     
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values
                     begin 
-                        case(IMMED_SEL[5:4])
+                        case(OPCODE_HOLD[5:4])
                         
                             2'b00: // ADD A, immed
                             begin
@@ -1597,7 +1593,7 @@ module ControlUnit(
                     
                     8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
                     begin 
-                        case(IMMED_SEL[5:4])
+                        case(OPCODE_HOLD[5:4])
                             2'b00: // ADC A, immed
                             begin
                                 // ALU Operation Select
@@ -1627,7 +1623,7 @@ module ControlUnit(
                     end                                     
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
-                IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
+                IMMED_FLAG = OPCODE_HOLD == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
                 // Transition to the SP_LOW state if the Stack Pointer Low Flag is High or the SP_HIGH state if the Stack Pointer High Flag is High
                 if (SP_LOW_FLAG)
                     NS = SP_LOW;
@@ -1836,7 +1832,7 @@ module ControlUnit(
                         NS = SP_LOW;             
                     end 
                 // LD HL, SP + r8    
-                else if (IMMED_SEL == 8'b11111000) 
+                else if (OPCODE_HOLD == 8'b11111000) 
                     begin 
                         // Reg File writes either the High or Low Byte
                         RF_WR = 1'b1; 
@@ -2288,27 +2284,35 @@ module ControlUnit(
             end // CB_EXEC
           
             HL_FETCH: begin
-                NS = HL_EXEC;
-                RF_ADRX = REG_H;
-                RF_ADRY = REG_L;
-                
-                MEM_ADDR_SEL = 'b011;
-                //RF_ADRX = REG_A;
-                ALU_SEL = HL_ALU_FUN;
-                ALU_OPY_SEL = 'b01;
-                C_FLAG_LD = 1;
-                Z_FLAG_LD = 1;
-                N_FLAG_LD = 1;
-                H_FLAG_LD = 1;                  
-            end
-            HL_EXEC: begin
+                case (OPCODE_HOLD) inside
+                    8'b01???110: begin  // LD (HL), r
+                        RF_ADRX = OPCODE_HOLD[5:3];
+                        RF_WR = 1;
+                        RF_WR_SEL = RF_MUX_MEM;
+                    end
+                    8'b00000000: begin  // use this aidan
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        
+                        MEM_ADDR_SEL = 2'b11;
+                        //RF_ADRX = REG_A;
+                        ALU_SEL = HL_ALU_FUN;
+                        ALU_OPY_SEL = 3'b001;
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;   
+                    end
+                endcase
+                NS = HL_EXEC;  
+            end // HL_FETCH
+            HL_EXEC: begin  // shouldn't need another state?
                 NS = FETCH;
                 ALU_SEL = HL_ALU_FUN;
                 RF_ADRX = REG_A;
-                ALU_OPY_SEL = 'b01;
-                RF_WR = 1;
-                
-            end
+                ALU_OPY_SEL = 3'b001;
+                RF_WR = 1;                
+            end // HL_EXEC
         endcase // PS
     end
 endmodule
