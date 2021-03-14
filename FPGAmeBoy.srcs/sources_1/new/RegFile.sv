@@ -43,14 +43,13 @@ initial begin
         mem[i] = 0;
     end
     mem[0] = 8'h18; // REG B
-    mem[1] = 8'h69; // REG C
+    mem[1] = 8'hff; // REG C 69
     mem[2] = 8'h00; // REG D
     mem[3] = 8'h01; // REG E
-    mem[4] = 8'h02;
-    mem[5] = 8'h05;
+    mem[4] = 8'h02; // REG H
+    mem[5] = 8'hf5; // REG L 05
     mem[7] = 8'h2D; // REG A
-    mem[8] = 8'h11; // REG H
-    mem[9] = 8'h22; // REG L
+
 end
 
 //create synchronous write to port X

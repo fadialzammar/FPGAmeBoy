@@ -39,7 +39,7 @@ module Wrapper(
     logic [3:0] ALU_FLAGS_IN;
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
-    logic [1:0] ALU_B_SEL;
+    logic [2:0] ALU_B_SEL;
     // ALU 16 bit signals
     logic [15:0] ALU_16_A,ALU_16_B,ALU_16_OUT;
     logic [1:0] ALU_16_B_SEL;
@@ -60,6 +60,7 @@ module Wrapper(
     localparam H_IDX = 3'd5;
     localparam C_IDX = 3'd4;
     
+    localparam eightbitzero = 8'h00;
     // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
@@ -111,8 +112,8 @@ module Wrapper(
         .PC_COUNT(PC)
     );
     
-    MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL),
+    MUX6to1#(.DATA_SIZE(8)) ALU_B_MUX(
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL), .In4(eightbitzero), .In5(),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
@@ -125,7 +126,7 @@ module Wrapper(
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
     ALU_16 ALU_16(
-        .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(ALU_16_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
     
@@ -144,7 +145,7 @@ module Wrapper(
     
     MUX6to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
-        .In3(ALU_16_OUT), .In4(), .In5(),
+        .In3(), .In4(ALU_16_OUT[15:8]), .In5(ALU_16_OUT[7:0]),
          .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     
