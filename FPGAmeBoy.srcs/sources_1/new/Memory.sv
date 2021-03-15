@@ -45,7 +45,14 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
             mem[i] = 0;
          end
 //      mem[17733] = 8'h1A; // REG A
-      mem[515] = 8'hEE;
+    //   mem[515] = 8'hEE;
+      mem[258] = 8'hBB;     //0x0102
+      mem[515] = 8'hCC;     //0x0203
+      mem[772] = 8'hDD;     //0x0304
+      mem[1029] = 8'hEE;    //0x0405
+      mem[1286] = 8'hAB;    //0x0506
+      mem[43783] = 8'hCD;   //0xAB07
+      mem[61389] = 8'hAA;   //0xEFCD
     end
   
     always_ff@(posedge CLK)

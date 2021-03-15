@@ -2307,11 +2307,15 @@ module ControlUnit(
                 NS = HL_EXEC;  
             end // HL_FETCH
             HL_EXEC: begin  // shouldn't need another state?
-                NS = FETCH;
-                ALU_SEL = HL_ALU_FUN;
-                RF_ADRX = REG_A;
-                ALU_OPY_SEL = 3'b001;
-                RF_WR = 1;                
+                case (OPCODE_HOLD) inside
+                    8'b00000000: begin  // for aidan
+                        ALU_SEL = HL_ALU_FUN;
+                        RF_ADRX = REG_A;
+                        ALU_OPY_SEL = 3'b001;
+                        RF_WR = 1;  
+                    end
+                endcase
+                NS = FETCH;   
             end // HL_EXEC
         endcase // PS
     end
