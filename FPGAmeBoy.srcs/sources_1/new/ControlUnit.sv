@@ -71,6 +71,7 @@ module ControlUnit(
     parameter MEM_DATA_FLAGS   = 2; // Flags Register values
     parameter MEM_DATA_SP_LOW  = 3; // Stack Pointer Low Byte output
     parameter MEM_DATA_SP_HIGH = 4; // Stack Pointer High Byte output
+    parameter MEM_DATA_IMMED   = 5; // Immediate valie
     
     parameter SP_DIN_RF_16 = 0; // 16 bit output of Reg File 
     parameter SP_DIN_IMMED = 1; // Immediate value input
@@ -598,10 +599,14 @@ module ControlUnit(
                     
                     8'b00???110: begin  // LD r, n
                         if (OPCODE[5:3] == 3'b110) begin    // LD (HL), n
-                            
+                            HL_FLAG = 1;    // kinda the wrong state but it doesn't actually matter
+                            OPCODE_HOLD = OPCODE;
+                            // RF_ADRX = REG_H;
+                            // RF_ADRY = REG_L;
+                            // MEM_ADDR_SEL = MEM_ADDR_16_RF;
+                            // MEM_WE = 1;
                         end
                         else begin  // normal LD r8, n8
-                            // RF_WR = 0;
                             IMMED_FLAG = 1;
                             OPCODE_HOLD = OPCODE;
                         end
@@ -613,12 +618,7 @@ module ControlUnit(
                         end
 
                         else if (OPCODE[5:3] == 3'b110) begin   // LD (HL), r
-                            if (mcycle == 0) begin
-                                
-                            end
-                            if (mcycle == 1) begin
-                                
-                            end
+                            
                         end
 
                         else if (OPCODE[2:0] == 3'b110) begin   // LD r, (HL)
@@ -2302,6 +2302,14 @@ module ControlUnit(
                         Z_FLAG_LD = 1;
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;   
+                    end
+                    8'b00110110: begin  // LD (HL), n
+                        MEM_WE = 1;
+                        MEM_DATA_SEL = MEM_DATA_IMMED;
+                        MEM_ADDR_SEL = MEM_ADDR_16_RF;
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        IMMED_DATA_LOW = OPCODE;
                     end
                 endcase
                 NS = HL_EXEC;  

@@ -208,9 +208,9 @@ module Wrapper(
     );
     
     // Memory Data MUX
-    MUX5to1 MEM_DATA_MUX(
+    MUX6to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]),
-        .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In5(IMMED_DATA_LOW), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     Memory Memory(
