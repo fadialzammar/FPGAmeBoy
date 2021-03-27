@@ -53,6 +53,10 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
       mem[1286] = 8'hAB;    //0x0506
       mem[43783] = 8'hCD;   //0xAB07
       mem[61389] = 8'hAA;   //0xEFCD
+      
+      // LD A, (BC) and LD A, (DE) testing
+      mem[48076] = 8'hFA;   //0xBBCC
+      mem[56814] = 8'hD1;   //0xDDEE
     end
   
     always_ff@(posedge CLK)
@@ -63,7 +67,6 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
     
     always_ff@(negedge CLK)
     begin
-    if(RE == 1)
     DOUT <= mem[ADDR];
     end
     

@@ -85,6 +85,8 @@ module Wrapper(
     logic [7:0] MEM_DIN, MEM_DOUT;
     logic [15:0] MEM_ADDR_IN;
     logic [15:0] HL_PTR;
+    logic [15:0] MEM_ADDR_BUF_OUT;
+    logic MEM_ADDR_BUF_WE;
     
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
@@ -101,8 +103,8 @@ module Wrapper(
     logic FLAGS_DATA_SEL;
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic SP_DIN_SEL;
-    logic MEM_WE, MEM_RE;            // memory
-    logic [1:0] MEM_ADDR_SEL;
+    logic MEM_WE;                    // memory
+    logic [2:0] MEM_ADDR_SEL;
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
@@ -200,23 +202,34 @@ module Wrapper(
         .DIN(SP_DIN),
         .DOUT(SP_DOUT)
     );
+
+    // Memory Address Buffer
+    always_ff @ (posedge CLK) begin
+        if (MEM_ADDR_BUF_WE)
+            MEM_ADDR_BUF_OUT = RF_16_OUT;
+    end
     
     // Memory Address MUX
-    MUX4to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+    MUX5to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT),
-        .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+        .In4(MEM_ADDR_BUF_OUT), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
+    // // Memory Data Input Buffer
+    // always_ff @ (posedge CLK) begin
+    //     if (MEM_DIN_BUF_WE)
+    //         MEM_DIN_BUF_OUT = RF_DX_OUT;
+    // end
+
     // Memory Data MUX
     MUX6to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]),
-        .In5(IMMED_DATA_LOW), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In5(IMMED_DATA_LOW), /*.In6(MEM_DIN_BUF_OUT), .In7(), */.Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     Memory Memory(
         .CLK(CLK), 
         .WE(MEM_WE), 
-        .RE(MEM_RE), 
         .ADDR(MEM_ADDR_IN), 
         .DIN(MEM_DIN),
         .DOUT(MEM_DOUT)
@@ -237,7 +250,9 @@ module Wrapper(
         .ALU_16_SEL(ALU_16_FUN),
         .ALU_OPY_SEL(ALU_B_SEL),
         .ALU_16_B_SEL(ALU_16_B_SEL),
-        .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
+        .MEM_WE(MEM_WE), // memory
+        // .MEM_DIN_BUF_WE(MEM_DIN_BUF_WE),
+        .MEM_ADDR_BUF_WE(MEM_ADDR_BUF_WE),
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
         .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH),
         .IMMED_DATA_LOW(IMMED_DATA_LOW), .IMMED_DATA_HIGH(IMMED_DATA_HIGH),
