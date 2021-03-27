@@ -29,6 +29,7 @@ module Wrapper(
     logic PC_LD;
     logic [15:0] PC_DIN;
     logic [15:0] PC;
+    logic [15:0] CU_PC_ADDR;
     
     // ProgRom Signals
     
@@ -119,6 +120,11 @@ module Wrapper(
     logic [15:0] SP_IMMED_VAL;
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
+    
+    MUX2to1 ProgCount_MUX(
+    .In0(), .In1(CU_PC_ADDR), 
+        .Sel(PC_MUX_SEL), .Out(PC_DIN)
+    );
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -229,7 +235,8 @@ module Wrapper(
         .OPCODE(OPCODE), // Memory Line
         // Outputs
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
-        .PC_MUX_SEL(),                     // Unconnected
+        .PC_MUX_SEL(PC_MUX_SEL),
+        .PC_ADDR_OUT(CU_PC_ADDR),                     // Unconnected
         .RF_WR(RF_WR),             // register file
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),

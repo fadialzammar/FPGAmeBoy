@@ -24,7 +24,7 @@ module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
         output logic PC_LD, PC_INC,                     // program counter
-        output logic [1:0] PC_MUX_SEL,
+        output logic PC_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
         output logic [2:0] RF_ADRX, RF_ADRY,
@@ -47,7 +47,8 @@ module ControlUnit(
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
         output logic RST,                               // reset
         output logic IO_STRB,                           // IO
-        output logic [2:0] BIT_SEL                      // BIT select signal 
+        output logic [2:0] BIT_SEL,                      // BIT select signal 
+        output logic [15:0] PC_ADDR_OUT                 //address to program counter for jumps
     ); 
     // RF Data Mux
     parameter RF_MUX_ALU             = 0; // ALU output
@@ -127,6 +128,8 @@ module ControlUnit(
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
 
     STATE NS, PS = INIT;
+    //indicates jump is ready
+    logic JUMP_FLAG = 1'b0;
 
      logic mcycle = 0;     
      // Flag used for identifying that NS after EXEC is SP_LOW
@@ -165,6 +168,8 @@ module ControlUnit(
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
+     
+     //
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -1223,22 +1228,43 @@ module ControlUnit(
                         // literally crashes on a real game boy
                     end
                     8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
-                        PC_LD = 1; 
+                        IMMED_SEL = OPCODE;
+                        IMMED_FLAG = 1;
+                        
                     end
                     
                     8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
-                        if(Z == 0) PC_LD = 1;                        
+                        if(Z == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end                       
                     end
                     8'b11001010: begin //JP if Z flag is set (opcode CA)
-                        if(Z == 1) PC_LD = 1;
+                        if(Z == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end   
                     end
                     8'b11010010: begin //JP if C flag is reset (opcode D2)
-                        if(C == 1) PC_LD = 1;
+                        if(C == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end   
                     end
-                    8'b11011010: begin // JP if C flat is set (opcode DA)
-                        if(C == 0) PC_LD = 1;
+                    8'b11011010: begin // JP if C flag is set (opcode DA)
+                        if(C == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end   
                     end
                     8'b11101001: begin //JP to address contained in HL (opcode E9)
+                        PC_LD = 1;
+                        PC_MUX_SEL = 1;
+                        
                     end
                     8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
                     end
@@ -1272,7 +1298,7 @@ module ControlUnit(
                     else if(HL_FLAG) // Transition to HL state
                         NS = HL_FETCH;
                     else if (SP_HIGH_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
-                        NS = SP_HIGH;
+                        NS = SP_HIGH;  
                     else if (ALU_16)
                         NS= ALU16;
                     else 
@@ -1624,7 +1650,24 @@ module ControlUnit(
                                 RF_WR = 0; 
                             end  
                         endcase               
-                    end                                     
+                    end
+                    8'b110??01?: // jump nn, conditional jumps
+                    begin
+                    if(JUMP_FLAG == 1)
+                        begin
+                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
+                        PC_MUX_SEL = 1;
+                        PC_LD = 1;
+                        end
+                    IMMED_FLAG = 1;
+                    IMMED_DATA_LOW = OPCODE;
+                    JUMP_FLAG = 1;
+                    end
+                    8'b00011000: //jump, add n to current address and jump to it
+                    begin
+                        IMMED_DATA_LOW = OPCODE;
+                    end
+                                                             
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
                 IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
@@ -2272,6 +2315,7 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         // ADD HL CASE
                     end
+
                   
                     default: begin
                         // CRASHES
