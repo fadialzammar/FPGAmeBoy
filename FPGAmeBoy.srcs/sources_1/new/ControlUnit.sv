@@ -636,7 +636,7 @@ module ControlUnit(
 
                         else begin  // normal LD r8, r8
                             RF_WR = 1;
-                            //RF_WR_SEL = RF_MUX_DY;
+                            RF_WR_SEL = RF_MUX_DY;
                             RF_ADRX = OPCODE[5:3];  // copies from Y into X
                             RF_ADRY = OPCODE[2:0];
                         end
@@ -1463,7 +1463,8 @@ module ControlUnit(
                     end
                     8'b00???110: begin  // LD r, n
                         RF_WR = 1;
-                        //RF_WR_SEL = RF_MUX_IMM;
+                        RF_WR_SEL = RF_MUX_IMMED_LOW;
+                        IMMED_DATA_LOW = OPCODE;
                         RF_ADRX = IMMED_SEL[5:3];
                     end
                     

@@ -180,7 +180,7 @@ module Wrapper(
     RegFile RegFile(
         .ADRX(RF_ADRX), .ADRY(RF_ADRY), .DIN(RF_DIN),
         .DX_OUT(RF_DX_OUT), .DY_OUT(RF_DY_OUT), 
-        .WE(RF_WR), .CLK(CLK_DIV)
+        .WE(RF_WR), .CLK(CLK_DIV), .REG_A(REG_A)
     );
     
     ProgRom ProgRom(
@@ -261,9 +261,9 @@ module Wrapper(
         .CLK_DIV(CLK_DIV),
         .CLK_DIV_DISP(CLK_DIV_DISP)
     );
-    
+    logic[7:0] REG_A;
     logic[15:0] DISP_DATA;
-    assign DISP_DATA = {OPCODE, RF_DX_OUT};
+    assign DISP_DATA = {OPCODE, REG_A};
     
     SevSegDisp display(
         .CLK(CLK),

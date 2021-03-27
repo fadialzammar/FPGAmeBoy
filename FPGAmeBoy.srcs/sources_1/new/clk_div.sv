@@ -33,7 +33,7 @@ module clk_div(
 	always_ff @(posedge CLK) begin
         clk_div_counter = clk_div_counter + 1;
         clk_div_counter2 = clk_div_counter2 + 1;        
-        if (clk_div_counter == 28'h8FFFFFF) begin     // x186A0 = 1*10^5 = 1 ms toggle (x30D40)
+        if (clk_div_counter == 28'h0AFFFFF) begin     // x186A0 = 1*10^5 = 1 ms toggle (x30D40)
             clk_div_counter = 24'h0000000;
             CLK_DIV = ~CLK_DIV;         // toggle every 1 ms creates 500 Hz clock
         end

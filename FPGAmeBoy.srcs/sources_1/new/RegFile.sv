@@ -32,24 +32,25 @@ module RegFile #(parameter ADDR_SIZE = 3, DATA_SIZE = 8)(
     input [ADDR_SIZE-1:0] ADRX, ADRY,
     input [DATA_SIZE-1:0] DIN,
     input CLK, WE,
-    output logic [DATA_SIZE-1:0] DX_OUT, DY_OUT
+    output logic [DATA_SIZE-1:0] DX_OUT, DY_OUT,
+    output logic [DATA_SIZE-1:0] REG_A
 );
 
 logic [DATA_SIZE-1:0] mem [0:(1<<ADDR_SIZE)-1];
 
-//initialize all memory to zero
-initial begin
-    for (int i = 0; i < (1<<ADDR_SIZE); i++) begin
-        mem[i] = 0;
-    end
-    mem[0] = 8'h18; // REG B
-    mem[1] = 8'h69; // REG C 69
-    mem[2] = 8'h00; // REG D
-    mem[3] = 8'h01; // REG E
-    mem[4] = 8'h45; // REG H
-    mem[5] = 8'h45; // REG L
-    mem[7] = 8'h2D; // REG A
-end
+////initialize all memory to zero
+//initial begin
+//    for (int i = 0; i < (1<<ADDR_SIZE); i++) begin
+//        mem[i] = 0;
+//    end
+//    mem[0] = 8'h18; // REG B
+//    mem[1] = 8'h69; // REG C 69
+//    mem[2] = 8'h00; // REG D
+//    mem[3] = 8'h01; // REG E
+//    mem[4] = 8'h45; // REG H
+//    mem[5] = 8'h45; // REG L
+//    mem[7] = 8'h2D; // REG A
+//end
 
 //create synchronous write to port X
 always_ff @ (posedge CLK)
@@ -61,5 +62,6 @@ end
 //asynchronous read to ports x and y
 assign DX_OUT = mem[ADRX];
 assign DY_OUT = mem[ADRY]; 
+assign REG_A = mem[8'd7];
 endmodule
 
