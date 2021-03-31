@@ -24,7 +24,7 @@ module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
         output logic PC_LD, PC_INC,                     // program counter
-        output logic PC_MUX_SEL,
+        output logic [1:0]PC_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
         output logic [2:0] RF_ADRX, RF_ADRY,
@@ -1262,29 +1262,75 @@ module ControlUnit(
                         end   
                     end
                     8'b11101001: begin //JP to address contained in HL (opcode E9)
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        MEM_ADDR_SEL = MEM_ADDR_16_RF;
                         PC_LD = 1;
-                        PC_MUX_SEL = 1;
-                        
+                        PC_MUX_SEL = 2'b10;
                     end
                     8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
+                        IMMED_SEL = OPCODE;
+                        IMMED_FLAG = 1;
                     end
                     8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
+                    if(Z == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end  
                     end
                     8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
+                    if(Z == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end  
                     end
                     8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
+                    if(C == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end  
                     end
                     8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
+                    if(C == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end  
                     end
                     8'b11001101: begin //CALL : push addr of next instruction onto stack and then jump to address nn (opcode CD)
+                        IMMED_SEL = OPCODE;
+                        IMMED_FLAG = 1;
                     end
                     8'b11000100: begin //CALL cc, nn : call address n if Z flag is reset (opcode C4)
+                    if(Z == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end  
                     end
                     8'b11001100: begin //CALL cc, nn : call address n if Z flag is set (opcode CC)
+                    if(Z == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end 
                     end
                     8'b11010100: begin //CALL cc, nn : call address n if C flag is reset(opcode D4)
+                    if(C == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end 
                     end
                     8'b11011100: begin //CALL cc, nn: call address n if C flag is set (opcode DC)
+                    if(C == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end 
                     end
                 
 
@@ -1656,17 +1702,41 @@ module ControlUnit(
                     if(JUMP_FLAG == 1)
                         begin
                         PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
-                        PC_MUX_SEL = 1;
+                        PC_MUX_SEL = 2'b01;
                         PC_LD = 1;
                         end
                     IMMED_FLAG = 1;
                     IMMED_DATA_LOW = OPCODE;
                     JUMP_FLAG = 1;
                     end
-                    8'b00011000: //jump, add n to current address and jump to it
+                    8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        IMMED_DATA_LOW = OPCODE;
+                        PC_ADDR_OUT = IMMED_SEL + OPCODE;
+                        PC_MUX_SEL = 2'b01;
+                        PC_LD = 1;
                     end
+                     8'b11001101: //call nn
+                     if(JUMP_FLAG = 1)
+                        begin
+                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
+                        PUSH_FLAG = 1'b1;                        
+                        SP_OPCODE = OPCODE;
+                        SP_LOW_FLAG = 1'b1;
+                        end
+                     IMMED_DATA_LOW = OPCODE;
+                     JUMP_FLAG = 1;
+                     8'b110??100: // call nn, conditional
+                     begin
+                        if(JUMP_FLAG = 1)
+                        begin
+                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
+                        PUSH_FLAG = 1'b1;                        
+                        SP_OPCODE = OPCODE;
+                        SP_LOW_FLAG = 1'b1;
+                        end
+                    IMMED_DATA_LOW = OPCODE;
+                    JUMP_FLAG = 1;
+                     end
                                                              
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
@@ -1695,6 +1765,14 @@ module ControlUnit(
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
                         // Low Byte used set by RF_ADRX except for the Flag Register Values
+                        case SP_OPCODE
+                            8'b11001101:
+                            begin
+                            end
+                            8'b110??100: // call nn, conditional
+                            begin
+                            end
+                        endcase
                         case (SP_OPCODE[5:4])
                             2'b00: // BC
                             begin                                                          
@@ -1809,6 +1887,16 @@ module ControlUnit(
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
                         // High Byte used set by RF_ADRX
+                        case SP_OPCODE
+                            8'b11001101: //call unconditional
+                            begin
+                                SP_LD = 1;
+                            end
+                            8'b110??100: // call nn, conditional
+                            begin
+                                SP_LD = 1;
+                            end
+                        endcase
                         case (SP_OPCODE[5:4])
                             2'b00: // BC
                             begin                                                          
@@ -2332,6 +2420,12 @@ module ControlUnit(
             end // CB_EXEC
           
             HL_FETCH: begin
+                // case(OPCODE_HOLD) inside
+                //     8'b11101001: begin //jp to value in HL
+                       
+                //     end
+
+                        
                 NS = HL_EXEC;
                 RF_ADRX = REG_H;
                 RF_ADRY = REG_L;
