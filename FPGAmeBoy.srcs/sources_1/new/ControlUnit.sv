@@ -1224,9 +1224,6 @@ module ControlUnit(
                         PS_OPCODE= OPCODE;
                     end
                     
-                    default: begin
-                        // literally crashes on a real game boy
-                    end
                     8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
                         IMMED_SEL = OPCODE;
                         IMMED_FLAG = 1;
@@ -1332,6 +1329,12 @@ module ControlUnit(
                             IMMED_FLAG = 1;
                         end 
                     end
+
+
+                    default: begin
+                        // literally crashes on a real game boy
+                    end
+                    
                 
 
                 endcase // OPCODE
