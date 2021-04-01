@@ -44,7 +44,7 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
         for (int i = 0; i < (1<<16); i++) begin
             mem[i] = 0;
          end
-      mem[17733] = 8'h1A; // REG A
+      mem[517] = 8'h1A; // REG A
     end
   
     always_ff@(posedge CLK)
