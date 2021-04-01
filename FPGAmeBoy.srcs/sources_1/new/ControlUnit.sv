@@ -36,6 +36,7 @@ module ControlUnit(
         output logic MEM_WE, MEM_RE,                    // memory
         output logic [2:0] MEM_ADDR_SEL, 
         output logic [2:0] MEM_DATA_SEL,
+        output logic INTR_REG_SEL,
         output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
         output logic [7:0] IMMED_DATA_LOW,  IMMED_DATA_HIGH,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
@@ -75,6 +76,11 @@ module ControlUnit(
     parameter MEM_DATA_FLAGS   = 2; // Flags Register values
     parameter MEM_DATA_SP_LOW  = 3; // Stack Pointer Low Byte output
     parameter MEM_DATA_SP_HIGH = 4; // Stack Pointer High Byte output
+    parameter MEM_DATA_INTR    = 5; // Interrput Register Data
+    
+    // Interrupt Register MUX
+    parameter INTR_MUX_LOW  = 0; // Low input to the Interrupt Register
+    parameter INTR_MUX_HIGH = 1; // High input to the Interrupt Register
     
     // Stack Pointer MUX
     parameter SP_DIN_RF_16 = 0; // 16 bit output of Reg File 
@@ -1158,7 +1164,19 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b1; 
                     end
                     
-                          
+                     8'b11011001: // RETI : Pop two bytes from stack & jump to that address and enable interrupts
+                    begin
+                        POP_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        SP_HIGH_FLAG = 1'b1; 
+                        // Set the Interrupt value high
+                        INTR_REG_SEL = INTR_MUX_HIGH;
+                        // Set the Memory Address and Data 
+                        MEM_DATA_SEL = MEM_DATA_INTR;
+                        MEM_ADDR_SEL = MEM_ADDR_INTR;
+                        MEM_WE = 1'b1;
+                    end
+                           
                     //16 bit ALU
                     8'b00??0011: // INC BC, DE, HL, SP
                     begin
@@ -1825,6 +1843,7 @@ module ControlUnit(
                                 PC_MUX_SEL = PC_MUX_RET;
                                 PC_LD = 1'b1;
                             end
+                            
                             8'b11011001: // RETI: POP low byte and load the PC with the popped address
                             begin
                                 // Register File does not write on a RET

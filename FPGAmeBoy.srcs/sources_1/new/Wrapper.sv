@@ -106,11 +106,13 @@ module Wrapper(
     logic MEM_WE, MEM_RE;            // memory
     logic [2:0] MEM_ADDR_SEL;
     logic [2:0] MEM_DATA_SEL;
+    logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
+    logic [7:0] INTR_REG_DIN = 8'h00;
     
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
@@ -225,9 +227,14 @@ module Wrapper(
         .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
+    MUX2to1 INTR_MUX(
+        .In0(8'h00), .In1(8'hFF),
+        .Sel(INTR_REG_SEL), .Out(INTR_REG_DIN)
+    );
+    
     // Memory Data MUX
-    MUX5to1 MEM_DATA_MUX(
-        .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]),
+    MUX6to1 MEM_DATA_MUX(
+        .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]), .In5(INTR_REG_DIN),
         .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
@@ -257,7 +264,7 @@ module Wrapper(
         .ALU_OPY_SEL(ALU_B_SEL),
         .ALU_16_B_SEL(ALU_16_B_SEL),
         .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
-        .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL),
+        .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL), .INTR_REG_SEL(INTR_REG_SEL),
         .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH),
         .IMMED_DATA_LOW(IMMED_DATA_LOW), .IMMED_DATA_HIGH(IMMED_DATA_HIGH),
         .SP_LD(SP_LD), .SP_INCR(SP_INCR), .SP_DECR(SP_DECR), .SP_DIN_SEL(SP_DIN_SEL), // stack pointer
