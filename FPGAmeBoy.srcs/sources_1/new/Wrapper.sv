@@ -29,6 +29,7 @@ module Wrapper(
     logic PC_LD;
     logic [15:0] PC_DIN;
     logic [15:0] PC;
+    logic [15:00] RET_PC;
     
     // ProgRom Signals
     
@@ -67,7 +68,7 @@ module Wrapper(
     // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
-    logic [2:0] BIT_SEL = 3'b000;
+    //logic [2:0] BIT_SEL = 3'b000;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];
@@ -95,6 +96,7 @@ module Wrapper(
     // Control signals
     logic [7:0] OPCODE;
     logic PC_INC;                   // program counter
+    logic PC_HIGH_FLAG, PC_LOW_FLAG;
     logic [1:0] PC_MUX_SEL;
     logic [1:0] RF_WR_SEL;
     logic ALU_OPY_SEL;
@@ -102,11 +104,14 @@ module Wrapper(
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic SP_DIN_SEL;
     logic MEM_WE, MEM_RE;            // memory
-    logic [1:0] MEM_ADDR_SEL;
+    logic [2:0] MEM_ADDR_SEL;
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
 
+    // Interrupt Register
+    logic [15:0] INTR_REG = 16'hFFFF;
+    
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
     assign IMMED_ADDR = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
@@ -119,6 +124,19 @@ module Wrapper(
     logic [15:0] SP_IMMED_VAL;
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
+    
+    logic [7:0] RET_PC_LOW, RET_PC_HIGH;
+    // Set the Return PC low byte to the low byte popped off the stack
+    assign RET_PC_LOW = PC_LOW_FLAG && !PC_HIGH_FLAG ? MEM_DOUT : RET_PC_LOW;
+    // Set the Return PC high byte to the high byte popped off the stack
+    assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
+    // Concatenate the High and Low Bytes of the PC Address Values
+    assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
+    
+    MUX2to1 #(.DATA_SIZE(16)) ProgCount_MUX(
+        .In0(RET_PC), .In1(CU_PC_ADDR), 
+        .Sel(PC_MUX_SEL), .Out(PC_DIN)
+    );
         
     ProgCount ProgCount( 
         .PC_CLK(CLK),
@@ -144,7 +162,7 @@ module Wrapper(
     );
     ALU_16 ALU_16(
         .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
-        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
+        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT()
     );
     
     MUX2to1 Flag_Reg_MUX(
@@ -200,10 +218,10 @@ module Wrapper(
         .DIN(SP_DIN),
         .DOUT(SP_DOUT)
     );
-    
+    // Add the INterruopt reg inpit to the mux (0xFFFF)
     // Memory Address MUX
-    MUX4to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
-        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT),
+    MUX5to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(INTR_REG),
         .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
@@ -229,7 +247,8 @@ module Wrapper(
         .OPCODE(OPCODE), // Memory Line
         // Outputs
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
-        .PC_MUX_SEL(),                     // Unconnected
+        .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
+        .PC_MUX_SEL(PC_MUX_SEL),                   
         .RF_WR(RF_WR),             // register file
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),

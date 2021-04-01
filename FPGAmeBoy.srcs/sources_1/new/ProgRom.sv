@@ -32,7 +32,7 @@ module ProgRom(
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
-        $readmemh("ALU16.mem", rom, 0, 1023);
+        $readmemh("ret.mem", rom, 0, 1023);
     end 
     
     always_ff @(posedge PROG_CLK)
