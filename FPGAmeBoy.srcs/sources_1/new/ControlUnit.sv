@@ -1716,7 +1716,8 @@ module ControlUnit(
                         PC_LD = 1;
                     end
                      8'b11001101: //call nn
-                     if(JUMP_FLAG = 1)
+                     begin
+                     if(JUMP_FLAG == 1)
                         begin
                         PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
                         PUSH_FLAG = 1'b1;                        
@@ -1725,9 +1726,10 @@ module ControlUnit(
                         end
                      IMMED_DATA_LOW = OPCODE;
                      JUMP_FLAG = 1;
+                     end
                      8'b110??100: // call nn, conditional
                      begin
-                        if(JUMP_FLAG = 1)
+                        if(JUMP_FLAG == 1)
                         begin
                         PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
                         PUSH_FLAG = 1'b1;                        
@@ -1765,7 +1767,7 @@ module ControlUnit(
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
                         // Low Byte used set by RF_ADRX except for the Flag Register Values
-                        case SP_OPCODE
+                        case (SP_OPCODE)
                             8'b11001101:
                             begin
                             end
@@ -1887,7 +1889,7 @@ module ControlUnit(
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
                         // High Byte used set by RF_ADRX
-                        case SP_OPCODE
+                        case (SP_OPCODE)
                             8'b11001101: //call unconditional
                             begin
                                 SP_LD = 1;
