@@ -29,9 +29,7 @@ module Wrapper(
     logic PC_LD;
     logic [15:0] PC_DIN;
     logic [15:0] PC;
-    logic [15:00] RET_PC;
-    
-    // ProgRom Signals
+    logic [15:00] RET_PC, CALL_PC, JP_PC, JR_PC;
     
     // ALU Signals
     logic [4:0] ALU_FUN;
@@ -41,9 +39,11 @@ module Wrapper(
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
     logic [2:0] ALU_B_SEL;
+    
     // ALU 16 bit signals
     logic [15:0] ALU_16_A,ALU_16_B,ALU_16_OUT;
     logic [1:0] ALU_16_B_SEL;
+    
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
@@ -58,17 +58,15 @@ module Wrapper(
     logic N_IN,N_FLAG_LD,N_FLAG_SET,N_FLAG_CLR,N_FLAG;
     logic H_IN,H_FLAG_LD, H_FLAG_SET,H_FLAG_CLR,H_FLAG;
     logic C_IN, C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, C_FLAG;
-    
+    // [Z,N,H,C,0,0,0,0]
     localparam Z_IDX = 3'd7;
     localparam N_IDX = 3'd6;
     localparam H_IDX = 3'd5;
     localparam C_IDX = 3'd4;
     
     localparam eightbitzero = 8'h00;
-    // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
-    //logic [2:0] BIT_SEL = 3'b000;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];
@@ -127,19 +125,23 @@ module Wrapper(
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
     
-    logic [7:0] RET_PC_LOW, RET_PC_HIGH;
+    // RET PC High and Low Bytes
+    logic [7:0] RET_PC_LOW, RET_PC_HIGH;   
     // Set the Return PC low byte to the low byte popped off the stack
     assign RET_PC_LOW = PC_LOW_FLAG && !PC_HIGH_FLAG ? MEM_DOUT : RET_PC_LOW;
     // Set the Return PC high byte to the high byte popped off the stack
     assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
     // Concatenate the High and Low Bytes of the PC Address Values
-    assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
+    assign RET_PC = {RET_PC_HIGH,RET_PC_LOW} + 2; // + 2 to bypass the immediate values after CALL
+    assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
     
-    MUX2to1 #(.DATA_SIZE(16)) ProgCount_MUX(
-        .In0(RET_PC), .In1(CU_PC_ADDR), 
+    // PC Data MUX
+    MUX4to1 #(.DATA_SIZE(16)) ProgCount_MUX(
+        .In0(RET_PC), .In1(CALL_PC), .In2(JP_PC), .In3(JR_PC),
         .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
-        
+    
+    // Program Counter Instantiation    
     ProgCount ProgCount( 
         .PC_CLK(CLK),
         .PC_RST(RST),
@@ -149,29 +151,37 @@ module Wrapper(
         .PC_COUNT(PC)
     );
     
+    // 8-bit ALU B input MUX
     MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
         .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL_8),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
+    // 16-bit ALU B input MUX
     MUX4to1#(.DATA_SIZE(16)) ALU_16_B_MUX(
         .In0(ALU_16_OUT), .In1(16'h0000), .In2(), .In3(),
         .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
     );
+    
+    // ALU Instantiation
     ALU ALU(
         .ALU_FUN(ALU_FUN), .A(RF_DX_OUT), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
     );
+    
+    // 16-bit ALU Instantiation
     ALU_16 ALU_16(
         .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_16_OUT), .FLAGS_OUT()
     );
     
+    // Flag Register MUX
     MUX2to1 Flag_Reg_MUX(
         .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_DOUT), 
         .Sel(FLAGS_DATA_SEL), .Out(FLAG_REG_IN)
     );
     
+    // Flag Register Instantiation
     Flag_Reg Flag_Reg(
         .CLK(CLK), .RST(RST),
         .Z_IN(Z_IN), .Z_FLAG_LD(Z_FLAG_LD), .Z_FLAG_SET(Z_FLAG_SET), .Z_FLAG_CLR(Z_FLAG_CLR), .Z_OUT(Z_FLAG),
@@ -180,37 +190,35 @@ module Wrapper(
         .C_IN(C_IN), .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), .C_OUT(C_FLAG)
     );
     
-    // Change Control Unit
+    // Reg File MUX
     MUX9to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), 
         .In2(SP_DOUT[7:0]), .In3(ALU_16_OUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
         .In6(IMMED_DATA_LOW), .In7(IMMED_DATA_HIGH), .In8(RF_DY_OUT),
         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
-
- //   MUX6to1 RegFile_MUX(
- //       .In0(ALU_OUT), .In1(MEM_DOUT), .In2(SP_DOUT), 
- //       .In3(), .In4(OPCODE), .In5(RF_DY_OUT),
- //       .Sel(RF_DIN_SEL),  .Out(RF_DIN)
-
     );
     
+    // Reg File Instantiation
     RegFile RegFile(
         .ADRX(RF_ADRX), .ADRY(RF_ADRY), .DIN(RF_DIN),
         .DX_OUT(RF_DX_OUT), .DY_OUT(RF_DY_OUT), 
         .WE(RF_WR), .CLK(CLK)
     );
     
+    // Program Counter Instantiation
     ProgRom ProgRom(
         .PROG_CLK(CLK),
         .PROG_ADDR(PC),
         .PROG_IR(OPCODE)
     );
 
+    // Stack Pointer Data MUX
     MUX2to1#(.DATA_SIZE(16)) SP_MUX(
         .In0(RF_16_OUT), .In1(IMMED_DATA_16),
         .Sel(SP_DIN_SEL), .Out(SP_DIN)
     );
 
+    // Stack Pointer Instantiation
     Stack_Pointer Stack_Pointer(
         .SP_LD(SP_LD),
         .SP_INCR(SP_INCR),
@@ -220,24 +228,27 @@ module Wrapper(
         .DIN(SP_DIN),
         .DOUT(SP_DOUT)
     );
-    // Add the INterruopt reg inpit to the mux (0xFFFF)
+    
     // Memory Address MUX
     MUX5to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(INTR_REG),
         .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
+    // Interrupt Enable/Disable Values MUX
     MUX2to1 INTR_MUX(
         .In0(8'h00), .In1(8'hFF),
         .Sel(INTR_REG_SEL), .Out(INTR_REG_DIN)
     );
     
     // Memory Data MUX
-    MUX6to1 MEM_DATA_MUX(
-        .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]), .In5(INTR_REG_DIN),
+    MUX7to1 MEM_DATA_MUX(
+        .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
+        .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN),
         .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
+    // Memory Instantiation
     Memory Memory(
         .CLK(CLK), 
         .WE(MEM_WE), 
@@ -247,6 +258,7 @@ module Wrapper(
         .DOUT(MEM_DOUT)
     );
     
+    // Control Unit Instantiation
     ControlUnit ControlUnit(
         // Inputs
         .CLK(CLK), .INTR(), .RESET(CPU_RESET),
@@ -265,7 +277,7 @@ module Wrapper(
         .ALU_16_B_SEL(ALU_16_B_SEL),
         .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL), .INTR_REG_SEL(INTR_REG_SEL),
-        .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH),
+        .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH), // immediates
         .IMMED_DATA_LOW(IMMED_DATA_LOW), .IMMED_DATA_HIGH(IMMED_DATA_HIGH),
         .SP_LD(SP_LD), .SP_INCR(SP_INCR), .SP_DECR(SP_DECR), .SP_DIN_SEL(SP_DIN_SEL), // stack pointer
         .C_FLAG_LD(C_FLAG_LD), .C_FLAG_SET(C_FLAG_SET), .C_FLAG_CLR(C_FLAG_CLR), // Flags 
