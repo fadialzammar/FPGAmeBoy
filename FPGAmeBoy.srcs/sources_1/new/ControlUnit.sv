@@ -23,6 +23,7 @@
 module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
+        input [15:0] PC,
         output logic PC_LD, PC_INC,                     // program counter
         output logic [1:0]PC_MUX_SEL,
         output logic RF_WR,                             // register file
@@ -1714,7 +1715,7 @@ module ControlUnit(
                     end
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        PC_ADDR_OUT = IMMED_SEL + OPCODE;
+                        PC_ADDR_OUT = (IMMED_SEL + OPCODE + PC) - 1;// OPCODE= hi byte, IMMED_SEL = lwo byte + current addr (PC);
                         PC_MUX_SEL = 2'b01;
                         PC_LD = 1;
                     end

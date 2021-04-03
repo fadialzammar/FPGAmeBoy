@@ -235,7 +235,7 @@ module Wrapper(
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs
-        .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
+        .PC(PC), .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_MUX_SEL(PC_MUX_SEL),
         .PC_ADDR_OUT(CU_PC_ADDR),                     
         .RF_WR(RF_WR),             // register file
