@@ -104,7 +104,7 @@ module Wrapper(
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic SP_DIN_SEL;
     logic MEM_WE;                    // memory
-    logic [2:0] MEM_ADDR_SEL;
+    logic [3:0] MEM_ADDR_SEL;
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
@@ -210,9 +210,10 @@ module Wrapper(
     end
     
     // Memory Address MUX
-    MUX5to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
-        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT),
-        .In4(MEM_ADDR_BUF_OUT), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+    MUX9to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
+        .In5(MEM_ADDR_BUF_OUT + 1), .In6(MEM_ADDR_BUF_OUT - 1), /*.In7({8'hFF, IMMED_DATA_LOW}),
+        .In8({8'hFF, RF_DX_OUT}),*/ .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
     // // Memory Data Input Buffer
@@ -222,9 +223,9 @@ module Wrapper(
     // end
 
     // Memory Data MUX
-    MUX6to1 MEM_DATA_MUX(
+    MUX8to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC), .In2(FLAG_REG_OUT), .In3(SP_DOUT[7:0]), .In4(SP_DOUT[15:8]),
-        .In5(IMMED_DATA_LOW), /*.In6(MEM_DIN_BUF_OUT), .In7(), */.Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In5(IMMED_DATA_LOW), .In6(RF_DY_OUT), .In7(), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     Memory Memory(
