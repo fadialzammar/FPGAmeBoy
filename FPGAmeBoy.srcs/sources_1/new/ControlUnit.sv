@@ -298,8 +298,24 @@ module ControlUnit(
                             
                              2'b11: // INC (HL) ////////////=========== Update with (HL) code
                             begin
-                                // Register File Addresses
-                                RF_ADRX = REG_HL;
+                            HL_ALU_FUN = INC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+                            
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                          
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                         
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                             end
                         endcase
                     end
@@ -344,8 +360,24 @@ module ControlUnit(
                             
                              2'b11: // DEC (HL) ////////////=========== Update with (HL) code
                             begin
-                                // Register File Addresses
-                                RF_ADRX = REG_HL;
+                            HL_ALU_FUN = DEC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+                            
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                          
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                         
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                             end
                         endcase
                     end
