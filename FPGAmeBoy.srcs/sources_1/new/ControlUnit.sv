@@ -132,7 +132,7 @@ module ControlUnit(
     localparam DEC_16_ALU = 2'b10;
 
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, HL_4, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
 
     STATE NS, PS = INIT;
 
@@ -684,6 +684,7 @@ module ControlUnit(
                     // end
 
                     8'b00100010: begin // LD (HL+), A
+                    // TODO: Test overflows
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
@@ -691,12 +692,11 @@ module ControlUnit(
                         HL_FLAG = 1;
 
                         // will increment HL after memory write
-                        ALU_16_SEL = INC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // Write operation back into Register 
-                        RF_WR = 1; 
-                        OPCODE_HOLD = OPCODE;
-                        // ALU_16=1'b1;
+                        // ALU_16_SEL = INC_16_ALU;
+                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // // Write operation back into Register 
+                        // RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b00110010: begin // LD (HL-), A
@@ -706,13 +706,42 @@ module ControlUnit(
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
 
-                        // will decrement HL after memory write
-                        ALU_16_SEL = DEC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // Write operation back into Register 
-                        RF_WR = 1; 
+                        // // will decrement HL after memory write
+                        // ALU_16_SEL = DEC_16_ALU;
+                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // // Write operation back into Register 
+                        // RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+
+                    8'b00101010: begin // LD A, (HL+)
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        MEM_ADDR_BUF_WE = 1;
                         OPCODE_HOLD = OPCODE;
-                        // ALU_16=1'b1;
+                        HL_FLAG = 1;
+
+                        // // will increment HL after memory read
+                        // ALU_16_SEL = INC_16_ALU;
+                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // // Write operation back into Register 
+                        // RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+
+                    8'b00111010: begin // LD A, (HL-)
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        MEM_ADDR_BUF_WE = 1;
+                        OPCODE_HOLD = OPCODE;
+                        HL_FLAG = 1;
+
+                        // // will decrement HL after memory read
+                        // ALU_16_SEL = DEC_16_ALU;
+                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // // Write operation back into Register 
+                        // RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b11100000: begin // LD (FF00 + u8), A
@@ -2354,6 +2383,19 @@ module ControlUnit(
           
             HL_FETCH: begin
                 case (OPCODE_HOLD) inside
+                    8'b00000000: begin  // use this aidan
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        
+                        MEM_ADDR_SEL = 2'b11;
+                        //RF_ADRX = REG_A;
+                        ALU_SEL = HL_ALU_FUN;
+                        ALU_OPY_SEL = 3'b001;
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;   
+                    end
                     8'b01???110: begin  // LD r, (HL)
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRX = OPCODE_HOLD[5:3]; // r
@@ -2403,19 +2445,6 @@ module ControlUnit(
                     //     RF_WR_SEL = RF_MUX_MEM;
                     //     RF_WR = 1;
                     // end
-                    8'b00000000: begin  // use this aidan
-                        RF_ADRX = REG_H;
-                        RF_ADRY = REG_L;
-                        
-                        MEM_ADDR_SEL = 2'b11;
-                        //RF_ADRX = REG_A;
-                        ALU_SEL = HL_ALU_FUN;
-                        ALU_OPY_SEL = 3'b001;
-                        C_FLAG_LD = 1;
-                        Z_FLAG_LD = 1;
-                        N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;   
-                    end
                     8'b00110110: begin  // LD (HL), n
                         MEM_WE = 1;
                         MEM_DATA_SEL = MEM_DATA_IMMED;
@@ -2425,55 +2454,120 @@ module ControlUnit(
                         IMMED_DATA_LOW = OPCODE;
                     end
                     8'b00100010: begin // LD (HL+), A
+                        // Write to memory from REG_A
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRY = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DY;
                         MEM_WE = 1;
 
-                        // ALU Operation Select
-                        ALU_OPY_SEL = 3'b001;  
-                        ALU_SEL = INC_ALU;                                
-                        // Input to the Reg File is the ALU output
-                        RF_WR_SEL = RF_MUX_ALU;                                
-                        // Write operation back into Register A
-                        RF_WR = 1;  
-                        // Flag register data select
-                        RF_ADRX = REG_L;
+                        // // Increment HL
+                        // ALU_OPY_SEL = 3'b001;  
+                        // ALU_SEL = INC_ALU;                                
+                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        // RF_WR = 1;  
+                        // RF_ADRX = REG_L;    // Flag register data select
                     end
                     8'b00110010: begin // LD (HL-), A
+                        // Write to memory from REG_A
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRY = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DY;
                         MEM_WE = 1;
 
-                        // ALU Operation Select
-                        ALU_OPY_SEL = 3'b001;  
-                        ALU_SEL = DEC_ALU;                                
-                        // Input to the Reg File is the ALU output
-                        RF_WR_SEL = RF_MUX_ALU;                                
-                        // Write operation back into Register A
-                        RF_WR = 1;  
-                        // Flag register data select
-                        RF_ADRX = REG_L;
+                        // // Decrement HL
+                        // ALU_OPY_SEL = 3'b001;  
+                        // ALU_SEL = DEC_ALU;                                
+                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        // RF_WR = 1;  
+                        // RF_ADRX = REG_L;    // Flag register data select
                     end
-                           
+                    8'b00101010: begin // LD A, (HL+)
+                        // Write to REG_A from memory
+                        MEM_ADDR_SEL = MEM_ADDR_BUF;
+                        RF_ADRX = REG_A;
+                        RF_WR_SEL = RF_MUX_MEM;
+                        RF_WR = 1;
+
+                        // // Increment HL
+                        // ALU_OPY_SEL = 3'b001;  
+                        // ALU_SEL = INC_ALU;                                
+                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        // RF_WR = 1;  
+                        // RF_ADRX = REG_L;    // Flag register data select
+                    end
+                    8'b00111010: begin // LD A, (HL-)
+                        // Write to REG_A from memory
+                        MEM_ADDR_SEL = MEM_ADDR_BUF;
+                        RF_ADRX = REG_A;
+                        RF_WR_SEL = RF_MUX_MEM;
+                        RF_WR = 1;
+
+                        // // Decrement HL
+                        // ALU_OPY_SEL = 3'b001;  
+                        // ALU_SEL = DEC_ALU;                                
+                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        // RF_WR = 1;  
+                        // RF_ADRX = REG_L;    // Flag register data select
+                    end    
                     default: begin
                         // shouldn't be in here
                     end
                 endcase
                 NS = HL_EXEC;  
             end // HL_FETCH
-            HL_EXEC: begin  // shouldn't need another state?
+            HL_EXEC: begin
+                // for incrementing/decrementing HL after a load
                 case (OPCODE_HOLD) inside
-                    8'b00000000: begin  // for aidan
+                    8'b00000000: begin  // for aidan, don't think you actually need this
                         ALU_SEL = HL_ALU_FUN;
                         RF_ADRX = REG_A;
                         ALU_OPY_SEL = 3'b001;
                         RF_WR = 1;  
                     end
+                    8'b0010?010: begin // LD A, (HL+) or LD (HL+), A
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        ALU_16_SEL = INC_16_ALU;
+                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // Write operation back into Register 
+                        RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+                    8'b0011?010: begin // LD (HL-), A or LD (HL-), A
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        ALU_16_SEL = DEC_16_ALU;
+                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // Write operation back into Register 
+                        RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+                    default: begin
+                    end
                 endcase
-                NS = FETCH;   
+                NS = HL_4;
             end // HL_EXEC
+            HL_4: begin
+                case (OPCODE_HOLD) inside
+                    8'b0010?010: begin // LD A, (HL+) or LD (HL+), A
+                        ALU_OPY_SEL = 3'b001;  
+                        ALU_SEL = INC_ALU;                                
+                        RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        RF_WR = 1;  
+                        RF_ADRX = REG_L;    // Flag register data select
+                    end
+                    8'b0011?010: begin // LD (HL-), A or LD (HL-), A
+                        ALU_OPY_SEL = 3'b001;  
+                        ALU_SEL = DEC_ALU;                                
+                        RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
+                        RF_WR = 1;  
+                        RF_ADRX = REG_L;    // Flag register data select
+                    end
+                    default: begin
+                    end
+                endcase
+                NS = FETCH;
+            end
         endcase // PS
     end
 endmodule
