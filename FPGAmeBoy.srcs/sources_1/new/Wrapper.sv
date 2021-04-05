@@ -29,6 +29,8 @@ module Wrapper(
     logic PC_LD;
     logic [15:0] PC_DIN;
     logic [15:0] PC;
+    logic [15:0] CU_PC_ADDR;
+    logic [15:0] REG_PC_ADDR;
     
     // ProgRom Signals
     
@@ -107,11 +109,14 @@ module Wrapper(
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
+    logic [15:0] JP_PC;
 
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
     assign IMMED_ADDR = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
     assign IMMED_ADDR_1 = IMMED_ADDR + 1;
+    
+    assign JP_PC = {IMMED_DATA_HIGH, IMMED_DATA_LOW}-1;
     
     logic [15:0] IMMED_DATA_16;
     // Concatenate the High and Low Bytes of the Immediate Data Values
@@ -120,6 +125,7 @@ module Wrapper(
     logic [15:0] SP_IMMED_VAL;
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
+
     // Restart Address Values    
     logic [3:0] RST_MUX_SEL;
     logic [15:0] RST_ADDR;
@@ -129,7 +135,7 @@ module Wrapper(
         .Sel(RST_MUX_SEL), .Out(RST_ADDR)
     );
     MUX4to1#(.DATA_SIZE(16)) ProgCount_MUX(
-        .In0(), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
+        .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
         .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
@@ -246,8 +252,9 @@ module Wrapper(
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs
-        .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
-        .PC_MUX_SEL(PC_MUX_SEL),                     // Unconnected
+        .PC(PC), .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
+        .PC_MUX_SEL(PC_MUX_SEL),
+        .PC_ADDR_OUT(CU_PC_ADDR),                     
         .RF_WR(RF_WR),             // register file
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),
