@@ -526,7 +526,7 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                             // Z Flag set if bit is 0, it is cleared otherwise                            
                             FLAGS_OUT[Z_FLAG] = ~A[B[2:0]]; 
                             // Outputs index bit 
-                            ALU_OUT = B;                                               
+                            ALU_OUT = A;                                               
                         end
                     // Set bit [input B: 0-7] of input register [input A]
                     SET:

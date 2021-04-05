@@ -23,7 +23,7 @@
 //000: B
 //001: C
 //002: D 
-//003: E;
+//003: E
 //004: H
 //005: L 
 //007: A
@@ -42,13 +42,6 @@ initial begin
     for (int i = 0; i < (1<<ADDR_SIZE); i++) begin
         mem[i] = 0;
     end
-//    mem[0] = 8'h18; // REG B
-//    mem[1] = 8'h69; // REG C 69
-//    mem[2] = 8'h00; // REG D
-//    mem[3] = 8'h01; // REG E
-//    mem[4] = 8'h45; // REG H
-//    mem[5] = 8'h45; // REG L
-//    mem[7] = 8'h2D; // REG A
 end
 
 //create synchronous write to port X

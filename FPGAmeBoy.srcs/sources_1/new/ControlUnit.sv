@@ -23,9 +23,10 @@
 module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
+        input [15:0] PC,
         output logic PC_LD, PC_INC,                     // program counter
         output logic PC_HIGH_FLAG, PC_LOW_FLAG,
-        output logic [1:0] PC_MUX_SEL,
+        output logic [2:0] PC_MUX_SEL,
         output logic CALL_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
@@ -50,7 +51,9 @@ module ControlUnit(
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
         output logic RST,                               // reset
         output logic IO_STRB,                           // IO
-        output logic [2:0] BIT_SEL                      // BIT select signal 
+        output logic [15:0] PC_ADDR_OUT                 //address to program counter for jumps
+        output logic [2:0] BIT_SEL,                      // BIT select signal
+        output logic [2:0] RST_MUX_SEL
     ); 
     
     // RF Data Mux
@@ -79,6 +82,7 @@ module ControlUnit(
     parameter MEM_DATA_SP_LOW  = 4; // Stack Pointer Low Byte output
     parameter MEM_DATA_SP_HIGH = 5; // Stack Pointer High Byte output
     parameter MEM_DATA_INTR    = 6; // Interrput Register Data
+    parameter MEM_DATA_ALU = 7;
     
     // Interrupt Register MUX
     parameter INTR_MUX_LOW  = 0; // Low input to the Interrupt Register
@@ -108,10 +112,12 @@ module ControlUnit(
     parameter REG_A  = 3'b111;
     
     // PC Data MUX
-    parameter PC_MUX_RET  = 0;   // RET PC Address
-    parameter PC_MUX_CALL = 1;   // CALL PC Address
-    parameter PC_MUX_JP   = 2;   // JP PC Address
-    parameter PC_MUX_JR   = 3;   // JR PC Address
+    parameter PC_MUX_JP   = 0;   // JP PC Address 
+    parameter PC_CU_PC_ADDR = 1;
+    parameter PC_RF_16_OUT = 2;
+    parameter PC_RST_ADDR = 3;
+    parameter PC_MUX_RET  = 4;   // RET PC Address
+    parameter PC_MUX_CALL = 5;   // CALL PC Address
     
     // CALL Data MUX
     parameter CALL_MUX_FALSE = 0; // CALL not taken
@@ -152,6 +158,8 @@ module ControlUnit(
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
 
     STATE NS, PS = INIT;
+    //indicates jump is ready
+    logic JUMP_FLAG = 1'b0;
 
      logic mcycle = 0;     
      // Flag used for identifying that NS after EXEC is SP_LOW
@@ -167,6 +175,8 @@ module ControlUnit(
      logic IMMED_FLAG = 1'b0;
      // Flag for HL pointer state
      logic HL_FLAG = 1'b0;
+     logic HL_CODE = 1'b0;
+     logic [2:0] HL_BIT_SEL = 3'b000;
   
      // FLag for 16 bit ALU state
      logic ALU_16=1'b0;
@@ -190,6 +200,8 @@ module ControlUnit(
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
+     
+     //
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -320,8 +332,24 @@ module ControlUnit(
                             
                              2'b11: // INC (HL) ////////////=========== Update with (HL) code
                             begin
-                                // Register File Addresses
-                                RF_ADRX = REG_HL;
+                            HL_ALU_FUN = INC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+                            
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                          
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                         
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                             end
                         endcase
                     end
@@ -366,8 +394,24 @@ module ControlUnit(
                             
                              2'b11: // DEC (HL) ////////////=========== Update with (HL) code
                             begin
-                                // Register File Addresses
-                                RF_ADRX = REG_HL;
+                            HL_ALU_FUN = DEC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+                            
+                            MEM_ADDR_SEL = 3'b011;
+                            MEM_RE = 1;
+                          
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                         
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                             end
                         endcase
                     end
@@ -1391,44 +1435,145 @@ module ControlUnit(
                         ALU_16=1'b1;
                         PS_OPCODE= OPCODE;
                     end
-                    
-                    default: begin
-                        // literally crashes on a real game boy
+
+                    // Restart commands
+                    8'b11???111: begin
+                        PC_LD = 1;
+                        PC_MUX_SEL = 2'b11;
+                        RST_MUX_SEL = OPCODE[5:3];
                     end
+                  
                     8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
-                        PC_LD = 1; 
+                        IMMED_SEL = OPCODE;
+                        IMMED_FLAG = 1;
+                        
                     end
                     
                     8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
-                        if(Z == 0) PC_LD = 1;                        
+                        if(Z == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end 
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end                    
                     end
                     8'b11001010: begin //JP if Z flag is set (opcode CA)
-                        if(Z == 1) PC_LD = 1;
+                        if(Z == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end      
                     end
                     8'b11010010: begin //JP if C flag is reset (opcode D2)
-                        if(C == 1) PC_LD = 1;
+                        if(C == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end      
                     end
-                    8'b11011010: begin // JP if C flat is set (opcode DA)
-                        if(C == 0) PC_LD = 1;
+                    8'b11011010: begin // JP if C flag is set (opcode DA)
+                        if(C == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end      
                     end
                     
                     8'b11101001: begin //JP to address contained in HL (opcode E9)
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        MEM_ADDR_SEL = MEM_ADDR_16_RF;
+                        PC_LD = 1;
+                        PC_MUX_SEL = 2'b10;
                     end
                     8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
+                        IMMED_SEL = OPCODE;
+                        IMMED_FLAG = 1;
                     end
                     8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
+                    if(Z == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end     
                     end
                     8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
+                    if(Z == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end     
                     end
                     8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
+                    if(C == 0)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end     
                     end
                     8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
+                    if(C == 1)
+                        begin
+                            IMMED_SEL = OPCODE;
+                            IMMED_FLAG = 1;
+                        end
+                        else
+                        begin
+                            PC_ADDR_OUT = PC+2;
+                            PC_MUX_SEL = 2'b10;
+                            PC_LD = 1;
+                        end     
+                    end
+
+                    default: begin
+                        // literally crashes on a real game boy
                     end
                 endcase // OPCODE
                     
                 if (INTR)
                     NS = INTERRUPT;       
-                else // Maybe add begin and end to this
+                else
                     begin
                         if (SP_LOW_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
                             NS = SP_LOW;
@@ -1635,9 +1780,9 @@ module ControlUnit(
                     8'b00??0001: // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
                     begin
                         // Flag for Immediate Low Byte Load
-                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
                         // Flag for 16 bit Immediates
-                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                         IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
                         case(IMMED_SEL[5:4])                            
                             2'b00: // LD BC, d16
                             begin
@@ -1846,6 +1991,33 @@ module ControlUnit(
                         PC_MUX_SEL = PC_MUX_CALL;
                         CALL_MUX_SEL = CALL_MUX_TRUE;
                     end                                           
+                  
+                    8'b110??01?: // jump nn, conditional jumps
+                    begin
+                    if(JUMP_FLAG == 1)
+                        begin
+                        PC_MUX_SEL = 2'b01;
+                        PC_LD = 1;
+                        end
+                    // Flag for Immediate Low Byte Load
+                    LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                    // Flag for 16 bit Immediates
+                    IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                    IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                    // Saves the new Immediate Value Data Low Byte for writing
+                    LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                    // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                    IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                    // Saves the new Immediate Value Data High Byte for writing
+                    LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                    JUMP_FLAG = 1;
+                    end
+                    8'b0001??00: //jump, add n to current address and jump to it
+                    begin
+                        PC_ADDR_OUT = (OPCODE + PC)-1;// OPCODE= hi byte, IMMED_SEL = lwo byte + current addr (PC);
+                        PC_MUX_SEL = 2'b11;
+                        PC_LD = 1;
+                    end
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
                 IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
@@ -1877,8 +2049,9 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
+                      
                         case (SP_OPCODE) inside
-                            8'b11??0101: /// PUSH nn
+                          8'b11??0101: /// PUSH nn
                             begin
                                 // Low Byte used set by RF_ADRX except for the Flag Register Values
                                 case (SP_OPCODE[5:4])
@@ -2047,6 +2220,7 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
+                      
                         case(SP_OPCODE)
                             8'b11??0101: // PUSH nn
                             begin
@@ -2234,22 +2408,28 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // RLC, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
-                        begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                        begin            
+                            HL_ALU_FUN = RLC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2277,22 +2457,26 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // RRC A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
-                            
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            HL_ALU_FUN = RRC_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2320,22 +2504,28 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // RL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = RL_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2366,19 +2556,25 @@ module ControlUnit(
                         // CP A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = RR_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2406,22 +2602,28 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // SLA, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = SLA_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2449,22 +2651,28 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // SRA (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = SRA_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     8'b00110???:  // SWAP n, n
@@ -2493,19 +2701,23 @@ module ControlUnit(
                         // CP A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = SWAP_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     
@@ -2533,22 +2745,28 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // CP A, (HL)  /// FIX Later 
+                        // SRL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            if (mcycle == 0)
-                            begin
-                                RF_WR = 0;
-                                RF_ADRY = REG_HL;
-                                MEM_ADDR_SEL =  MEM_ADDR_16_RF;
-                            end
+                            HL_ALU_FUN = SRL_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+//                          MEM_ADDR_SEL = 3'b011;
+//                          MEM_RE = 1;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
                             
-                            if (mcycle == 1) 
-                            begin
-                                RF_WR = 1;
-                                RF_WR_SEL = RF_MUX_MEM;
-                                RF_ADRX = OPCODE[5:3]; // r
-                            end 
+                            // Store values needed for later
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
                         end                                                        
                     end
                     8'b01??????:  // BIT K, n
@@ -2566,7 +2784,28 @@ module ControlUnit(
                         H_FLAG_LD = 1;                            
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0]; 
-                        // ADD HL CASE
+                        // BIT (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            HL_ALU_FUN = BIT_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            // Store values needed for later
+                            HL_BIT_SEL = OPCODE[5:3];
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end
                     end
                     8'b11??????:  // SET K, n
                     begin
@@ -2583,7 +2822,28 @@ module ControlUnit(
                         RF_WR = 1;                            
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
-                        // ADD HL CASE
+                        // SET (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            HL_ALU_FUN = SET_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            // Store values needed for later
+                            HL_BIT_SEL = OPCODE[5:3];
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end
                     end
                     8'b10??????:  // RES K, n
                     begin
@@ -2601,8 +2861,30 @@ module ControlUnit(
                         BIT_SEL = OPCODE[5:3];                   
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
-                        // ADD HL CASE
+                        //RES (HL)  /// FIX Later 
+                        if (OPCODE[2:0] == 3'b110)
+                        begin                      
+                            HL_ALU_FUN = RES_ALU;                      
+                            RF_ADRX = REG_H;
+                            RF_ADRY = REG_L;
+
+                            // ALU B input mux select
+                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            // Reset control lines
+                            RF_WR = 0;
+                            C_FLAG_LD = 0;
+                            Z_FLAG_LD = 0;
+                            N_FLAG_LD = 0;
+                            H_FLAG_LD = 0;                            
+                            
+                            // Store values needed for later
+                            HL_BIT_SEL = OPCODE[5:3];
+                            HL_CODE = 1; 
+                            HL_FLAG = 1;
+                            NS = HL_FETCH;
+                        end
                     end
+
                   
                     default: begin
                         // CRASHES
@@ -2616,28 +2898,63 @@ module ControlUnit(
                 CB_FLAG = 1'b0;
                 NS = FETCH;
                 mcycle++;
+                
+                if (HL_FLAG == 1)
+                    NS = HL_FETCH;
+                else 
+                    NS = FETCH;
             end // CB_EXEC
           
             HL_FETCH: begin
+                // case(OPCODE_HOLD) inside
+                //     8'b11101001: begin //jp to value in HL
+                       
+                //     end
+
+                        
                 NS = HL_EXEC;
                 RF_ADRX = REG_H;
                 RF_ADRY = REG_L;
-                
                 MEM_ADDR_SEL = 'b011;
+                MEM_RE = 1;
                 //RF_ADRX = REG_A;
                 ALU_SEL = HL_ALU_FUN;
-                ALU_OPY_SEL = 'b01;
-                C_FLAG_LD = 1;
-                Z_FLAG_LD = 1;
-                N_FLAG_LD = 1;
-                H_FLAG_LD = 1;                  
+                ALU_OPY_SEL = 'b01;               
             end
+            
             HL_EXEC: begin
                 NS = FETCH;
-                ALU_SEL = HL_ALU_FUN;
-                RF_ADRX = REG_A;
-                ALU_OPY_SEL = 'b01;
-                RF_WR = 1;
+                case(HL_CODE)
+                    1'b0: begin // ALU operations - write to reg A
+                        ALU_SEL = HL_ALU_FUN;
+                        RF_ADRX = REG_A;
+                        ALU_OPY_SEL = 'b01;
+                        RF_WR = 1;
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                    end
+                    1'b1: begin // In-place operations
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        MEM_ADDR_SEL = 'b011;
+                        
+                        BIT_SEL = HL_BIT_SEL;
+                        ALU_SEL = HL_ALU_FUN;
+                        ALU_OPX_SEL = 2'b01;
+                        ALU_OPY_SEL = 2'b11;
+                        
+                        RF_WR = 0;
+                        MEM_WE = 1;
+                        MEM_DATA_SEL = MEM_DATA_ALU;
+                        
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
+                    end
+                endcase
                 
             end
         endcase // PS
