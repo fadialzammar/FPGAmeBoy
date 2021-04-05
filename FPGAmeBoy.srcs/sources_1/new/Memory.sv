@@ -44,6 +44,22 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
         for (int i = 0; i < (1<<16); i++) begin
             mem[i] = 0;
          end
+//      mem[17733] = 8'h1A; // REG A
+    //   mem[515] = 8'hEE;
+      mem[258] = 8'hBB;     //mem[0x0102]
+      mem[515] = 8'hCC;     //mem[0x0203]
+      mem[772] = 8'hDD;     //mem[0x0304]
+      mem[1029] = 8'hEE;    //mem[0x0405]
+      mem[1286] = 8'hAB;    //mem[0x0506]
+      mem[43783] = 8'hCD;   //mem[0xAB07]
+      mem[61389] = 8'hAA;   //mem[0xEFCD]
+      
+      // LD A, (BC) and LD A, (DE) testing
+      mem[48076] = 8'hFA;   //mem[0xBBCC]
+      mem[56814] = 8'hD1;   //mem[0xDDEE]
+
+      // LDH testing
+      mem[65315] = 8'hAB;   //mem[0xFF23]
       mem[517] = 8'h1A; // REG A
     end
   
@@ -55,7 +71,6 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
     
     always_ff@(negedge CLK)
     begin
-    if(RE == 1)
     DOUT <= mem[ADDR];
     end
     
