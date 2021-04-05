@@ -1547,9 +1547,9 @@ module ControlUnit(
                     8'b00??0001: // 16 bit Immediate Loads: nn , 16-immediate = d16; SP, 16-immediate = d16
                     begin
                         // Flag for Immediate Low Byte Load
-                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
                         // Flag for 16 bit Immediates
-                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                         IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
                         case(IMMED_SEL[5:4])                            
                             2'b00: // LD BC, d16
                             begin
@@ -1705,18 +1705,26 @@ module ControlUnit(
                     begin
                     if(JUMP_FLAG == 1)
                         begin
-                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
                         PC_MUX_SEL = 2'b01;
                         PC_LD = 1;
                         end
-                    IMMED_FLAG = 1;
-                    IMMED_DATA_LOW = OPCODE;
+                    // Flag for Immediate Low Byte Load
+                    LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                    // Flag for 16 bit Immediates
+                    IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                    IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                    // Saves the new Immediate Value Data Low Byte for writing
+                    LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                    // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                    IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                    // Saves the new Immediate Value Data High Byte for writing
+                    LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
                     JUMP_FLAG = 1;
                     end
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        PC_ADDR_OUT = (IMMED_SEL + OPCODE + PC) - 1;// OPCODE= hi byte, IMMED_SEL = lwo byte + current addr (PC);
-                        PC_MUX_SEL = 2'b01;
+                        PC_ADDR_OUT = (OPCODE + PC)-1;// OPCODE= hi byte, IMMED_SEL = lwo byte + current addr (PC);
+                        PC_MUX_SEL = 2'b11;
                         PC_LD = 1;
                     end
                      8'b11001101: //call nn

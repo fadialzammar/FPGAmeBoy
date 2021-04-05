@@ -108,11 +108,14 @@ module Wrapper(
     logic [2:0] MEM_DATA_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
+    logic [15:0] JP_PC;
 
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
     assign IMMED_ADDR = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
     assign IMMED_ADDR_1 = IMMED_ADDR + 1;
+    
+    assign JP_PC = {IMMED_DATA_HIGH, IMMED_DATA_LOW}-1;
     
     logic [15:0] IMMED_DATA_16;
     // Concatenate the High and Low Bytes of the Immediate Data Values
@@ -122,8 +125,8 @@ module Wrapper(
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
     
-    MUX4to1 ProgCount_MUX(
-    .In0(), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(),
+    MUX4to1#(.DATA_SIZE(16)) ProgCount_MUX(
+    .In0(), .In1(JP_PC), .In2(RF_16_OUT), .In3(CU_PC_ADDR),
         .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
         
