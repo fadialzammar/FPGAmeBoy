@@ -25,7 +25,9 @@ module ControlUnit(
         input [7:0] OPCODE,
         input [15:0] PC,
         output logic PC_LD, PC_INC,                     // program counter
-        output logic [1:0]PC_MUX_SEL,
+        output logic PC_HIGH_FLAG, PC_LOW_FLAG,
+        output logic [2:0] PC_MUX_SEL,
+        output logic CALL_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
         output logic [2:0] RF_ADRX, RF_ADRY,
@@ -34,8 +36,9 @@ module ControlUnit(
         output logic ALU_OPX_SEL, ALU_16_A_SEL,
         output logic [2:0] ALU_OPY_SEL, ALU_16_B_SEL,
         output logic MEM_WE, MEM_RE,                    // memory
-        output logic [1:0] MEM_ADDR_SEL, 
+        output logic [2:0] MEM_ADDR_SEL, 
         output logic [2:0] MEM_DATA_SEL,
+        output logic INTR_REG_SEL,
         output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
         output logic [7:0] IMMED_DATA_LOW,  IMMED_DATA_HIGH,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
@@ -52,6 +55,7 @@ module ControlUnit(
         output logic [2:0] BIT_SEL,                      // BIT select signal
         output logic [2:0] RST_MUX_SEL
     ); 
+    
     // RF Data Mux
     parameter RF_MUX_ALU             = 0; // ALU output
     parameter RF_MUX_MEM             = 1; // Memory output
@@ -63,38 +67,61 @@ module ControlUnit(
     parameter RF_MUX_IMMED_HIGH      = 7; // Immediate value High Byte
     parameter RF_MUX_DY              = 8; // DY output of the Reg File
     
-    // 
+    // Memory Address MUX
     parameter MEM_ADDR_SP      = 0; // stack pointer output
     parameter MEM_ADDR_IMMED   = 1; // Immediate Value address input
     parameter MEM_ADDR_IMMED_1 = 2; // Immediate Value address input + 1  
     parameter MEM_ADDR_16_RF   = 3; // 16 bit output of the Reg File
+    parameter MEM_ADDR_INTR    = 4; // Interrput Register Address
     
+    // Memory Data MUX
     parameter MEM_DATA_DX      = 0; // DX output of the Reg File
-    parameter MEM_DATA_PC      = 1; // PC value output 
-    parameter MEM_DATA_FLAGS   = 2; // Flags Register values
-    parameter MEM_DATA_SP_LOW  = 3; // Stack Pointer Low Byte output
-    parameter MEM_DATA_SP_HIGH = 4; // Stack Pointer High Byte output
-    parameter MEM_DATA_ALU = 5;
+    parameter MEM_DATA_PC_LOW  = 1; // PC Low Byte value 
+    parameter MEM_DATA_PC_HIGH = 2; // PC High Byte value 
+    parameter MEM_DATA_FLAGS   = 3; // Flags Register values
+    parameter MEM_DATA_SP_LOW  = 4; // Stack Pointer Low Byte output
+    parameter MEM_DATA_SP_HIGH = 5; // Stack Pointer High Byte output
+    parameter MEM_DATA_INTR    = 6; // Interrput Register Data
+    parameter MEM_DATA_ALU = 7;
     
-    parameter SP_DIN_RF_16 = 0; // 16 bit output of Reg File 
-    parameter SP_DIN_IMMED = 1; // Immediate value input
+    // Interrupt Register MUX
+    parameter INTR_MUX_LOW  = 0; // Low input to the Interrupt Register
+    parameter INTR_MUX_HIGH = 1; // High input to the Interrupt Register
     
+    // Stack Pointer MUX
+    parameter SP_DIN_RF_16   = 0; // 16 bit output of Reg File 
+    parameter SP_DIN_IMMED   = 1; // Immediate value input
+    
+    // Flag Register MUX
     parameter FLAGS_DATA_ALU = 0; // ALU Flags Output
     parameter FLAGS_DATA_MEM = 1;  // Memory Flags Output 
     
+    // ALU B Input
     parameter ALU_B_MUX_DY   = 0; // DY output of the Reg File
     parameter ALU_B_MUX_MEM  = 1; // Memory output
     parameter ALU_B_MUX_PROG = 2; // PROGOM output
 
-    parameter REG_B = 3'b000;
-    parameter REG_C = 3'b001;
-    parameter REG_D = 3'b010;
-    parameter REG_E = 3'b011;
-    parameter REG_H = 3'b100;
-    parameter REG_L = 3'b101;
+    // Reg File Register Addresses
+    parameter REG_B  = 3'b000;
+    parameter REG_C  = 3'b001;
+    parameter REG_D  = 3'b010;
+    parameter REG_E  = 3'b011;
+    parameter REG_H  = 3'b100;
+    parameter REG_L  = 3'b101;
     parameter REG_HL = 3'b110;
-    parameter REG_A = 3'b111;
-     
+    parameter REG_A  = 3'b111;
+    
+    // PC Data MUX
+    parameter PC_MUX_JP   = 0;   // JP PC Address 
+    parameter PC_CU_PC_ADDR = 1;
+    parameter PC_RF_16_OUT = 2;
+    parameter PC_RST_ADDR = 3;
+    parameter PC_MUX_RET  = 4;   // RET PC Address
+    parameter PC_MUX_CALL = 5;   // CALL PC Address
+    
+    // CALL Data MUX
+    parameter CALL_MUX_FALSE = 0; // CALL not taken
+    parameter CALL_MUX_TRUE  = 1; // CALL taken
     
     // ALU Operations
     localparam ADD_ALU  = 5'b00000;
@@ -123,10 +150,10 @@ module ControlUnit(
     localparam SET_ALU  = 5'b10111;
     localparam RES_ALU  = 5'b11000;
 
+    // 16 Bit ALU Operations
     localparam ADD_16_ALU = 2'b00;
     localparam INC_16_ALU = 2'b01;
     localparam DEC_16_ALU = 2'b10;
-
     
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
 
@@ -185,15 +212,16 @@ module ControlUnit(
 
     
     always_comb begin
-        I_SET = 0; I_CLR =0; RST=0; IO_STRB = 0;
-        PC_LD=0; PC_INC=0; PC_MUX_SEL=0;
+        I_SET = 0; I_CLR = 0; RST=0; IO_STRB = 0;
+        PC_LD = 0; PC_INC = 0; PC_MUX_SEL = 0;
+        PC_HIGH_FLAG = 0; PC_LOW_FLAG = 0;
         RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;  RF_WR_SEL=0;
-        SP_LD=0; SP_INCR=0; SP_DECR=0; SP_DIN_SEL = 0;
-        MEM_WE=0; MEM_RE = 0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
+        SP_LD=0; SP_INCR = 0; SP_DECR  =0; SP_DIN_SEL = 0;
+        MEM_WE=0; MEM_RE = 0; MEM_DATA_SEL = 0; MEM_ADDR_SEL = 0; 
         IMMED_ADDR_LOW = 0; IMMED_ADDR_HIGH = 0;
         IMMED_DATA_LOW = 0; IMMED_DATA_LOW = 0;
-        ALU_OPY_SEL=0; ALU_OPX_SEL = 0; ALU_SEL=0;
-        ALU_16_A_SEL=0; ALU_16_B_SEL=0; 
+        ALU_OPY_SEL = 0; ALU_OPX_SEL = 0; ALU_SEL = 0;
+        ALU_16_A_SEL = 0; ALU_16_B_SEL = 0; 
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
@@ -1134,6 +1162,153 @@ module ControlUnit(
                         SP_LD = 1'b1;
                     end
                     
+                    8'b110??000: // RET Z, RET NZ, RET C, RET NC
+                    begin
+                        case (OPCODE[4:3])
+                            2'b00: //  RET NZ
+                            begin
+                                if (!Z)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                            
+                            2'b01: //  RET Z
+                            begin                          
+                                if (Z)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end      
+                            end
+                            
+                            2'b10: //  RET NC
+                            begin
+                                if (!C)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                            
+                            2'b11: //  RET C
+                            begin
+                                if (C)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                        endcase
+                    end
+                    
+                    8'b11001001: // RET : Pop two bytes from stack & jump to that address
+                    begin
+                        POP_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        SP_HIGH_FLAG = 1'b1; 
+                    end
+                    
+                     8'b11011001: // RETI : Pop two bytes from stack & jump to that address and enable interrupts
+                    begin
+                        POP_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        SP_HIGH_FLAG = 1'b1; 
+                        // Set the Interrupt value high
+                        INTR_REG_SEL = INTR_MUX_HIGH;
+                        // Set the Memory Address and Data 
+                        MEM_DATA_SEL = MEM_DATA_INTR;
+                        MEM_ADDR_SEL = MEM_ADDR_INTR;
+                        MEM_WE = 1'b1;
+                    end
+                    
+                    8'b11001101: // CALL nn: Push the PC onto the stack & jump to immediate address
+                    begin
+                        PUSH_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        IMMED_SEL = OPCODE;
+                        SP_LOW_FLAG = 1'b1; 
+                    end
+                    //////////////////////////////////////////===================== NEED TO ADDRESS THE NOT TAKEN CASE (PC + 2) also for RET =====================//////////////////////////////////
+                    8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C
+                    begin
+                        case (OPCODE[4:3])
+                            2'b00: // CALL NZ
+                            begin
+                                if (!Z)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b01: // CALL Z
+                            begin
+                                if (Z)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b10: // CALL NC
+                            begin
+                                if (!C)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end                                
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b11: // CALL C
+                            begin
+                                if (C)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end                             
+                            end
+                            
+                        endcase
+                    end
+                           
                     //16 bit ALU
                     8'b00??0011: // INC BC, DE, HL, SP
                     begin
@@ -1326,6 +1501,7 @@ module ControlUnit(
                             PC_LD = 1;
                         end      
                     end
+                    
                     8'b11101001: begin //JP to address contained in HL (opcode E9)
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
@@ -1390,29 +1566,26 @@ module ControlUnit(
                         end     
                     end
 
-
-
                     default: begin
                         // literally crashes on a real game boy
                     end
-                    
-                
-
                 endcase // OPCODE
                     
                 if (INTR)
                     NS = INTERRUPT;       
-                else // Maybe add begin and end to this
-                    if (SP_LOW_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
-                        NS = SP_LOW;
-                    else if(HL_FLAG) // Transition to HL state
-                        NS = HL_FETCH;
-                    else if (SP_HIGH_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
-                        NS = SP_HIGH;  
-                    else if (ALU_16)
-                        NS= ALU16;
-                    else 
-                        NS = FETCH;
+                else
+                    begin
+                        if (SP_LOW_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                            NS = SP_LOW;
+                        else if(HL_FLAG) // Transition to HL state
+                            NS = HL_FETCH;
+                        else if (SP_HIGH_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
+                            NS = SP_HIGH;
+                        else if (ALU_16)
+                            NS= ALU16;
+                        else 
+                            NS = FETCH;
+                    end
             end // EXEC
             
             ALU16: begin // 16 bit ALU
@@ -1566,12 +1739,12 @@ module ControlUnit(
                 // Input to the Reg File is the ALU output
                 RF_WR_SEL = RF_MUX_ALU;                                
                 // Write operation back into Register A
-                RF_WR = 1;                                
+                RF_WR = 1;        
                 // Flags
-                C_FLAG_LD = 1;
-                Z_FLAG_LD = 1;
-                N_FLAG_LD = 1;
-                H_FLAG_LD = 1;
+                C_FLAG_LD = 1'b0;
+                Z_FLAG_LD = 1'b0;
+                N_FLAG_LD = 1'b0;
+                H_FLAG_LD = 1'b0;                             
                 // Flag register data select
                 FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                 // Register File Addresses
@@ -1583,7 +1756,6 @@ module ControlUnit(
                     begin
                         // Reg File does not write
                         RF_WR = 0; 
-                        //HIGH_IMMED = 
                         // Flag for Immediate Low Byte Load
                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
                         // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
@@ -1597,7 +1769,8 @@ module ControlUnit(
                         // Set the Stack Pointer Low Flag to Write the Low byte of the Stack Pointer Data
                         SP_LOW_FLAG = ~LOW_IMMED ? 1'b1 : 1'b0;
                     end
-                    8'b00???110: begin  // LD r, n
+                    
+                    8'b00???110: begin  // LD r, n                    
                         RF_WR = 1;
                         RF_WR_SEL = RF_MUX_IMMED_LOW;
                         IMMED_DATA_LOW = OPCODE;
@@ -1703,6 +1876,12 @@ module ControlUnit(
                     
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values
                     begin 
+                        // Flags
+                        C_FLAG_LD = 1'b1;
+                        Z_FLAG_LD = 1'b1;
+                        N_FLAG_LD = 1'b1;
+                        H_FLAG_LD = 1'b1;
+                    
                         case(IMMED_SEL[5:4])
                         
                             2'b00: // ADD A, immed
@@ -1733,6 +1912,11 @@ module ControlUnit(
                     
                     8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
                     begin 
+                        // Flags
+                        C_FLAG_LD = 1'b1;
+                        Z_FLAG_LD = 1'b1;
+                        N_FLAG_LD = 1'b1;
+                        H_FLAG_LD = 1'b1;
                         case(IMMED_SEL[5:4])
                             2'b00: // ADC A, immed
                             begin
@@ -1760,7 +1944,54 @@ module ControlUnit(
                                 RF_WR = 0; 
                             end  
                         endcase               
+                    end 
+                    
+                    8'b11001101: // CALL nn: Save/set the immediate PC value
+                    begin        
+                        // Reg File does not write
+                        RF_WR = 0; 
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;                       
+                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
+                        // Saves the new Immediate Value Address Low Byte for writing
+                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
+                        // Saves the new Immediate Value Address High Byte for writing
+                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
+                        // Load the PC with the immediate value address when the data is valid
+                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                        PC_MUX_SEL = PC_MUX_CALL;
+                        CALL_MUX_SEL = CALL_MUX_TRUE;
                     end
+                    
+                    8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C: Save/set the immediate PC value
+                    begin        
+                        // Reg File does not write
+                        RF_WR = 0; 
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;                       
+                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
+                        // Saves the new Immediate Value Address Low Byte for writing
+                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
+                        // Saves the new Immediate Value Address High Byte for writing
+                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
+                        // Load the PC with the immediate value address when the data is valid
+                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                        PC_MUX_SEL = PC_MUX_CALL;
+                        CALL_MUX_SEL = CALL_MUX_TRUE;
+                    end                                           
+                  
                     8'b110??01?: // jump nn, conditional jumps
                     begin
                     if(JUMP_FLAG == 1)
@@ -1787,31 +2018,6 @@ module ControlUnit(
                         PC_MUX_SEL = 2'b11;
                         PC_LD = 1;
                     end
-                     8'b11001101: //call nn
-                     begin
-                     if(JUMP_FLAG == 1)
-                        begin
-                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
-                        PUSH_FLAG = 1'b1;                        
-                        SP_OPCODE = OPCODE;
-                        SP_LOW_FLAG = 1'b1;
-                        end
-                     IMMED_DATA_LOW = OPCODE;
-                     JUMP_FLAG = 1;
-                     end
-                     8'b110??100: // call nn, conditional
-                     begin
-                        if(JUMP_FLAG == 1)
-                        begin
-                        PC_ADDR_OUT = (8<<IMMED_DATA_LOW)+OPCODE;
-                        PUSH_FLAG = 1'b1;                        
-                        SP_OPCODE = OPCODE;
-                        SP_LOW_FLAG = 1'b1;
-                        end
-                    IMMED_DATA_LOW = OPCODE;
-                    JUMP_FLAG = 1;
-                     end
-                                                             
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
                 IMMED_FLAG = IMMED_SEL == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
@@ -1826,6 +2032,11 @@ module ControlUnit(
             
             
             SP_LOW: begin   // Stack Pointer Low Byte state
+                // Flags
+                C_FLAG_LD = 1'b0;
+                Z_FLAG_LD = 1'b0;
+                N_FLAG_LD = 1'b0;
+                H_FLAG_LD = 1'b0;
                 if (PUSH_FLAG) // Pushes the Low Byte and then the High Byte
                     begin
                         // Register File does not write on a PUSH
@@ -1838,37 +2049,47 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
-                        // Low Byte used set by RF_ADRX except for the Flag Register Values
-                        case (SP_OPCODE)
-                            8'b11001101:
+                      
+                        case (SP_OPCODE) inside
+                          8'b11??0101: /// PUSH nn
                             begin
-                            end
-                            8'b110??100: // call nn, conditional
-                            begin
-                            end
-                        endcase
-                        case (SP_OPCODE[5:4])
-                            2'b00: // BC
-                            begin                                                          
-                                RF_ADRX = REG_C;                                
+                                // Low Byte used set by RF_ADRX except for the Flag Register Values
+                                case (SP_OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin                                                          
+                                        RF_ADRX = REG_C;                                
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin
+                                        RF_ADRX = REG_E;                        
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                        RF_ADRX = REG_L;
+                                    end
+                                    
+                                    2'b11: // AF 
+                                    begin
+                                        // Memory Data select set to the Flag Register values (Low Byte)
+                                        MEM_DATA_SEL = MEM_DATA_FLAGS;
+                                    end
+                                endcase 
                             end
                             
-                            2'b01: // DE
+                            8'b11001101: // CALL nn: Push the PC Low Byte onto the stack 
                             begin
-                                RF_ADRX = REG_E;                        
+                                // Memory Data select set to DX output of the Reg File
+                                MEM_DATA_SEL = MEM_DATA_PC_LOW;      
                             end
                             
-                            2'b10: // HL
+                            8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C: Push the PC Low Byte onto the stack
                             begin
-                                RF_ADRX = REG_L;
+                                // Memory Data select set to DX output of the Reg File
+                                MEM_DATA_SEL = MEM_DATA_PC_LOW;
                             end
-                            
-                            2'b11: // AF 
-                            begin
-                                // Memory Data select set to the Flag Register values (Low Byte)
-                                MEM_DATA_SEL = MEM_DATA_FLAGS;
-                            end
-                        endcase                                
+                        endcase                               
                         // Reset the Stack Pointer Low Byte Flag
                         SP_LOW_FLAG = 1'b0;
                         // Transition to the Stack Pointer High Byte state to push the High Byte
@@ -1889,40 +2110,73 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Read the popped value from memory &(SP)
                         MEM_RE = 1'b1;
-                        // Low Byte used set by RF_ADRX except for the Flag Register Values
-                        case (SP_OPCODE[5:4])
-                                2'b00: // BC
-                                begin                                                                   
-                                    RF_ADRX = REG_C;                                    
-                                end
-                                
-                                2'b01: // DE
-                                begin                                    
-                                    RF_ADRX = REG_E;
-                                end
-                                
-                                2'b10: // HL
-                                begin
-                                    RF_ADRX = REG_L;
-                                end
-                                
-                                2'b11: // AF
-                                begin
-                                    // Register File does not write when popping the Flag Register values
-                                    RF_WR = 1'b0;                                   
-                                    // Load the popped Low Byte values from the stack into the flag register
-                                    C_FLAG_LD = 1'b1;
-                                    Z_FLAG_LD = 1'b1;
-                                    N_FLAG_LD = 1'b1;
-                                    H_FLAG_LD = 1'b1; 
-                                    // Flag register data select
-                                    FLAGS_DATA_SEL =  FLAGS_DATA_MEM;                                   
-                                    // Memory Data select set to Flag Register values
-                                    MEM_DATA_SEL = MEM_DATA_FLAGS;
-                                end
-                            endcase                                               
-                        // Reset the Stack Pointer Low flag and the POP flag
                         
+                        case (SP_OPCODE) inside
+                            8'b11??0001: // POP nn
+                            begin
+                                // Low Byte used set by RF_ADRX except for the Flag Register Values
+                                case (SP_OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin                                                                   
+                                        RF_ADRX = REG_C;                                    
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin                                    
+                                        RF_ADRX = REG_E;
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                        RF_ADRX = REG_L;
+                                    end
+                                    
+                                    2'b11: // AF
+                                    begin
+                                        // Register File does not write when popping the Flag Register values
+                                        RF_WR = 1'b0;                                   
+                                        // Load the popped Low Byte values from the stack into the flag register
+                                        C_FLAG_LD = 1'b1;
+                                        Z_FLAG_LD = 1'b1;
+                                        N_FLAG_LD = 1'b1;
+                                        H_FLAG_LD = 1'b1; 
+                                        // Flag register data select
+                                        FLAGS_DATA_SEL =  FLAGS_DATA_MEM;                                   
+                                        // Memory Data select set to Flag Register values
+                                        MEM_DATA_SEL = MEM_DATA_FLAGS;
+                                    end
+                                endcase
+                            end
+                            
+                            8'b11001001: // RET: POP low byte and load the PC with the popped address
+                            begin
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0; 
+                                PC_LOW_FLAG = 1'b1;
+                                PC_MUX_SEL = PC_MUX_RET;
+                                PC_LD = 1'b1;
+                            end
+                            
+                            8'b11011001: // RETI: POP low byte and load the PC with the popped address
+                            begin
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0;
+                                PC_LOW_FLAG = 1'b1;
+                                PC_MUX_SEL = PC_MUX_RET;
+                                PC_LD = 1'b1;
+                            end
+                            
+                            8'b110??000: // RET Z, RET NZ, RET C, RET NC : POP low byte and load the PC with the popped address
+                            begin
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0;
+                                PC_LOW_FLAG = 1'b1;
+                                PC_MUX_SEL = PC_MUX_RET;
+                                PC_LD = 1'b1;
+                            end
+                            
+                         endcase                                               
+                        // Reset the Stack Pointer Low flag and the POP flag                       
                         SP_LOW_FLAG = 1'b0;
                         POP_FLAG = 1'b0;
                         // Transition to the FETCH state once both bytes are popped
@@ -1950,6 +2204,12 @@ module ControlUnit(
             end // SP_LOW               
                 
             SP_HIGH: begin   // Stack Pointer High Byte state
+                // Flags
+                C_FLAG_LD = 1'b0;
+                Z_FLAG_LD = 1'b0;
+                N_FLAG_LD = 1'b0;
+                H_FLAG_LD = 1'b0;
+                
                 if (PUSH_FLAG) // Pushes the Low Byte and then the High Byte
                     begin
                         // Register File does not write on a PUSH
@@ -1960,29 +2220,51 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
-                        // High Byte used set by RF_ADRX
-
-                        case (SP_OPCODE[5:4])
-                            2'b00: // BC
-                            begin                                                          
-                                RF_ADRX = REG_B;                                
+                      
+                        case(SP_OPCODE)
+                            8'b11??0101: // PUSH nn
+                            begin
+                                // High Byte used set by RF_ADRX
+                                case (SP_OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin                                                          
+                                        RF_ADRX = REG_B;                                
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin
+                                        RF_ADRX = REG_D;                        
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                        RF_ADRX = REG_H;
+                                    end
+                                    
+                                    2'b11: // AF 
+                                    begin
+                                        RF_ADRX = REG_A;
+                                    end
+                                endcase 
                             end
                             
-                            2'b01: // DE
+                            8'b11001101: // CALL nn: Push the PC High Byte onto the stack 
                             begin
-                                RF_ADRX = REG_D;                        
+                                // Memory Data select set to DX output of the Reg File
+                                MEM_DATA_SEL = MEM_DATA_PC_HIGH;
+                                // Set the Immediate Flag for the PC immediate address value
+                                IMMED_FLAG = 1'b1;      
+                            end  
+                            
+                            8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C: Push the PC High Byte onto the stack
+                            begin
+                                // Memory Data select set to DX output of the Reg File
+                                MEM_DATA_SEL = MEM_DATA_PC_HIGH;
+                                // Set the Immediate Flag for the PC immediate address value
+                                IMMED_FLAG = 1'b1; 
                             end
                             
-                            2'b10: // HL
-                            begin
-                                RF_ADRX = REG_H;
-                            end
-                            
-                            2'b11: // AF 
-                            begin
-                                RF_ADRX = REG_A;
-                            end
-                        endcase                                
+                        endcase                             
                         // Reset the Stack Pointer High Byte Flag and the PUSH Flag
                         SP_HIGH_FLAG = 1'b0;
                         PUSH_FLAG = 1'b0;
@@ -2004,28 +2286,55 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Read the popped value from memory &(SP)
                         MEM_RE = 1'b1;
-                        // High Byte used set by RF_ADRX
-                        case (SP_OPCODE[5:4])
-                                2'b00: // BC
-                                begin                                                                   
-                                    RF_ADRX = REG_B;                                    
-                                end
-                                
-                                2'b01: // DE
-                                begin                                    
-                                    RF_ADRX = REG_D;
-                                end
-                                
-                                2'b10: // HL
-                                begin
-                                    RF_ADRX = REG_H;
-                                end
-                                
-                                2'b11: // AF
-                                begin
-                                    RF_ADRX = REG_A;
-                                end
-                            endcase                                                
+                        case (SP_OPCODE) inside
+                            8'b11??0001: // POP nn
+                            begin
+                                // High Byte used set by RF_ADRX
+                                case (SP_OPCODE[5:4])
+                                    2'b00: // BC
+                                    begin                                                                   
+                                        RF_ADRX = REG_B;                                    
+                                    end
+                                    
+                                    2'b01: // DE
+                                    begin                                    
+                                        RF_ADRX = REG_D;
+                                    end
+                                    
+                                    2'b10: // HL
+                                    begin
+                                        RF_ADRX = REG_H;
+                                    end
+                                    
+                                    2'b11: // AF
+                                    begin
+                                        RF_ADRX = REG_A;
+                                    end
+                                endcase
+                            end    
+                                                    
+                            8'b11001001: // RET: pop high byte
+                            begin
+                                PC_HIGH_FLAG = 1'b1;
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0;
+                            end
+                            
+                            8'b11011001: // RETI: pop high byte
+                            begin
+                                PC_HIGH_FLAG = 1'b1;
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0;
+                            end   
+                            
+                            8'b110??000: // RET Z, RET NZ, RET C, RET NC : pop high byte
+                            begin
+                                PC_HIGH_FLAG = 1'b1;
+                                // Register File does not write on a RET
+                                RF_WR = 1'b0;
+                            end
+                        
+                        endcase                                                
                         // Reset the Stack Pointer High Byte Flag
                         SP_HIGH_FLAG = 1'b0;
                         // Transition to the Stack Pointer Low Byte state to pop the Low Byte
