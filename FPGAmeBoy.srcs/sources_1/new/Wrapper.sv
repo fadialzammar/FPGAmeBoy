@@ -29,7 +29,8 @@ module Wrapper(
     logic PC_LD;
     logic [15:0] PC_DIN;
     logic [15:0] PC;
-    logic [15:00] RET_PC, CALL_PC, JP_PC, JR_PC;
+    logic [15:0] RET_PC, CALL_PC, CALL_PC_FALSE, JP_PC, JR_PC, JR_PC_FALSE;
+    logic [15:0] CALL_PC_IN;
     
     // ALU Signals
     logic [4:0] ALU_FUN;
@@ -96,6 +97,7 @@ module Wrapper(
     logic PC_INC;                   // program counter
     logic PC_HIGH_FLAG, PC_LOW_FLAG;
     logic [1:0] PC_MUX_SEL;
+    logic CALL_MUX_SEL;
     logic [1:0] RF_WR_SEL;
     logic ALU_OPY_SEL;
     logic FLAGS_DATA_SEL;
@@ -134,10 +136,17 @@ module Wrapper(
     // Concatenate the High and Low Bytes of the PC Address Values
     assign RET_PC = {RET_PC_HIGH,RET_PC_LOW} + 2; // + 2 to bypass the immediate values after CALL
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
+    assign CALL_PC_FALSE = PC + 2; // CALL not taken due to conditional (skip immediat values)
     
+    // CALL Data MUX
+     MUX2to1 #(.DATA_SIZE(16)) CALL_MUX(
+        .In0(CALL_PC_FALSE), .In1(CALL_PC),
+        .Sel(CALL_MUX_SEL), .Out(CALL_PC_IN)
+    );
+     
     // PC Data MUX
     MUX4to1 #(.DATA_SIZE(16)) ProgCount_MUX(
-        .In0(RET_PC), .In1(CALL_PC), .In2(JP_PC), .In3(JR_PC),
+        .In0(RET_PC), .In1(CALL_PC_IN), .In2(JP_PC), .In3(JR_PC),
         .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
@@ -267,7 +276,7 @@ module Wrapper(
         // Outputs
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
-        .PC_MUX_SEL(PC_MUX_SEL),                   
+        .PC_MUX_SEL(PC_MUX_SEL), .CALL_MUX_SEL(CALL_MUX_SEL),                   
         .RF_WR(RF_WR),             // register file
         .RF_WR_SEL(RF_DIN_SEL), 
         .RF_ADRX(RF_ADRX), .RF_ADRY(RF_ADRY),

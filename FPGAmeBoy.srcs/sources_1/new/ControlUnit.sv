@@ -26,6 +26,7 @@ module ControlUnit(
         output logic PC_LD, PC_INC,                     // program counter
         output logic PC_HIGH_FLAG, PC_LOW_FLAG,
         output logic [1:0] PC_MUX_SEL,
+        output logic CALL_MUX_SEL,
         output logic RF_WR,                             // register file
         output logic [3:0] RF_WR_SEL,
         output logic [2:0] RF_ADRX, RF_ADRY,
@@ -111,6 +112,10 @@ module ControlUnit(
     parameter PC_MUX_CALL = 1;   // CALL PC Address
     parameter PC_MUX_JP   = 2;   // JP PC Address
     parameter PC_MUX_JR   = 3;   // JR PC Address
+    
+    // CALL Data MUX
+    parameter CALL_MUX_FALSE = 0; // CALL not taken
+    parameter CALL_MUX_TRUE  = 1; // CALL taken
     
     // ALU Operations
     localparam ADD_ALU  = 5'b00000;
@@ -1185,52 +1190,76 @@ module ControlUnit(
                         IMMED_SEL = OPCODE;
                         SP_LOW_FLAG = 1'b1; 
                     end
-                    
+                    //////////////////////////////////////////===================== NEED TO ADDRESS THE NOT TAKEN CASE (PC + 2) also for RET =====================//////////////////////////////////
                     8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C
                     begin
                         case (OPCODE[4:3])
                             2'b00: // CALL NZ
                             begin
                                 if (!Z)
-                                begin
-                                    PUSH_FLAG = 1'b1;
-                                    SP_OPCODE = OPCODE;
-                                    IMMED_SEL = OPCODE;
-                                    SP_LOW_FLAG = 1'b1;
-                                end 
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
                             end
                             
                             2'b01: // CALL Z
                             begin
                                 if (Z)
-                                begin
-                                    PUSH_FLAG = 1'b1;
-                                    SP_OPCODE = OPCODE;
-                                    IMMED_SEL = OPCODE;
-                                    SP_LOW_FLAG = 1'b1;
-                                end 
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
                             end
                             
                             2'b10: // CALL NC
                             begin
                                 if (!C)
-                                begin
-                                    PUSH_FLAG = 1'b1;
-                                    SP_OPCODE = OPCODE;
-                                    IMMED_SEL = OPCODE;
-                                    SP_LOW_FLAG = 1'b1;
-                                end 
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end                                
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
                             end
                             
                             2'b11: // CALL C
                             begin
                                 if (C)
-                                begin
-                                    PUSH_FLAG = 1'b1;
-                                    SP_OPCODE = OPCODE;
-                                    IMMED_SEL = OPCODE;
-                                    SP_LOW_FLAG = 1'b1;
-                                end 
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        IMMED_SEL = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end                             
                             end
                             
                         endcase
@@ -1395,17 +1424,6 @@ module ControlUnit(
                     end
                     8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
                     end
-                    8'b11000100: begin //CALL cc, nn : call address n if Z flag is reset (opcode C4)
-                    end
-                    8'b11001100: begin //CALL cc, nn : call address n if Z flag is set (opcode CC)
-                    end
-                    8'b11010100: begin //CALL cc, nn : call address n if C flag is reset(opcode D4)
-                    end
-                    8'b11011100: begin //CALL cc, nn: call address n if C flag is set (opcode DC)
-                    end
-                   
-                    
-
                 endcase // OPCODE
                     
                 if (INTR)
@@ -1801,8 +1819,9 @@ module ControlUnit(
                         LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
                         // Load the PC with the immediate value address when the data is valid
                         PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
-                        // Set the PC MUX select to the CALL input address
+                        // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                         PC_MUX_SEL = PC_MUX_CALL;
+                        CALL_MUX_SEL = CALL_MUX_TRUE;
                     end
                     
                     8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C: Save/set the immediate PC value
@@ -1823,8 +1842,9 @@ module ControlUnit(
                         LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
                         // Load the PC with the immediate value address when the data is valid
                         PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
-                        // Set the PC MUX select to the CALL input address
+                        // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                         PC_MUX_SEL = PC_MUX_CALL;
+                        CALL_MUX_SEL = CALL_MUX_TRUE;
                     end                                           
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
