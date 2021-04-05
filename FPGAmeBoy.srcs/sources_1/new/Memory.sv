@@ -59,7 +59,6 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
       mem[56814] = 8'hD1;   //mem[0xDDEE]
 
       // LDH testing
-    //   mem[65298] = 8'h00;   //mem[0xFF12]
       mem[65315] = 8'hAB;   //mem[0xFF23]
     end
   

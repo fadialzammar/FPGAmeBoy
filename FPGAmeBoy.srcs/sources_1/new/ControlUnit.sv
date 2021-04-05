@@ -68,7 +68,7 @@ module ControlUnit(
     parameter MEM_ADDR_16_RF   = 3; // 16 bit output of the Reg File
     parameter MEM_ADDR_BUF     = 4; // Buffer for RF_16_OUT
     parameter MEM_ADDR_FF_IMMED = 5; // 0xFF00 + immediate value
-    parameter MEM_ADDR_FF_REGC  = 6; // 0xFF00 + value of C register
+    parameter MEM_ADDR_FF_DY  = 6; // 0xFF00 + value of DY register
     
     parameter MEM_DATA_DX      = 0; // DX output of the Reg File
     parameter MEM_DATA_PC      = 1; // PC value output 
@@ -749,19 +749,22 @@ module ControlUnit(
                         HL_FLAG = 1;
                     end
 
-                    // 8'b11110000: begin // LDH A, (n)
-                    //     // aka LD A, (FF00 + u8)
-                    //     RF_ADRX = REG_A;
-                    //     OPCODE_HOLD = OPCODE;
-                    //     HL_FLAG = 1;    // TODO: optimize states
-                    // end
-
-                    8'b11100010:begin   // LDH (C), A
-                        // aka LD (FF00 + C), A                     
+                    8'b11100010: begin   // LDH (C), A
+                        // aka LD (FF00 + C), A      
+                        RF_ADRX = REG_A;
+                        RF_ADRY = REG_C;     
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        MEM_ADDR_SEL = MEM_ADDR_FF_DY;
+                        MEM_WE = 1;
                     end
 
-                    8'b11110010:begin   // LDH A, (C)
+                    8'b11110010: begin   // LDH A, (C)
                         // aka LD A, (FF00 + C) 
+                        RF_ADRX = REG_A;
+                        RF_ADRY = REG_C;
+                        RF_WR_SEL = RF_MUX_MEM;
+                        MEM_ADDR_SEL = MEM_ADDR_FF_DY;
+                        RF_WR = 1;
                     end
 
                     8'b11111010: begin // LD A, (nn), (nn) = 16-bit immediate, LSB first
@@ -2433,30 +2436,6 @@ module ControlUnit(
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_WE = 1;
                     end
-                    // 8'b00100010: begin  // LD (HL+), A
-                    //     MEM_ADDR_SEL = MEM_ADDR_BUF_P1;
-                    //     RF_ADRX = REG_A;
-                    //     MEM_DATA_SEL = MEM_DATA_DX;
-                    //     MEM_WE = 1;
-                    // end
-                    // 8'b00110010: begin  // LD (HL-), A
-                    //     MEM_ADDR_SEL = MEM_ADDR_BUF_M1;
-                    //     RF_ADRX = REG_A;
-                    //     MEM_DATA_SEL = MEM_DATA_DX;
-                    //     MEM_WE = 1;
-                    // end
-                    // 8'b00101010: begin // LD A, (HL+)
-                    //     MEM_ADDR_SEL = MEM_ADDR_BUF_P1;
-                    //     RF_ADRX = REG_A;
-                    //     RF_WR_SEL = RF_MUX_MEM;
-                    //     RF_WR = 1;
-                    // end
-                    // 8'b00111010: begin // LD A, (HL-)
-                    //     MEM_ADDR_SEL = MEM_ADDR_BUF_M1;
-                    //     RF_ADRX = REG_A;
-                    //     RF_WR_SEL = RF_MUX_MEM;
-                    //     RF_WR = 1;
-                    // end
                     8'b00110110: begin  // LD (HL), n
                         MEM_WE = 1;
                         MEM_DATA_SEL = MEM_DATA_IMMED;
@@ -2471,13 +2450,6 @@ module ControlUnit(
                         RF_ADRY = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DY;
                         MEM_WE = 1;
-
-                        // // Increment HL
-                        // ALU_OPY_SEL = 3'b001;  
-                        // ALU_SEL = INC_ALU;                                
-                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
-                        // RF_WR = 1;  
-                        // RF_ADRX = REG_L;    // Flag register data select
                     end
                     8'b00110010: begin // LD (HL-), A
                         // Write to memory from REG_A
@@ -2485,13 +2457,6 @@ module ControlUnit(
                         RF_ADRY = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DY;
                         MEM_WE = 1;
-
-                        // // Decrement HL
-                        // ALU_OPY_SEL = 3'b001;  
-                        // ALU_SEL = DEC_ALU;                                
-                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
-                        // RF_WR = 1;  
-                        // RF_ADRX = REG_L;    // Flag register data select
                     end
                     8'b00101010: begin // LD A, (HL+)
                         // Write to REG_A from memory
@@ -2499,13 +2464,6 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
-
-                        // // Increment HL
-                        // ALU_OPY_SEL = 3'b001;  
-                        // ALU_SEL = INC_ALU;                                
-                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
-                        // RF_WR = 1;  
-                        // RF_ADRX = REG_L;    // Flag register data select
                     end
                     8'b00111010: begin // LD A, (HL-)
                         // Write to REG_A from memory
@@ -2513,13 +2471,6 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
-
-                        // // Decrement HL
-                        // ALU_OPY_SEL = 3'b001;  
-                        // ALU_SEL = DEC_ALU;                                
-                        // RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
-                        // RF_WR = 1;  
-                        // RF_ADRX = REG_L;    // Flag register data select
                     end    
                     8'b11100000: begin  // LDH (n), A
                         IMMED_DATA_LOW = OPCODE;

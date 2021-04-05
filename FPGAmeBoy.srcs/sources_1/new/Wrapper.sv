@@ -212,7 +212,7 @@ module Wrapper(
     // Memory Address MUX
     MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
-        .In5({8'hFF, IMMED_DATA_LOW}), .In6({8'hFF, RF_DX_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+        .In5({8'hFF, IMMED_DATA_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
     // // Memory Data Input Buffer
