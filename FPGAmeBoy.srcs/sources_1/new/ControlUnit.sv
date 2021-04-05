@@ -34,7 +34,7 @@ module ControlUnit(
         output logic [2:0] ALU_OPY_SEL, ALU_16_B_SEL,
         output logic MEM_WE,                            // memory
         output logic MEM_ADDR_BUF_WE,
-        output logic [3:0] MEM_ADDR_SEL, 
+        output logic [2:0] MEM_ADDR_SEL, 
         output logic [2:0] MEM_DATA_SEL,
         output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
         output logic [7:0] IMMED_DATA_LOW,  IMMED_DATA_HIGH,
@@ -67,10 +67,8 @@ module ControlUnit(
     parameter MEM_ADDR_IMMED_1 = 2; // Immediate Value address input + 1  
     parameter MEM_ADDR_16_RF   = 3; // 16 bit output of the Reg File
     parameter MEM_ADDR_BUF     = 4; // Buffer for RF_16_OUT
-    // parameter MEM_ADDR_BUF_P1  = 5; // Buffer for RF_16_OUT + 1
-    // parameter MEM_ADDR_BUF_M1  = 6; // Buffer for RF_16_OUT - 1
-    parameter MEM_ADDR_FF00_IMMED = 7; // 0xFF00 + immediate value
-    parameter MEM_ADDR_FF00_REGC  = 8; // 0xFF00 + value of carry register
+    parameter MEM_ADDR_FF_IMMED = 5; // 0xFF00 + immediate value
+    parameter MEM_ADDR_FF_REGC  = 6; // 0xFF00 + value of C register
     
     parameter MEM_DATA_DX      = 0; // DX output of the Reg File
     parameter MEM_DATA_PC      = 1; // PC value output 
@@ -744,12 +742,26 @@ module ControlUnit(
                         // OPCODE_HOLD = OPCODE;
                     end
 
-                    8'b11100000: begin // LD (FF00 + u8), A
-                        
+                    8'b111?0000: begin // LDH (n), A or LDH A, (n)
+                        // aka LD (FF00 + u8), A
+                        RF_ADRX = REG_A;
+                        OPCODE_HOLD = OPCODE;
+                        HL_FLAG = 1;
                     end
 
-                    8'b11110000: begin // LD A, (FF00 + u8)
-                        
+                    // 8'b11110000: begin // LDH A, (n)
+                    //     // aka LD A, (FF00 + u8)
+                    //     RF_ADRX = REG_A;
+                    //     OPCODE_HOLD = OPCODE;
+                    //     HL_FLAG = 1;    // TODO: optimize states
+                    // end
+
+                    8'b11100010:begin   // LDH (C), A
+                        // aka LD (FF00 + C), A                     
+                    end
+
+                    8'b11110010:begin   // LDH A, (C)
+                        // aka LD A, (FF00 + C) 
                     end
 
                     8'b11111010: begin // LD A, (nn), (nn) = 16-bit immediate, LSB first
@@ -2509,6 +2521,20 @@ module ControlUnit(
                         // RF_WR = 1;  
                         // RF_ADRX = REG_L;    // Flag register data select
                     end    
+                    8'b11100000: begin  // LDH (n), A
+                        IMMED_DATA_LOW = OPCODE;
+                        MEM_DATA_SEL = MEM_DATA_DX;
+                        MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
+                        MEM_WE = 1;
+                        RF_ADRX = REG_A;
+                    end
+                    8'b11110000: begin  // LDH A, (n)
+                        IMMED_DATA_LOW = OPCODE;
+                        MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
+                        RF_ADRX = REG_A;
+                        RF_WR_SEL = RF_MUX_MEM;
+                        RF_WR = 1;
+                    end
                     default: begin
                         // shouldn't be in here
                     end
