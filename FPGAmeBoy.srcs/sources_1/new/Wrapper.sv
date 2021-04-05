@@ -68,7 +68,7 @@ module Wrapper(
     // [Z,N,H,C,0,0,0,0]
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
-    logic [2:0] BIT_SEL = 3'b000;
+    logic [2:0] BIT_SEL;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];

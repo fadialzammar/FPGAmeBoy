@@ -2450,11 +2450,7 @@ module ControlUnit(
                 MEM_RE = 1;
                 //RF_ADRX = REG_A;
                 ALU_SEL = HL_ALU_FUN;
-                ALU_OPY_SEL = 'b01;
-                C_FLAG_LD = 1;
-                Z_FLAG_LD = 1;
-                N_FLAG_LD = 1;
-                H_FLAG_LD = 1;                  
+                ALU_OPY_SEL = 'b01;               
             end
             
             HL_EXEC: begin
@@ -2465,6 +2461,10 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         ALU_OPY_SEL = 'b01;
                         RF_WR = 1;
+                        C_FLAG_LD = 1;
+                        Z_FLAG_LD = 1;
+                        N_FLAG_LD = 1;
+                        H_FLAG_LD = 1;
                     end
                     1'b1: begin // In-place operations
                         RF_ADRX = REG_H;
