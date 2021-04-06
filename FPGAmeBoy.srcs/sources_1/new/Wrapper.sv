@@ -115,7 +115,7 @@ module Wrapper(
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    logic [15:0] JP_PC, CU_PC_ADDR;
+    logic [15:0] JP_PC;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -224,11 +224,11 @@ module Wrapper(
     );
     
     // Reg File MUX
-    MUX9to1 RegFile_MUX(
+    MUX10to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), 
-        .In2(SP_DOUT[7:0]), .In3(ALU_16_OUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
-        .In6(IMMED_DATA_LOW), .In7(IMMED_DATA_HIGH), .In8(RF_DY_OUT),
-        .Sel(RF_DIN_SEL),  .Out(RF_DIN)
+        .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(ALU_16_OUT[15:8]), .In5(SP_IMMED_VAL[7:0]), .In6(SP_IMMED_VAL[15:8]),
+        .In7(IMMED_DATA_LOW), .In8(IMMED_DATA_HIGH), .In9(RF_DY_OUT),
+        .Sel(RF_DIN_SEL), .Out(RF_DIN)
     );
     
     // Reg File Instantiation

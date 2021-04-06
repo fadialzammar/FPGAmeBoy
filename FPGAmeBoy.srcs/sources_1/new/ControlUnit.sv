@@ -62,11 +62,12 @@ module ControlUnit(
     parameter RF_MUX_MEM             = 1; // Memory output
     parameter RF_MUX_SP_LOW          = 2; // Stack Pointer Low Byte
     parameter RF_MUX_SP_HIGH         = 3; // Stack Pointer High Byte
-    parameter RF_MUX_SP_IMMED_LOW    = 4; // Stack Pointer + Immediate value Low Byte
-    parameter RF_MUX_SP_IMMED_HIGH   = 5; // Stack Pointer + Immediate value High Byte
-    parameter RF_MUX_IMMED_LOW       = 6; // Immediate value Low Byte
-    parameter RF_MUX_IMMED_HIGH      = 7; // Immediate value High Byte
-    parameter RF_MUX_DY              = 8; // DY output of the Reg File
+    parameter RF_MUX_ALU_16_HIGH     = 4; // 16-bit ALU High Byte
+    parameter RF_MUX_SP_IMMED_LOW    = 5; // Stack Pointer + Immediate value Low Byte
+    parameter RF_MUX_SP_IMMED_HIGH   = 6; // Stack Pointer + Immediate value High Byte
+    parameter RF_MUX_IMMED_LOW       = 7; // Immediate value Low Byte
+    parameter RF_MUX_IMMED_HIGH      = 8; // Immediate value High Byte
+    parameter RF_MUX_DY              = 9; // DY output of the Reg File
     
     // Memory Address MUX
     parameter MEM_ADDR_SP       = 0; // stack pointer output
@@ -3133,6 +3134,8 @@ module ControlUnit(
                         // Write operation back into Register 
                         RF_WR = 1; 
                         // OPCODE_HOLD = OPCODE;
+                    end
+                    default: begin
                     end             
                 endcase
                 // ===== Separated due to errors ======== //
