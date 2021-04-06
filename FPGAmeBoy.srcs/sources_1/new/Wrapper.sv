@@ -69,9 +69,9 @@ module Wrapper(
     localparam C_IDX = 3'd4;
     
     localparam eightbitzero = 8'h00;
+    logic [2:0] BIT_SEL;
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
-    logic [2:0] BIT_SEL;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];
@@ -89,6 +89,8 @@ module Wrapper(
     logic [7:0] MEM_DIN, MEM_DOUT;
     logic [15:0] MEM_ADDR_IN;
     logic [15:0] HL_PTR;
+    logic [15:0] MEM_ADDR_BUF_OUT;
+    logic MEM_ADDR_BUF_WE;
     
     // H is the X output of  Reg File and L is the Y output of the Reg File
     assign HL_PTR = {RF_DX_OUT, RF_DY_OUT};  
@@ -107,13 +109,13 @@ module Wrapper(
     logic FLAGS_DATA_SEL;
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic SP_DIN_SEL;
-    logic MEM_WE, MEM_RE;            // memory
+    logic MEM_WE;                    // memory
     logic [2:0] MEM_ADDR_SEL;
-    logic [2:0] MEM_DATA_SEL;
+    logic [3:0] MEM_DATA_SEL;
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    logic [15:0] JP_PC;
+    logic [15:0] JP_PC, CU_PC_ADDR;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -149,9 +151,7 @@ module Wrapper(
      MUX2to1 #(.DATA_SIZE(16)) CALL_MUX(
         .In0(CALL_PC_FALSE), .In1(CALL_PC),
         .Sel(CALL_MUX_SEL), .Out(CALL_PC_IN)
-    );
-    
-    // Program Counter Instantiation    
+    );    
 
     // Restart Address Values    
     logic [3:0] RST_MUX_SEL;
@@ -162,11 +162,13 @@ module Wrapper(
         .Sel(RST_MUX_SEL), .Out(RST_ADDR)
     );
   
+    // PC Data MUX
     MUX6to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
         .In4(RET_PC), .In5(CALL_PC_IN), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
+   // Program Counter Instantiation
     ProgCount ProgCount( 
         .PC_CLK(CLK),
         .PC_RST(RST),
@@ -175,6 +177,8 @@ module Wrapper(
         .PC_DIN(PC_DIN),
         .PC_COUNT(PC)
     );
+    
+    // 8-bit ALU A input MUX
     MUX2to1#(.DATA_SIZE(8)) ALU_A_MUX(
         .In0(RF_DX_OUT), .In1(MEM_DOUT),
         .Sel(ALU_A_SEL), .Out(ALU_A)
@@ -192,6 +196,7 @@ module Wrapper(
         .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
     );
     
+    // 8-bit ALU Instantiation
     ALU ALU(
         .ALU_FUN(ALU_FUN), .A(ALU_A), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
@@ -256,13 +261,19 @@ module Wrapper(
         .DIN(SP_DIN),
         .DOUT(SP_DOUT)
     );
+
+    // Memory Address Buffer
+    always_ff @ (posedge CLK) begin
+        if (MEM_ADDR_BUF_WE)
+            MEM_ADDR_BUF_OUT = RF_16_OUT;
+    end
     
     // Memory Address MUX
-    MUX5to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
-        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(INTR_REG),
-        .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+    MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+        .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
+        .In5({8'hFF, IMMED_DATA_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
-    
+
     // Interrupt Enable/Disable Values MUX
     MUX2to1 INTR_MUX(
         .In0(8'h00), .In1(8'hFF),
@@ -270,17 +281,16 @@ module Wrapper(
     );
     
     // Memory Data MUX
-    MUX8to1 MEM_DATA_MUX(
+    MUX10to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
         .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN), 
-        .In7(ALU_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     // Memory Instantiation
     Memory Memory(
         .CLK(CLK), 
         .WE(MEM_WE), 
-        .RE(MEM_RE), 
         .ADDR(MEM_ADDR_IN), 
         .DIN(MEM_DIN),
         .DOUT(MEM_DOUT)
@@ -291,7 +301,7 @@ module Wrapper(
         // Inputs
         .CLK(CLK), .INTR(), .RESET(CPU_RESET),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
-        .OPCODE(OPCODE), // Memory Line
+        .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
@@ -305,7 +315,9 @@ module Wrapper(
         .ALU_OPX_SEL(ALU_A_SEL), 
         .ALU_OPY_SEL(ALU_B_SEL),
         .ALU_16_B_SEL(ALU_16_B_SEL),
-        .MEM_WE(MEM_WE), .MEM_RE(MEM_RE), // memory
+        .MEM_WE(MEM_WE), // memory
+        // .MEM_DIN_BUF_WE(MEM_DIN_BUF_WE),
+        .MEM_ADDR_BUF_WE(MEM_ADDR_BUF_WE),
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL), .INTR_REG_SEL(INTR_REG_SEL),
         .IMMED_ADDR_LOW(IMMED_ADDR_LOW), .IMMED_ADDR_HIGH(IMMED_ADDR_HIGH), // immediates
         .IMMED_DATA_LOW(IMMED_DATA_LOW), .IMMED_DATA_HIGH(IMMED_DATA_HIGH),
