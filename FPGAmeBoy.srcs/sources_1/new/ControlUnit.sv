@@ -3031,6 +3031,7 @@ module ControlUnit(
                         RF_ADRX = OPCODE_HOLD[5:3]; // r
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     8'b01110???: begin  // LD (HL), r
                         // see notes in EXEC
@@ -3038,18 +3039,21 @@ module ControlUnit(
                         RF_ADRX = OPCODE_HOLD[2:0];  // r 
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_WE = 1;
+                        NS = FETCH;
                     end
                     8'b000?1010: begin  // LD A, (BC) and LD A, (DE)
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     8'b000?0010: begin   // LD (BC), A and LD (DE), A
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRX = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_WE = 1;
+                        NS = FETCH;
                     end
                     8'b00110110: begin  // LD (HL), n
                         MEM_WE = 1;
@@ -3058,6 +3062,7 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         IMMED_DATA_LOW = OPCODE;
+                        NS = FETCH;
                     end
                     8'b00100010: begin // LD (HL+), A
                         // Write to memory from REG_A
@@ -3093,6 +3098,7 @@ module ControlUnit(
                         MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                         MEM_WE = 1;
                         RF_ADRX = REG_A;
+                        NS = FETCH;
                     end
                     8'b11110000: begin  // LDH A, (n)
                         IMMED_DATA_LOW = OPCODE;
@@ -3100,6 +3106,7 @@ module ControlUnit(
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     default: begin
                         // shouldn't be in here
@@ -3121,7 +3128,7 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         ALU_16_SEL = INC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        RF_WR_SEL = RF_MUX_ALU_16_HIGH; //ALU16_OUT[15:8]                                
                         // Write operation back into Register 
                         RF_WR = 1; 
                         // OPCODE_HOLD = OPCODE;
@@ -3130,7 +3137,7 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         ALU_16_SEL = DEC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        RF_WR_SEL = RF_MUX_ALU_16_HIGH; //ALU16_OUT[15:8]                                
                         // Write operation back into Register 
                         RF_WR = 1; 
                         // OPCODE_HOLD = OPCODE;
@@ -3140,39 +3147,39 @@ module ControlUnit(
                 endcase
                 // ===== Separated due to errors ======== //
                 // FIX ME 
-                  case(HL_CODE)
-                    1'b0: begin // ALU operations - write to reg A
-                        ALU_SEL = HL_ALU_FUN;
-                        RF_ADRX = REG_A;
-                        ALU_OPY_SEL = 'b01;
-                        RF_WR = 1;
-                        C_FLAG_LD = 1;
-                        Z_FLAG_LD = 1;
-                        N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;
-                    end
-                    1'b1: begin // In-place operations
-                        RF_ADRX = REG_H;
-                        RF_ADRY = REG_L;
-                        MEM_ADDR_SEL = 'b011;
+                //   case(HL_CODE)
+                //     1'b0: begin // ALU operations - write to reg A
+                //         ALU_SEL = HL_ALU_FUN;
+                //         RF_ADRX = REG_A;
+                //         ALU_OPY_SEL = 'b01;
+                //         RF_WR = 1;
+                //         C_FLAG_LD = 1;
+                //         Z_FLAG_LD = 1;
+                //         N_FLAG_LD = 1;
+                //         H_FLAG_LD = 1;
+                //     end
+                //     1'b1: begin // In-place operations
+                //         RF_ADRX = REG_H;
+                //         RF_ADRY = REG_L;
+                //         MEM_ADDR_SEL = 'b011;
                         
-                        BIT_SEL = HL_BIT_SEL;
-                        ALU_SEL = HL_ALU_FUN;
-                        ALU_OPX_SEL = 2'b01;
-                        ALU_OPY_SEL = 2'b11;
+                //         BIT_SEL = HL_BIT_SEL;
+                //         ALU_SEL = HL_ALU_FUN;
+                //         ALU_OPX_SEL = 2'b01;
+                //         ALU_OPY_SEL = 2'b11;
                         
-                        RF_WR = 0;
-                        MEM_WE = 1;
-                        MEM_DATA_SEL = MEM_DATA_ALU;
+                //         RF_WR = 0;
+                //         MEM_WE = 1;
+                //         MEM_DATA_SEL = MEM_DATA_ALU;
                         
-                        C_FLAG_LD = 1;
-                        Z_FLAG_LD = 1;
-                        N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;
-                    end
-                    default: begin
-                    end
-                endcase
+                //         C_FLAG_LD = 1;
+                //         Z_FLAG_LD = 1;
+                //         N_FLAG_LD = 1;
+                //         H_FLAG_LD = 1;
+                //     end
+                //     default: begin
+                //     end
+                // endcase
                 NS = HL_4;
             end // HL_EXEC
                   
