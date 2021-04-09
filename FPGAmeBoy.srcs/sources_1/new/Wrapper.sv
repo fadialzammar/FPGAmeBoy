@@ -69,9 +69,9 @@ module Wrapper(
     localparam C_IDX = 3'd4;
     
     localparam eightbitzero = 8'h00;
+    logic [2:0] BIT_SEL;
     logic [7:0] FLAG_REG_IN, FLAG_REG_OUT;
     
-    logic [2:0] BIT_SEL;
     // Inputs to the flag register file from the Flag Reg MUX    
     assign Z_IN = FLAG_REG_IN[Z_IDX];
     assign N_IN = FLAG_REG_IN[N_IDX];
@@ -115,7 +115,6 @@ module Wrapper(
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    logic [15:0] JP_PC;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -151,9 +150,7 @@ module Wrapper(
      MUX2to1 #(.DATA_SIZE(16)) CALL_MUX(
         .In0(CALL_PC_FALSE), .In1(CALL_PC),
         .Sel(CALL_MUX_SEL), .Out(CALL_PC_IN)
-    );
-    
-    // Program Counter Instantiation    
+    );    
 
     // Restart Address Values    
     logic [3:0] RST_MUX_SEL;
@@ -164,11 +161,13 @@ module Wrapper(
         .Sel(RST_MUX_SEL), .Out(RST_ADDR)
     );
   
+    // PC Data MUX
     MUX6to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
         .In4(RET_PC), .In5(CALL_PC_IN), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
+   // Program Counter Instantiation
     ProgCount ProgCount( 
         .PC_CLK(CLK),
         .PC_RST(RST),
@@ -177,6 +176,8 @@ module Wrapper(
         .PC_DIN(PC_DIN),
         .PC_COUNT(PC)
     );
+    
+    // 8-bit ALU A input MUX
     MUX2to1#(.DATA_SIZE(8)) ALU_A_MUX(
         .In0(RF_DX_OUT), .In1(MEM_DOUT),
         .Sel(ALU_A_SEL), .Out(ALU_A)
@@ -194,6 +195,7 @@ module Wrapper(
         .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
     );
     
+    // 8-bit ALU Instantiation
     ALU ALU(
         .ALU_FUN(ALU_FUN), .A(ALU_A), .B(ALU_B), .FLAGS_IN(FLAG_REG_OUT[7:4]),
         .ALU_OUT(ALU_OUT), .FLAGS_OUT(ALU_FLAGS_OUT)
@@ -223,9 +225,9 @@ module Wrapper(
     // Reg File MUX
     MUX10to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), 
-        .In2(SP_DOUT[7:0]),.In3(SP_DOUT[15:8]), .In4(ALU_16_OUT[15:8]), .In5(SP_IMMED_VAL[7:0]), .In6(SP_IMMED_VAL[15:8]),
+        .In2(SP_DOUT[7:0]), .In3(SP_DOUT[15:8]), .In4(ALU_16_OUT[15:8]), .In5(SP_IMMED_VAL[7:0]), .In6(SP_IMMED_VAL[15:8]),
         .In7(IMMED_DATA_LOW), .In8(IMMED_DATA_HIGH), .In9(RF_DY_OUT),
-        .Sel(RF_DIN_SEL),  .Out(RF_DIN)
+        .Sel(RF_DIN_SEL), .Out(RF_DIN)
     );
     
     // Reg File Instantiation
@@ -268,7 +270,7 @@ module Wrapper(
     // Memory Address MUX
     MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
-        .In5({8'hFF, IMMED_DATA_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
 
     // Interrupt Enable/Disable Values MUX
@@ -299,8 +301,9 @@ module Wrapper(
         // Inputs
         .CLK(CLK), .INTR(), .RESET(CPU_RESET),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
-        .OPCODE(OPCODE), // Memory Line
+        .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
+        .PC(PC),
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
         .PC_MUX_SEL(PC_MUX_SEL), .CALL_MUX_SEL(CALL_MUX_SEL),                   
