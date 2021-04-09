@@ -62,11 +62,12 @@ module ControlUnit(
     parameter RF_MUX_MEM             = 1; // Memory output
     parameter RF_MUX_SP_LOW          = 2; // Stack Pointer Low Byte
     parameter RF_MUX_SP_HIGH         = 3; // Stack Pointer High Byte
-    parameter RF_MUX_SP_IMMED_LOW    = 4; // Stack Pointer + Immediate value Low Byte
-    parameter RF_MUX_SP_IMMED_HIGH   = 5; // Stack Pointer + Immediate value High Byte
-    parameter RF_MUX_IMMED_LOW       = 6; // Immediate value Low Byte
-    parameter RF_MUX_IMMED_HIGH      = 7; // Immediate value High Byte
-    parameter RF_MUX_DY              = 8; // DY output of the Reg File
+    parameter RF_MUX_ALU_16_HIGH     = 4; // 16-bit ALU High Byte
+    parameter RF_MUX_SP_IMMED_LOW    = 5; // Stack Pointer + Immediate value Low Byte
+    parameter RF_MUX_SP_IMMED_HIGH   = 6; // Stack Pointer + Immediate value High Byte
+    parameter RF_MUX_IMMED_LOW       = 7; // Immediate value Low Byte
+    parameter RF_MUX_IMMED_HIGH      = 8; // Immediate value High Byte
+    parameter RF_MUX_DY              = 9; // DY output of the Reg File
     
     // Memory Address MUX
     parameter MEM_ADDR_SP       = 0; // stack pointer output
@@ -118,12 +119,12 @@ module ControlUnit(
     parameter REG_A  = 3'b111;
     
     // PC Data MUX
-    parameter PC_MUX_JP   = 0;   // JP PC IMMED Address 
-    parameter PC_CU_PC_ADDR = 1;// JP Offset Address
-    parameter PC_RF_16_OUT = 2;
-    parameter PC_RST_ADDR = 3;
-    parameter PC_MUX_RET  = 4;   // RET PC Address
-    parameter PC_MUX_CALL = 5;   // CALL PC Address
+    parameter PC_MUX_JP     = 0;   // JP PC Address 
+    parameter PC_CU_PC_ADDR = 1;
+    parameter PC_RF_16_OUT  = 2;
+    parameter PC_RST_ADDR   = 3;
+    parameter PC_MUX_RET    = 4;   // RET PC Address
+    parameter PC_MUX_CALL   = 5;   // CALL PC Address
     
     // CALL Data MUX
     parameter CALL_MUX_FALSE = 0; // CALL not taken
@@ -209,8 +210,6 @@ module ControlUnit(
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
     
-     
-     //
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -346,7 +345,6 @@ module ControlUnit(
                             RF_ADRY = REG_L;
                             
                             MEM_ADDR_SEL = 3'b011;
-                            MEM_RE = 1;
                           
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -408,7 +406,6 @@ module ControlUnit(
                             RF_ADRY = REG_L;
                             
                             MEM_ADDR_SEL = 3'b011;
-                            MEM_RE = 1;
                           
                             // ALU B input mux select
                             ALU_OPY_SEL = 2'b01; // Select data from memory
@@ -676,13 +673,11 @@ module ControlUnit(
                     end
                     
                     8'b00???110: begin  // LD r, n
+                    // ***FIX ME***
                         if (OPCODE[5:3] == 3'b110) begin    // LD (HL), n
-                            HL_FLAG = 1;    // kinda the wrong state but it doesn't actually matter
+                            HL_FLAG = 1;
                             OPCODE_HOLD = OPCODE;
-                            // RF_ADRX = REG_H;
-                            // RF_ADRY = REG_L;
-                            // MEM_ADDR_SEL = MEM_ADDR_16_RF;
-                            // MEM_WE = 1;
+                            PC_INC = 1;//*************
                         end
                         else begin  // normal LD r8, n8
                             IMMED_FLAG = 1;
@@ -738,22 +733,6 @@ module ControlUnit(
                         HL_FLAG = 1;
                     end
 
-                    // 8'b001?0010: begin  // LD (HL+), A or LD (HL-), A
-                    //     RF_ADRX = REG_H;
-                    //     RF_ADRY = REG_L;   
-                    //     MEM_ADDR_BUF_WE = 1;
-                    //     OPCODE_HOLD = OPCODE;
-                    //     HL_FLAG = 1;
-                    // end
-
-                    // 8'b001?1010: begin // LD A, (HL+) or LD A, (HL-)
-                    //     RF_ADRX = REG_H;
-                    //     RF_ADRY = REG_L;
-                    //     MEM_ADDR_BUF_WE = 1;
-                    //     OPCODE_HOLD = OPCODE;
-                    //     HL_FLAG = 1;
-                    // end
-
                     8'b00100010: begin // LD (HL+), A
                     // TODO: Test overflows
                         RF_ADRX = REG_H;
@@ -761,13 +740,6 @@ module ControlUnit(
                         MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
-
-                        // will increment HL after memory write
-                        // ALU_16_SEL = INC_16_ALU;
-                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // // Write operation back into Register 
-                        // RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b00110010: begin // LD (HL-), A
@@ -776,13 +748,6 @@ module ControlUnit(
                         MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
-
-                        // // will decrement HL after memory write
-                        // ALU_16_SEL = DEC_16_ALU;
-                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // // Write operation back into Register 
-                        // RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b00101010: begin // LD A, (HL+)
@@ -791,13 +756,6 @@ module ControlUnit(
                         MEM_ADDR_BUF_WE = 1;
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
-
-                        // // will increment HL after memory read
-                        // ALU_16_SEL = INC_16_ALU;
-                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // // Write operation back into Register 
-                        // RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b00111010: begin // LD A, (HL-)
@@ -806,20 +764,15 @@ module ControlUnit(
                         MEM_ADDR_BUF_WE = 1;
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
-
-                        // // will decrement HL after memory read
-                        // ALU_16_SEL = DEC_16_ALU;
-                        // RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // // Write operation back into Register 
-                        // RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
                     end
 
                     8'b111?0000: begin // LDH (n), A or LDH A, (n)
+                        //***FIX ME***
                         // aka LD (FF00 + u8), A
                         RF_ADRX = REG_A;
                         OPCODE_HOLD = OPCODE;
                         HL_FLAG = 1;
+                        PC_INC = 1; //*********
                     end
 
                     8'b11100010: begin   // LDH (C), A
@@ -841,11 +794,14 @@ module ControlUnit(
                     end
 
                     8'b11111010: begin // LD A, (nn), (nn) = 16-bit immediate, LSB first
-                    
+                        OPCODE_HOLD = OPCODE;
+                        IMMED_FLAG = 1;
                     end
 
                     8'b11101010: begin // LD (nn), A, (nn) = 16-bit immediate, LSB first
-                    
+                    // TODO: combine
+                        OPCODE_HOLD = OPCODE;
+                        IMMED_FLAG = 1;
                     end
                     
                     // ALU Time
@@ -1221,13 +1177,12 @@ module ControlUnit(
                     end       
                     
                     8'b11??0101: // PUSH // ======================== Might need to send to wait state for consistent timing ======================== //
-                    begin
+                    begin 
                         PUSH_FLAG = 1'b1;                        
                         SP_OPCODE = OPCODE;
                         SP_LOW_FLAG = 1'b1;
                         // Decrement before pushing
-                        SP_DECR = 1'b1;
-                                                       
+                        SP_DECR = 1'b1;                                  
                     end             
                     
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values 
@@ -1345,8 +1300,10 @@ module ControlUnit(
                         SP_OPCODE = OPCODE;
                         OPCODE_HOLD = OPCODE;
                         SP_LOW_FLAG = 1'b1; 
+                        // Decrement before pushing
+                        SP_DECR = 1'b1;
                     end
-                    //////////////////////////////////////////===================== NEED TO ADDRESS THE NOT TAKEN CASE (PC + 2) also for RET =====================//////////////////////////////////
+                  
                     8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C
                     begin
                         case (OPCODE[4:3])
@@ -1358,6 +1315,8 @@ module ControlUnit(
                                         SP_OPCODE = OPCODE;
                                         OPCODE_HOLD = OPCODE;
                                         SP_LOW_FLAG = 1'b1;
+                                        // Decrement before pushing
+                                        SP_DECR = 1'b1;
                                     end 
                                 else
                                     begin
@@ -1375,6 +1334,8 @@ module ControlUnit(
                                         SP_OPCODE = OPCODE;
                                         OPCODE_HOLD = OPCODE;
                                         SP_LOW_FLAG = 1'b1;
+                                        // Decrement before pushing
+                                        SP_DECR = 1'b1;
                                     end 
                                 else
                                     begin
@@ -1392,6 +1353,8 @@ module ControlUnit(
                                         SP_OPCODE = OPCODE;
                                         OPCODE_HOLD = OPCODE;
                                         SP_LOW_FLAG = 1'b1;
+                                        // Decrement before pushing
+                                        SP_DECR = 1'b1;
                                     end                                
                                 else
                                     begin
@@ -1409,6 +1372,8 @@ module ControlUnit(
                                         SP_OPCODE = OPCODE;
                                         OPCODE_HOLD = OPCODE;
                                         SP_LOW_FLAG = 1'b1;
+                                        // Decrement before pushing
+                                        SP_DECR = 1'b1;
                                     end 
                                 else
                                     begin
@@ -2135,6 +2100,64 @@ module ControlUnit(
                         PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;// OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
                         PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
                     end
+                    8'b11101010: begin  // LD (nn), A
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                        // Reg File writes either the High or Low Byte
+                        RF_WR = 1'b0; 
+                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
+                        // Saves the new Immediate Value Data Low Byte for writing
+                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
+                        // Saves the new Immediate Value Data High Byte for writing
+                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
+                        // // Write the High Byte to B and the Low Byte to C
+                        // RF_ADRX = ~LOW_IMMED ? REG_B : REG_C;
+                        // // Load the Stack Pointer with the High and Low Byte immediate values
+                        // RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH;
+
+                        if (~LOW_IMMED) begin // if storing upper immediate byte
+                            MEM_ADDR_SEL = MEM_ADDR_IMMED;
+                            RF_ADRX = REG_A;
+                            MEM_DATA_SEL = MEM_DATA_DX;
+                            MEM_WE = 1;
+                        end
+
+                        IMMED_FLAG = LOW_IMMED ? 1'b1 : 1'b0; // if storing lower byte, return to IMMED state after fetching new byte
+                    end
+                    8'b11111010: begin  // LD A, (nn)
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                        // Reg File writes either the High or Low Byte
+                        RF_WR = 1'b0; 
+                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
+                        // Saves the new Immediate Value Data Low Byte for writing
+                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
+                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
+                        // Saves the new Immediate Value Data High Byte for writing
+                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
+                        // // Write the High Byte to B and the Low Byte to C
+                        // RF_ADRX = ~LOW_IMMED ? REG_B : REG_C;
+                        // // Load the Stack Pointer with the High and Low Byte immediate values
+                        // RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH;
+
+                        if (~LOW_IMMED) begin // if storing upper immediate byte
+                            MEM_ADDR_SEL = MEM_ADDR_IMMED;
+                            RF_ADRX = REG_A;
+                            RF_WR_SEL= RF_MUX_MEM;
+                            RF_WR = 1;
+                        end
+
+                        IMMED_FLAG = LOW_IMMED ? 1'b1 : 1'b0; // if storing lower byte, return to IMMED state after fetching new byte
+                    end
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
                 IMMED_FLAG = OPCODE_HOLD == (8'b00001000) || IMMED_16_FLAG && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
@@ -2337,8 +2360,8 @@ module ControlUnit(
                         // Write the pushed value to memory &(SP)
                         MEM_WE = 1'b1;
                       
-                        case(SP_OPCODE)
-                            8'b11??0101: // PUSH nn
+                        case (SP_OPCODE) inside
+                          8'b11??0101: /// PUSH nn
                             begin
                                 // High Byte used set by RF_ADRX
                                 case (SP_OPCODE[5:4])
@@ -2346,9 +2369,9 @@ module ControlUnit(
                                     begin                                                          
                                         RF_ADRX = REG_B;                                
                                     end
-                                    
+
                                     2'b01: // DE
-                                    begin
+                                    begin                                       
                                         RF_ADRX = REG_D;                        
                                     end
                                     
@@ -2401,8 +2424,6 @@ module ControlUnit(
                         // Memory Data select set to DX output of the Reg File
                         MEM_DATA_SEL = MEM_DATA_DX;
                         // Read the popped value from memory &(SP)
-
-                        MEM_RE = 1'b1;
                         case (SP_OPCODE) inside
                             8'b11??0001: // POP nn
                             begin
@@ -2414,7 +2435,7 @@ module ControlUnit(
                                     end
                                     
                                     2'b01: // DE
-                                    begin                                    
+                                    begin                                  
                                         RF_ADRX = REG_D;
                                     end
                                     
@@ -3037,6 +3058,7 @@ module ControlUnit(
                         RF_ADRX = OPCODE_HOLD[5:3]; // r
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     8'b01110???: begin  // LD (HL), r
                         // see notes in EXEC
@@ -3044,18 +3066,21 @@ module ControlUnit(
                         RF_ADRX = OPCODE_HOLD[2:0];  // r 
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_WE = 1;
+                        NS = FETCH;
                     end
                     8'b000?1010: begin  // LD A, (BC) and LD A, (DE)
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     8'b000?0010: begin   // LD (BC), A and LD (DE), A
                         MEM_ADDR_SEL = MEM_ADDR_BUF;
                         RF_ADRX = REG_A;
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_WE = 1;
+                        NS = FETCH;
                     end
                     8'b00110110: begin  // LD (HL), n
                         MEM_WE = 1;
@@ -3064,6 +3089,7 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         IMMED_DATA_LOW = OPCODE;
+                        NS = FETCH;
                     end
                     8'b00100010: begin // LD (HL+), A
                         // Write to memory from REG_A
@@ -3094,24 +3120,27 @@ module ControlUnit(
                         RF_WR = 1;
                     end    
                     8'b11100000: begin  // LDH (n), A
-                        IMMED_DATA_LOW = OPCODE;
+                        IMMED_ADDR_LOW = OPCODE;
                         MEM_DATA_SEL = MEM_DATA_DX;
                         MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                         MEM_WE = 1;
                         RF_ADRX = REG_A;
+                        NS = FETCH;
                     end
                     8'b11110000: begin  // LDH A, (n)
-                        IMMED_DATA_LOW = OPCODE;
+                        IMMED_ADDR_LOW = OPCODE;
                         MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                         RF_ADRX = REG_A;
                         RF_WR_SEL = RF_MUX_MEM;
                         RF_WR = 1;
+                        NS = FETCH;
                     end
                     default: begin
                         // shouldn't be in here
                     end
                 endcase
-                NS = HL_EXEC;  
+                if (NS != FETCH)
+                    NS = HL_EXEC;  
             end // HL_FETCH
 
             HL_EXEC: begin
@@ -3127,56 +3156,56 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         ALU_16_SEL = INC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        RF_WR_SEL = RF_MUX_ALU_16_HIGH; //ALU16_OUT[15:8]                                
                         // Write operation back into Register 
                         RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
                     end
                     8'b0011?010: begin // LD (HL-), A or LD (HL-), A
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         ALU_16_SEL = DEC_16_ALU;
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        RF_WR_SEL = RF_MUX_ALU_16_HIGH; //ALU16_OUT[15:8]                                
                         // Write operation back into Register 
                         RF_WR = 1; 
-                        // OPCODE_HOLD = OPCODE;
-                    end
-                    endcase
-              
-                  // FIX ME
-                  case (HL_CODE) inside
-                    1'b0: begin // ALU operations - write to reg A
-                        ALU_SEL = HL_ALU_FUN;
-                        RF_ADRX = REG_A;
-                        ALU_OPY_SEL = 'b01;
-                        RF_WR = 1;
-                        C_FLAG_LD = 1;
-                        Z_FLAG_LD = 1;
-                        N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;
-                    end
-                    1'b1: begin // In-place operations
-                        RF_ADRX = REG_H;
-                        RF_ADRY = REG_L;
-                        MEM_ADDR_SEL = 'b011;
-                        
-                        BIT_SEL = HL_BIT_SEL;
-                        ALU_SEL = HL_ALU_FUN;
-                        ALU_OPX_SEL = 2'b01;
-                        ALU_OPY_SEL = 2'b11;
-                        
-                        RF_WR = 0;
-                        MEM_WE = 1;
-                        MEM_DATA_SEL = MEM_DATA_ALU;
-                        
-                        C_FLAG_LD = 1;
-                        Z_FLAG_LD = 1;
-                        N_FLAG_LD = 1;
-                        H_FLAG_LD = 1;
                     end
                     default: begin
-                    end
+                    end             
                 endcase
+                // ===== Separated due to errors ======== //
+                // FIX ME 
+                //   case(HL_CODE)
+                //     1'b0: begin // ALU operations - write to reg A
+                //         ALU_SEL = HL_ALU_FUN;
+                //         RF_ADRX = REG_A;
+                //         ALU_OPY_SEL = 'b01;
+                //         RF_WR = 1;
+                //         C_FLAG_LD = 1;
+                //         Z_FLAG_LD = 1;
+                //         N_FLAG_LD = 1;
+                //         H_FLAG_LD = 1;
+                //     end
+                //     1'b1: begin // In-place operations
+                //         RF_ADRX = REG_H;
+                //         RF_ADRY = REG_L;
+                //         MEM_ADDR_SEL = 'b011;
+                        
+                //         BIT_SEL = HL_BIT_SEL;
+                //         ALU_SEL = HL_ALU_FUN;
+                //         ALU_OPX_SEL = 2'b01;
+                //         ALU_OPY_SEL = 2'b11;
+                        
+                //         RF_WR = 0;
+                //         MEM_WE = 1;
+                //         MEM_DATA_SEL = MEM_DATA_ALU;
+                        
+                //         C_FLAG_LD = 1;
+                //         Z_FLAG_LD = 1;
+                //         N_FLAG_LD = 1;
+                //         H_FLAG_LD = 1;
+                //     end
+                //     default: begin
+                //     end
+                // endcase
                 NS = HL_4;
             end // HL_EXEC
                   
@@ -3195,6 +3224,8 @@ module ControlUnit(
                         RF_WR_SEL = RF_MUX_ALU; // Input to the Reg File is the ALU output
                         RF_WR = 1;  
                         RF_ADRX = REG_L;    // Flag register data select
+                    end
+                    default: begin
                     end
                     default: begin
                     end

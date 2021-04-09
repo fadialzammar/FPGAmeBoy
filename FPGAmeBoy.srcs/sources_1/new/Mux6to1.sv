@@ -18,15 +18,14 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 module MUX10to1
-    #(parameter DATA_SIZE = 16)(
+    #(parameter DATA_SIZE = 8)(
     input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, In6, In7, In8, In9, //8-bit inputs 
-    input [4:0] Sel, //selector signal
+    input [3:0] Sel, //selector signal
     output logic [DATA_SIZE - 1:0] Out //8-bit output
     );
     always_comb
-        case (Sel) // 9->1 multiplexor
+        case (Sel) // 10->1 multiplexor
             0: Out <= In0; 
             1: Out <= In1; 
             2: Out <= In2;
@@ -36,6 +35,7 @@ module MUX10to1
             6: Out <= In6;
             7: Out <= In7;
             8: Out <= In8;
+            9: Out <= In9;
             default: Out <= In0; 
         endcase
 endmodule
