@@ -29,7 +29,7 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
 //video RAM 8KByte
     input CLK, 
     input WE,
-    input RE,
+    input HOLD,
     input [ADDR_SIZE-1:0] ADDR, 
     input [DATA_SIZE-1:0] DIN,
     output logic [DATA_SIZE-1:0] DOUT);
@@ -66,12 +66,13 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
     always_ff@(posedge CLK)
     begin
     if(WE==1)
-    mem[ADDR] <= DIN;
+        mem[ADDR] <= DIN;
     end
     
     always_ff@(negedge CLK)
     begin
-    DOUT <= mem[ADDR];
+        if(~HOLD)
+            DOUT <= mem[ADDR];
     end
     
 endmodule

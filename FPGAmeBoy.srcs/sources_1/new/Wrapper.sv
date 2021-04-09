@@ -289,7 +289,8 @@ module Wrapper(
     // Memory Instantiation
     Memory Memory(
         .CLK(CLK), 
-        .WE(MEM_WE), 
+        .WE(MEM_WE),
+        .HOLD(MEM_HOLD), 
         .ADDR(MEM_ADDR_IN), 
         .DIN(MEM_DIN),
         .DOUT(MEM_DOUT)
@@ -315,7 +316,7 @@ module Wrapper(
         .ALU_OPX_SEL(ALU_A_SEL), 
         .ALU_OPY_SEL(ALU_B_SEL),
         .ALU_16_B_SEL(ALU_16_B_SEL),
-        .MEM_WE(MEM_WE), // memory
+        .MEM_WE(MEM_WE), .MEM_HOLD(MEM_HOLD), // memory
         // .MEM_DIN_BUF_WE(MEM_DIN_BUF_WE),
         .MEM_ADDR_BUF_WE(MEM_ADDR_BUF_WE),
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL), .INTR_REG_SEL(INTR_REG_SEL),
