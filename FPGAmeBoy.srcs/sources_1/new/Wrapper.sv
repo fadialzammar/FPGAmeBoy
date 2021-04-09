@@ -221,10 +221,10 @@ module Wrapper(
     );
     
     // Reg File MUX
-    MUX9to1 RegFile_MUX(
+    MUX10to1 RegFile_MUX(
         .In0(ALU_OUT), .In1(MEM_DOUT), 
-        .In2(SP_DOUT[7:0]), .In3(ALU_16_OUT[15:8]), .In4(SP_IMMED_VAL[7:0]), .In5(SP_IMMED_VAL[15:8]),
-        .In6(IMMED_DATA_LOW), .In7(IMMED_DATA_HIGH), .In8(RF_DY_OUT),
+        .In2(SP_DOUT[7:0]),.In3(SP_DOUT[15:8]), .In4(ALU_16_OUT[15:8]), .In5(SP_IMMED_VAL[7:0]), .In6(SP_IMMED_VAL[15:8]),
+        .In7(IMMED_DATA_LOW), .In8(IMMED_DATA_HIGH), .In9(RF_DY_OUT),
         .Sel(RF_DIN_SEL),  .Out(RF_DIN)
     );
     
@@ -281,13 +281,14 @@ module Wrapper(
     MUX10to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
         .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN), 
-      .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT) .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     // Memory Instantiation
     Memory Memory(
         .CLK(CLK), 
-        .WE(MEM_WE), 
+        .WE(MEM_WE),
+        .HOLD(MEM_HOLD), 
         .ADDR(MEM_ADDR_IN), 
         .DIN(MEM_DIN),
         .DOUT(MEM_DOUT)
@@ -312,7 +313,7 @@ module Wrapper(
         .ALU_OPX_SEL(ALU_A_SEL), 
         .ALU_OPY_SEL(ALU_B_SEL),
         .ALU_16_B_SEL(ALU_16_B_SEL),
-        .MEM_WE(MEM_WE), // memory
+        .MEM_WE(MEM_WE), .MEM_HOLD(MEM_HOLD), // memory
         // .MEM_DIN_BUF_WE(MEM_DIN_BUF_WE),
         .MEM_ADDR_BUF_WE(MEM_ADDR_BUF_WE),
         .MEM_ADDR_SEL(MEM_ADDR_SEL), .MEM_DATA_SEL(MEM_DATA_SEL), .INTR_REG_SEL(INTR_REG_SEL),
