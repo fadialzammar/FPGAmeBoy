@@ -115,7 +115,7 @@ module Wrapper(
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    logic [15:0] JP_PC;
+
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -281,7 +281,7 @@ module Wrapper(
     MUX10to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
         .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN), 
-      .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT) .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     // Memory Instantiation
@@ -300,6 +300,7 @@ module Wrapper(
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), // Memory Line
         // Outputs
+        .PC(PC),
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
         .PC_MUX_SEL(PC_MUX_SEL), .CALL_MUX_SEL(CALL_MUX_SEL),                   
