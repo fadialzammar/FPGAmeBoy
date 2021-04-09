@@ -48,7 +48,7 @@ module ControlUnit(
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
         output logic RST,                               // reset
         output logic IO_STRB,                           // IO
-        output logic [15:0] PC_ADDR_OUT                 //address to program counter for jumps
+        output logic [15:0] PC_ADDR_OUT,                 //address to program counter for jumps
         output logic [2:0] BIT_SEL,                      // BIT select signal
         output logic [2:0] RST_MUX_SEL
     ); 
@@ -93,8 +93,19 @@ module ControlUnit(
     parameter REG_H = 3'b100;
     parameter REG_L = 3'b101;
     parameter REG_HL = 3'b110;
-    parameter REG_A = 3'b111;
-     
+    parameter REG_A  = 3'b111;
+    
+    // PC Data MUX
+    parameter PC_MUX_JP   = 0;   // JP PC IMMED Address 
+    parameter PC_CU_PC_ADDR = 1;// JP Offset Address
+    parameter PC_RF_16_OUT = 2;
+    parameter PC_RST_ADDR = 3;
+    parameter PC_MUX_RET  = 4;   // RET PC Address
+    parameter PC_MUX_CALL = 5;   // CALL PC Address
+    
+    // CALL Data MUX
+    parameter CALL_MUX_FALSE = 0; // CALL not taken
+    parameter CALL_MUX_TRUE  = 1; // CALL taken
     
     // ALU Operations
     localparam ADD_ALU  = 5'b00000;
@@ -167,12 +178,15 @@ module ControlUnit(
      logic [7:0] LAST_IMMED_DATA_LOW, LAST_IMMED_DATA_HIGH;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
-     logic PUSH_FLAG = 1'b0;       
+     logic PUSH_FLAG = 1'b0;     
+     //flag for memory read
+     logic MEM_RE;  
      // Immediate Value Select 
      logic [7:0] IMMED_SEL = 8'h00;       
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
+    
      
      //
      
@@ -1134,6 +1148,153 @@ module ControlUnit(
                         SP_LD = 1'b1;
                     end
                     
+                    8'b110??000: // RET Z, RET NZ, RET C, RET NC
+                    begin
+                        case (OPCODE[4:3])
+                            2'b00: //  RET NZ
+                            begin
+                                if (!Z)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                            
+                            2'b01: //  RET Z
+                            begin                          
+                                if (Z)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end      
+                            end
+                            
+                            2'b10: //  RET NC
+                            begin
+                                if (!C)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                            
+                            2'b11: //  RET C
+                            begin
+                                if (C)
+                                begin
+                                    POP_FLAG = 1'b1;
+                                    SP_OPCODE = OPCODE;
+                                    SP_HIGH_FLAG = 1'b1; 
+                                end
+                            end
+                        endcase
+                    end
+                    
+                    8'b11001001: // RET : Pop two bytes from stack & jump to that address
+                    begin
+                        POP_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        SP_HIGH_FLAG = 1'b1; 
+                    end
+                    
+                     8'b11011001: // RETI : Pop two bytes from stack & jump to that address and enable interrupts
+                    begin
+                        POP_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        SP_HIGH_FLAG = 1'b1; 
+                        // Set the Interrupt value high
+                        INTR_REG_SEL = INTR_MUX_HIGH;
+                        // Set the Memory Address and Data 
+                        MEM_DATA_SEL = MEM_DATA_INTR;
+                        MEM_ADDR_SEL = MEM_ADDR_INTR;
+                        MEM_WE = 1'b1;
+                    end
+                    
+                    8'b11001101: // CALL nn: Push the PC onto the stack & jump to immediate address
+                    begin
+                        PUSH_FLAG = 1'b1;
+                        SP_OPCODE = OPCODE;
+                        OPCODE_HOLD = OPCODE;
+                        SP_LOW_FLAG = 1'b1; 
+                    end
+                    //////////////////////////////////////////===================== NEED TO ADDRESS THE NOT TAKEN CASE (PC + 2) also for RET =====================//////////////////////////////////
+                    8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C
+                    begin
+                        case (OPCODE[4:3])
+                            2'b00: // CALL NZ
+                            begin
+                                if (!Z)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        OPCODE_HOLD = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b01: // CALL Z
+                            begin
+                                if (Z)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        OPCODE_HOLD = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b10: // CALL NC
+                            begin
+                                if (!C)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        OPCODE_HOLD = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end                                
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end
+                            end
+                            
+                            2'b11: // CALL C
+                            begin
+                                if (C)
+                                    begin
+                                        PUSH_FLAG = 1'b1;
+                                        SP_OPCODE = OPCODE;
+                                        OPCODE_HOLD = OPCODE;
+                                        SP_LOW_FLAG = 1'b1;
+                                    end 
+                                else
+                                    begin
+                                        CALL_MUX_SEL = CALL_MUX_FALSE;
+                                        PC_MUX_SEL = PC_MUX_CALL;
+                                        PC_LD = 1'b1;
+                                    end                             
+                            end
+                            
+                        endcase
+                    end
+                           
                     //16 bit ALU
                     8'b00??0011: // INC BC, DE, HL, SP
                     begin
@@ -1269,7 +1430,7 @@ module ControlUnit(
                     end
                   
                     8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
-                        IMMED_SEL = OPCODE;
+                        OPCODE_HOLD = OPCODE;
                         IMMED_FLAG = 1;
                         
                     end
@@ -1277,52 +1438,52 @@ module ControlUnit(
                     8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
                         if(Z == 0)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end 
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end                    
                     end
                     8'b11001010: begin //JP if Z flag is set (opcode CA)
                         if(Z == 1)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end      
                     end
                     8'b11010010: begin //JP if C flag is reset (opcode D2)
-                        if(C == 1)
+                        if(C == 0)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end      
                     end
                     8'b11011010: begin // JP if C flag is set (opcode DA)
-                        if(C == 0)
+                        if(C == 1)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end      
                     end
@@ -1331,61 +1492,61 @@ module ControlUnit(
                         RF_ADRY = REG_L;
                         MEM_ADDR_SEL = MEM_ADDR_16_RF;
                         PC_LD = 1;
-                        PC_MUX_SEL = 2'b10;
+                        PC_MUX_SEL = PC_RF_16_OUT;
                     end
                     8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
-                        IMMED_SEL = OPCODE;
+                        OPCODE_HOLD = OPCODE;
                         IMMED_FLAG = 1;
                     end
                     8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
                     if(Z == 0)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
                     end
                     8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
                     if(Z == 1)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
                     end
                     8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
                     if(C == 0)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
                     end
                     8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
                     if(C == 1)
                         begin
-                            IMMED_SEL = OPCODE;
+                            OPCODE_HOLD = OPCODE;
                             IMMED_FLAG = 1;
                         end
                         else
                         begin
                             PC_ADDR_OUT = PC+2;
-                            PC_MUX_SEL = 2'b10;
+                            PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
                     end
@@ -1763,29 +1924,36 @@ module ControlUnit(
                     end
                     8'b110??01?: // jump nn, conditional jumps
                     begin
-                    if(JUMP_FLAG == 1)
-                        begin
-                        PC_MUX_SEL = 2'b01;
-                        PC_LD = 1;
-                        end
-                    // Flag for Immediate Low Byte Load
-                    LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
-                    // Flag for 16 bit Immediates
-                    IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
-                    IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
-                    // Saves the new Immediate Value Data Low Byte for writing
-                    LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
-                    // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                    IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
-                    // Saves the new Immediate Value Data High Byte for writing
-                    LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
-                    JUMP_FLAG = 1;
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                        IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                        // Saves the new Immediate Value Data Low Byte for writing
+                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                        // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                        // Saves the new Immediate Value Data High Byte for writing
+                        LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                        PC_MUX_SEL = PC_MUX_JP;
+                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
                     end
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        PC_ADDR_OUT = (OPCODE + PC)-1;// OPCODE= hi byte, IMMED_SEL = lwo byte + current addr (PC);
-                        PC_MUX_SEL = 2'b11;
-                        PC_LD = 1;
+                        // Flag for Immediate Low Byte Load
+                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        // Flag for 16 bit Immediates
+                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
+                        IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
+                        // Saves the new Immediate Value Data Low Byte for writing
+                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
+                        // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                        IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
+                        // Saves the new Immediate Value Data High Byte for writing
+                        LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
+                        PC_MUX_SEL = PC_CU_PC_ADDR;
+                        PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;// OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
+                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
                     end
                      8'b11001101: //call nn
                      begin
@@ -2614,8 +2782,35 @@ module ControlUnit(
             end
             
             HL_EXEC: begin
-                NS = FETCH;
-                case(HL_CODE)
+                // for incrementing/decrementing HL after a load
+                case (OPCODE_HOLD) inside
+                    8'b00000000: begin  // for aidan, don't think you actually need this
+                        ALU_SEL = HL_ALU_FUN;
+                        RF_ADRX = REG_A;
+                        ALU_OPY_SEL = 3'b001;
+                        RF_WR = 1;  
+                    end
+                    8'b0010?010: begin // LD A, (HL+) or LD (HL+), A
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        ALU_16_SEL = INC_16_ALU;
+                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // Write operation back into Register 
+                        RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+                    8'b0011?010: begin // LD (HL-), A or LD (HL-), A
+                        RF_ADRX = REG_H;
+                        RF_ADRY = REG_L;
+                        ALU_16_SEL = DEC_16_ALU;
+                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
+                        // Write operation back into Register 
+                        RF_WR = 1; 
+                        // OPCODE_HOLD = OPCODE;
+                    end
+                    endcase
+                  // FIX ME
+                  case (HL_CODE) inside
                     1'b0: begin // ALU operations - write to reg A
                         ALU_SEL = HL_ALU_FUN;
                         RF_ADRX = REG_A;
