@@ -115,7 +115,6 @@ module Wrapper(
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    // logic [15:0] JP_PC;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -303,6 +302,7 @@ module Wrapper(
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
+        .PC(PC),
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
         .PC_MUX_SEL(PC_MUX_SEL), .CALL_MUX_SEL(CALL_MUX_SEL),                   
