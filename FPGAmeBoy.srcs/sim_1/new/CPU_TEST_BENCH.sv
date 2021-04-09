@@ -29,19 +29,8 @@ module CPU_TEST_BENCH();
      logic [4:0] counter;
      
      Wrapper DUT (.*);
-
-
-    parameter REG_B = 3'b000;
-    parameter REG_C = 3'b001;
-    parameter REG_D = 3'b010;
-    parameter REG_E = 3'b011;
-    parameter REG_H = 3'b100;
-    parameter REG_L = 3'b101;
-    parameter REG_HL = 3'b110;
-    parameter REG_A = 3'b111;
-
     
-    initial forever  #10  CLK =  ! CLK; 
+     initial forever  #10  CLK =  ! CLK; 
 
 
 endmodule
