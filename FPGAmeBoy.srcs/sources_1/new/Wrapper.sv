@@ -115,7 +115,7 @@ module Wrapper(
     logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
-    logic [15:0] JP_PC;
+    // logic [15:0] JP_PC;
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
@@ -271,7 +271,7 @@ module Wrapper(
     // Memory Address MUX
     MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
-        .In5({8'hFF, IMMED_DATA_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
 
     // Interrupt Enable/Disable Values MUX
