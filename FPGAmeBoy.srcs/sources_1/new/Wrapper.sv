@@ -304,7 +304,6 @@ module Wrapper(
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
-        
         .PC_LD(PC_LD), .PC_INC(PC_INC),     // program counter
         .PC_HIGH_FLAG(PC_HIGH_FLAG), .PC_LOW_FLAG(PC_LOW_FLAG),
         .PC_MUX_SEL(PC_MUX_SEL), .CALL_MUX_SEL(CALL_MUX_SEL),                   

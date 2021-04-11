@@ -273,14 +273,14 @@ module ALU(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                     
                   //Swap upper and lower nibbles of input A
                   SWAP:
-                    begin
-                        //Set Z flag to 1 if result is zero
-                        FLAGS_OUT[Z_FLAG] = (ALU_OUT   == 8'b0) ? 1'b1 : 1'b0;
+                    begin                 
                         //Set N,H,C flags to zero
                         FLAGS_OUT[H_FLAG] = 1'b0; 
                         FLAGS_OUT[N_FLAG] = 1'b0; 
                         FLAGS_OUT[C_FLAG] = 1'b0; 
                         ALU_OUT = {A[3:0], A[7:4]};
+                        //Set Z flag to 1 if result is zero
+                        FLAGS_OUT[Z_FLAG] = (ALU_OUT == 8'h00) ? 1'b1 : 1'b0;
                     end 
                     
                   // DAA - decimal adjust after addition

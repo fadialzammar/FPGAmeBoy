@@ -106,7 +106,7 @@ module ControlUnit(
     parameter FLAGS_DATA_ALU16 = 3; // ALU16 Flags Output
     
     // ALU A Input MUX
-    parameter ALU_A_MUX_DX   = 0; // DY output of the Reg File
+    parameter ALU_A_MUX_DX   = 0; // DX output of the Reg File
     parameter ALU_A_MUX_MEM  = 1; // Memory output
     
     // ALU16 A Input MUX
@@ -2614,9 +2614,9 @@ module ControlUnit(
                     8'b00000???:  // RLC n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = RLC_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2664,9 +2664,9 @@ module ControlUnit(
                     8'b00001???:  // RRC n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = RRC_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2712,9 +2712,9 @@ module ControlUnit(
                     8'b00010???:  // RL n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = RL_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2762,9 +2762,9 @@ module ControlUnit(
                     8'b00011???:  // RR n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = RR_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2812,9 +2812,9 @@ module ControlUnit(
                     8'b00100???:  // SLA n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = SLA_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2862,9 +2862,9 @@ module ControlUnit(
                     8'b00101???:  // SRA n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = SRA_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2911,9 +2911,9 @@ module ControlUnit(
                     8'b00110???:  // SWAP n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = SWAP_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -2958,9 +2958,9 @@ module ControlUnit(
                     8'b00111???:  // SRL n, n
                     begin
                         // ALU A input mux select                                
-                        ALU_OPX_SEL = 1'b0;
+                        ALU_OPX_SEL = ALU_A_MUX_DX;
                         // ALU B input mux select
-                        ALU_OPY_SEL = 2'b00;                                
+                        ALU_OPY_SEL = ALU_B_MUX_DY;                                
                         // ALU Operation Select
                         ALU_SEL = SRL_ALU;                                
                         // Input to the Reg File is the ALU output
@@ -3206,7 +3206,7 @@ module ControlUnit(
                             RF_WR = 1;
                         end    
                         8'b11100000: begin  // LDH (n), A
-                            IMMED_DATA_LOW = OPCODE;
+                            IMMED_ADDR_LOW = OPCODE;
                             MEM_DATA_SEL = MEM_DATA_DX;
                             MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                             MEM_WE = 1;
@@ -3214,7 +3214,7 @@ module ControlUnit(
                             NS = FETCH;
                         end
                         8'b11110000: begin  // LDH A, (n)
-                            IMMED_DATA_LOW = OPCODE;
+                            IMMED_ADDR_LOW = OPCODE;        // TODO: take directly from ProgRom output
                             MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                             RF_ADRX = REG_A;
                             RF_WR_SEL = RF_MUX_MEM;
@@ -3341,7 +3341,7 @@ module ControlUnit(
                     end
                     default: begin
                     end
-                    
+
                 endcase
                 NS = FETCH;
 
