@@ -28,7 +28,7 @@ module ALU_16(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
         output logic [3:0] FLAGS_OUT;
        
        // Local Arithmetic Op-code parameters
-       localparam ADD  = 2'b00;
+       localparam ADD_SP  = 2'b00;
        localparam INC  = 2'b01;
        localparam DEC  = 2'b10;  
 
@@ -51,7 +51,7 @@ module ALU_16(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
             case(ALU_FUN)
             
                 // Concatenation station
-                ADD: 
+                ADD_SP: 
                     begin
                         // Concatenation  of lower 12 bits of the inputs with 
                         // additional bit for proper LOW_RESULT bit-width
@@ -67,8 +67,8 @@ module ALU_16(ALU_FUN, A, B, FLAGS_IN, ALU_OUT, FLAGS_OUT);
                         ALU_OUT = {HIGH_RESULT[3:0], LOW_RESULT[11:0]};                        
                         // Subtract Flag is reset
                         FLAGS_OUT[N_FLAG] = 1'b0;                        
-                        // Z Flag not affected
-                        FLAGS_OUT[Z_FLAG]= FLAGS_IN[Z_FLAG];
+                        // Z Flag reset
+                        FLAGS_OUT[Z_FLAG]= 1'b0;
                                              
                     end
                     
