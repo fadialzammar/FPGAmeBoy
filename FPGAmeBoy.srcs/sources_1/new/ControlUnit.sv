@@ -3151,7 +3151,7 @@ module ControlUnit(
                             RF_WR = 1;
                         end    
                         8'b11100000: begin  // LDH (n), A
-                            IMMED_DATA_LOW = OPCODE;
+                            IMMED_ADDR_LOW = OPCODE;
                             MEM_DATA_SEL = MEM_DATA_DX;
                             MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                             MEM_WE = 1;
@@ -3159,7 +3159,7 @@ module ControlUnit(
                             NS = FETCH;
                         end
                         8'b11110000: begin  // LDH A, (n)
-                            IMMED_DATA_LOW = OPCODE;
+                            IMMED_ADDR_LOW = OPCODE;        // TODO: take directly from ProgRom output
                             MEM_ADDR_SEL = MEM_ADDR_FF_IMMED;
                             RF_ADRX = REG_A;
                             RF_WR_SEL = RF_MUX_MEM;
