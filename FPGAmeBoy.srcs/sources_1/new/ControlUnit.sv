@@ -33,8 +33,9 @@ module ControlUnit(
         output logic [2:0] RF_ADRX, RF_ADRY,
         output logic [4:0] ALU_SEL,                     // ALU
         output logic [1:0] ALU_16_SEL,
-        output logic ALU_OPX_SEL, ALU_16_A_SEL,
-        output logic [2:0] ALU_OPY_SEL, ALU_16_B_SEL,
+        output logic ALU_OPX_SEL, 
+        output logic [1:0] ALU_16_A_SEL,
+        output logic [2:0] ALU_OPY_SEL, 
         output logic MEM_WE, MEM_HOLD,                 // memory
         output logic MEM_ADDR_BUF_WE,
         output logic [2:0] MEM_ADDR_SEL, 
@@ -43,12 +44,12 @@ module ControlUnit(
         output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
         output logic [7:0] IMMED_DATA_LOW,  IMMED_DATA_HIGH,
         output logic SP_LD, SP_INCR, SP_DECR,           // stack pointer
-        output logic SP_DIN_SEL,
+        output logic [1:0] SP_DIN_SEL,
         output logic C_FLAG_LD, C_FLAG_SET, C_FLAG_CLR, // C Flag control
         output logic Z_FLAG_LD, Z_FLAG_SET, Z_FLAG_CLR, // Z Flag control
         output logic N_FLAG_LD, N_FLAG_SET, N_FLAG_CLR, // N Flag control
         output logic H_FLAG_LD, H_FLAG_SET, H_FLAG_CLR, // H Flag control
-        output logic FLAGS_DATA_SEL,
+        output logic [1:0] FLAGS_DATA_SEL,
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
         output logic RST,                               // reset
         output logic IO_STRB,                           // IO
@@ -97,21 +98,29 @@ module ControlUnit(
     // Stack Pointer MUX
     parameter SP_DIN_RF_16   = 0; // 16 bit output of Reg File 
     parameter SP_DIN_IMMED   = 1; // Immediate value input
+    parameter SP_DIN_ALU16   = 2; // ALU16 output value
     
     // Flag Register MUX
     parameter FLAGS_DATA_ALU = 0; // ALU Flags Output
     parameter FLAGS_DATA_MEM = 1;  // Memory Flags Output 
+    parameter FLAGS_DATA_ALU16 = 3; // ALU16 Flags Output
     
     // ALU A Input MUX
     parameter ALU_A_MUX_DX   = 0; // DY output of the Reg File
     parameter ALU_A_MUX_MEM  = 1; // Memory output
+    
+    // ALU16 A Input MUX
+    parameter ALU16_A_MUX_DXDY   = 0; // {DX,DY} output of the Reg File
+    parameter ALU16_A_MUX_SP  = 1; // SP_DOUT value
     
     // ALU B Input
     parameter ALU_B_MUX_DY   = 0; // DY output of the Reg File
     parameter ALU_B_MUX_MEM  = 1; // Memory output
     parameter ALU_B_MUX_PROG = 2; // PROGOM output
     parameter ALU_B_MUX_BIT  = 3; // BIT_SEL
-
+    parameter ALU_B_MUX_SP_HIGH  = 4; // SP_DOUT[15:8]
+    parameter ALU_B_MUX_SP_LOW  = 5; // SP_DOUT[7:0]
+    
     // Reg File Register Addresses
     parameter REG_B  = 3'b000;
     parameter REG_C  = 3'b001;
@@ -166,7 +175,7 @@ module ControlUnit(
     localparam RES_ALU  = 5'b11000;
 
     // 16 Bit ALU Operations
-    localparam ADD_16_ALU = 2'b00;
+    localparam ADDSP_16_ALU = 2'b00;
     localparam INC_16_ALU = 2'b01;
     localparam DEC_16_ALU = 2'b10;
     
@@ -239,7 +248,7 @@ module ControlUnit(
         IMMED_ADDR_LOW = 0; IMMED_ADDR_HIGH = 0;
         IMMED_DATA_LOW = 0; IMMED_DATA_LOW = 0;
         ALU_OPY_SEL = 0; ALU_OPX_SEL = 0; ALU_SEL = 0;
-        ALU_16_A_SEL = 0; ALU_16_B_SEL = 0; 
+        ALU_16_A_SEL = 0; //ALU_16_B_SEL = 0; 
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
@@ -1416,17 +1425,30 @@ module ControlUnit(
                             
                         endcase
                     end
+                   
+                    //ADD SP.r8
+                    8'b11101000: 
+                    begin
+                        PS_OPCODE= OPCODE;
+                        ALU_16=1'b1;
+                        //SP_LD =1;
+                    end
                            
                     //16 bit ALU
                     8'b00??0011: // INC BC, DE, HL, SP
                     begin
                         ALU_16_SEL = INC_16_ALU;
+                        RF_WR_SEL = RF_MUX_ALU_16_HIGH ; //ALU16_OUT[15:8]  
+                        ALU_16_A_SEL = ALU16_A_MUX_DXDY;
+                        FLAGS_DATA_SEL = FLAGS_DATA_ALU16;
                          case (OPCODE[5:4])
                             2'b00: // INC BC
                             begin
                                 // Register File Addresses
                                 RF_ADRX = REG_B;
                                 RF_ADRY = REG_C;
+                                // Write operation back into Register 
+                                RF_WR = 1;
                             end
                             
                              2'b01: // INC DE
@@ -1434,6 +1456,8 @@ module ControlUnit(
                                 // Register File Addresses
                                 RF_ADRX = REG_D;
                                 RF_ADRY = REG_E;
+                                // Write operation back into Register 
+                                RF_WR = 1;
                             end
                             
                              2'b10: // INC HL
@@ -1441,17 +1465,17 @@ module ControlUnit(
                                 // Register File Addresses
                                 RF_ADRX = REG_H;
                                 RF_ADRY = REG_L;
+                                // Write operation back into Register 
+                                RF_WR = 1;
                             end
                             
-                             2'b11: // INC SP??
+                             2'b11: // INC SP
                             begin
-                                // Register File Addresses
+                                SP_INCR = 1'b1;
                                 
                             end
                         endcase
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // Write operation back into Register 
-                        RF_WR = 1; 
+                                                       
                         PS_OPCODE= OPCODE;
                         ALU_16=1'b1;
                     end
@@ -1460,12 +1484,18 @@ module ControlUnit(
                     begin
                                    
                        ALU_16_SEL = DEC_16_ALU;
+                       RF_WR_SEL = RF_MUX_ALU_16_HIGH ; //ALU16_OUT[15:8]   
+                       ALU_16_A_SEL = ALU16_A_MUX_DXDY;
+                       // Flag register data select
+                       FLAGS_DATA_SEL = FLAGS_DATA_ALU16;
                          case (OPCODE[5:4])
                             2'b00: // DEC BC
                             begin
                                 // Register File Addresses
                                 RF_ADRX = REG_B;
                                 RF_ADRY = REG_C;
+                                // Write operation back into Register 
+                                RF_WR = 1; 
                             end
                             
                              2'b01: // DEC DE
@@ -1473,6 +1503,8 @@ module ControlUnit(
                                 // Register File Addresses
                                 RF_ADRX = REG_D;
                                 RF_ADRY = REG_E;
+                                // Write operation back into Register 
+                                RF_WR = 1;
                             end
                             
                              2'b10: // DEC HL
@@ -1480,19 +1512,17 @@ module ControlUnit(
                                 // Register File Addresses
                                 RF_ADRX = REG_H;
                                 RF_ADRY = REG_L;
+                                // Write operation back into Register 
+                                RF_WR = 1;
                             end
                             
-                             2'b11: // DEC SP??
+                             2'b11: // DEC SP
                             begin
-                                // Register File Addresses
+                                SP_DECR = 1'b1;
                                 
                             end
-                        endcase
-                        
-                        RF_WR_SEL = 4'b0011; //ALU16_OUT[15:8]                                
-                        // Write operation back into Register 
-                        RF_WR = 1; 
-                        
+                        endcase                                                                      
+                                              
                         PS_OPCODE= OPCODE;
                         ALU_16=1'b1;
                     end
@@ -1502,8 +1532,7 @@ module ControlUnit(
                         C_FLAG_LD = 1;
                         // ALU A input mux select                                
                         ALU_OPX_SEL = 1'b0;
-                        // ALU B input mux select
-                        ALU_OPY_SEL = 0;                                
+                                                      
                         // ALU Operation Select
                         ALU_SEL = ADD_ALU;  // ADD Lower byte first                               
                         // Input to the Reg File is the ALU output
@@ -1519,24 +1548,26 @@ module ControlUnit(
                             begin
                                 // Register File Addresses
                                 RF_ADRY = REG_C;
+                                ALU_OPY_SEL = ALU_B_MUX_DY;
                             end
                             
                              2'b01: // ADD E to L
                             begin
                                 // Register File Addresses
                                 RF_ADRY = REG_E;
+                                ALU_OPY_SEL = ALU_B_MUX_DY;
                             end
                             
                              2'b10: // ADD L to L
                             begin
                                 // Register File Addresses
                                 RF_ADRY = REG_L;
+                                ALU_OPY_SEL = ALU_B_MUX_DY;
                             end
                             
-                             2'b11: // ADD SPam ??? do i need this
+                             2'b11: // ADD SP[7:0] to L
                             begin
-                                // Register File Addresses
-                                RF_ADRX = REG_A;
+                                ALU_OPY_SEL = ALU_B_MUX_SP_LOW;
                             end
                           endcase
                         
@@ -1699,18 +1730,33 @@ module ControlUnit(
             ALU16: begin // 16 bit ALU
             
             case (PS_OPCODE) inside
-            
-                8'b00??0011: // INC
+                //ADD SP.r8
+                8'b11101000: 
+                begin
+                    SP_LD =1;
+                    IMMED_DATA_LOW = PS_OPCODE;
+                    ALU_16_SEL = ADDSP_16_ALU;  
+                    ALU_16_A_SEL = ALU16_A_MUX_SP;
+                    // Flags
+                    C_FLAG_LD = 1;
+                    Z_FLAG_LD = 1;
+                    N_FLAG_LD = 1;
+                    H_FLAG_LD = 1;
+                    // Flag register data select
+                    FLAGS_DATA_SEL = FLAGS_DATA_ALU16;
+                    SP_DIN_SEL = SP_DIN_ALU16;
+                    
+                end
+                
+                8'b00??0011: // INC lower byte
                 begin
                 
                 // ALU Operation Select
-                ALU_OPY_SEL = 3'b001;  
+                ALU_OPY_SEL = ALU_B_MUX_DY;  //this doesnt matter since inc input A
                 ALU_SEL = INC_ALU;                                
                 // Input to the Reg File is the ALU output
                 RF_WR_SEL = RF_MUX_ALU;                                
-                // Write operation back into Register A
-                RF_WR = 1;  
-                
+                                
                 // Flag register data select
                 FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                 case (PS_OPCODE[5:4])
@@ -1718,79 +1764,83 @@ module ControlUnit(
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_C;
+                        // Write operation back into Register A
+                        RF_WR = 1;
                     end
                     
                      2'b01: // INC E
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_E;
+                        // Write operation back into Register A
+                        RF_WR = 1;
                     end
                     
                      2'b10: // INC L
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_L;
+                        // Write operation back into Register A
+                        RF_WR = 1;
                     end
                     
-                     2'b11: // INC SP??
+                     2'b11: // INC SP
                     begin
-                        // Register File Addresses
-                        
+                                               
                     end
-                endcase
-                        
-                
-                RF_WR = 1;        
+                endcase                               
                 end
                 
                 8'b00??1011: // DEC BC, DE, HL, SP
                 begin
                     
                 // ALU Operation Select
-                ALU_OPY_SEL = 3'b001;  
+                ALU_OPY_SEL = ALU_B_MUX_DY;  
                 ALU_SEL = DEC_ALU;                                
                 // Input to the Reg File is the ALU output
                 RF_WR_SEL = RF_MUX_ALU;                                
-                // Write operation back into Register A
-                RF_WR = 1;  
-                
+                                
                 // Flag register data select
                 FLAGS_DATA_SEL = FLAGS_DATA_ALU;
                 case (PS_OPCODE[5:4])
-                    2'b00: // INC C
+                    2'b00: // DEC C
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_C;
+                        // Write operation back into Register A
+                        RF_WR = 1;  
                     end
                     
-                     2'b01: // INC E
+                     2'b01: // DEC E
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_E;
+                        // Write operation back into Register A
+                        RF_WR = 1;
                     end
                     
-                     2'b10: // INC L
+                     2'b10: // DEC L
                     begin
                         // Register File Addresses
                         RF_ADRX = REG_L;
+                        // Write operation back into Register A
+                        RF_WR = 1;
                     end
                     
-                     2'b11: // INC SP??
+                     2'b11: // DEC SP
                     begin
-                        // Register File Addresses
-                        
+                                               
                     end
                 endcase
                         
-                RF_WR = 1;      
+                     
                 end
                     
                 8'b00??1001: // ADD HL to BC, DE, HL, and SP
                 begin
                 // ALU A input mux select                                
                 ALU_OPX_SEL = 1'b0;
-                // ALU B input mux select
-                ALU_OPY_SEL = 2'b00;                                
+                                                
                 // ALU Operation Select
                 ALU_SEL = ADC_ALU;      //ADC the upper byte                          
                 // Input to the Reg File is the ALU output
@@ -1812,24 +1862,29 @@ module ControlUnit(
                     begin 
                         // Register File Addresses
                         RF_ADRY = REG_B;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = ALU_B_MUX_DY;
                     end
                     
                      2'b01: // ADD D to H
                     begin
                         // Register File Addresses
                         RF_ADRY = REG_D;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = ALU_B_MUX_DY;
                     end
                     
                      2'b10: // ADD H to H
                     begin
                         // Register File Addresses
                         RF_ADRY = REG_H;
+                        // ALU B input mux select
+                        ALU_OPY_SEL = ALU_B_MUX_DY;
                     end
                     
-                     2'b11: // ADD SPam ??? do i need this
+                     2'b11: // ADD SP[15:8] to H
                     begin
-                        // Register File Addresses
-                        RF_ADRX = REG_A;
+                        ALU_OPY_SEL = RF_MUX_ALU_16_HIGH;
                     end
                     endcase
                 end
@@ -3286,8 +3341,7 @@ module ControlUnit(
                     end
                     default: begin
                     end
-                    default: begin
-                    end
+                    
                 endcase
                 NS = FETCH;
 
