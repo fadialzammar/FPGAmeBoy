@@ -41,12 +41,13 @@ module Wrapper(
     logic [3:0] ALU_FLAGS_IN;
     logic [7:0] ALU_OUT; 
     logic [3:0] ALU_FLAGS_OUT;
+    logic [3:0] ALU_16_FLAGS_OUT;
     logic ALU_A_SEL;
     logic [2:0] ALU_B_SEL;
     
     // ALU 16 bit signals
     logic [15:0] ALU_16_A,ALU_16_B,ALU_16_OUT;
-    logic [1:0] ALU_16_B_SEL;
+    logic [1:0] ALU_16_A_SEL;
     
     // RegFile Signals
     logic [4:0] RF_ADRX, RF_ADRY;
@@ -106,9 +107,9 @@ module Wrapper(
     logic CALL_MUX_SEL;
     logic [1:0] RF_WR_SEL;
     logic ALU_OPY_SEL;
-    logic FLAGS_DATA_SEL;
+    logic [1:0] FLAGS_DATA_SEL;
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
-    logic SP_DIN_SEL;
+    logic [1:0] SP_DIN_SEL;
     logic MEM_WE;                    // memory
     logic [2:0] MEM_ADDR_SEL;
     logic [3:0] MEM_DATA_SEL;
@@ -179,20 +180,20 @@ module Wrapper(
     
     // 8-bit ALU A input MUX
     MUX2to1#(.DATA_SIZE(8)) ALU_A_MUX(
-        .In0(RF_DX_OUT), .In1(MEM_DOUT),
+        .In0(RF_DX_OUT), .In1(MEM_DOUT), 
         .Sel(ALU_A_SEL), .Out(ALU_A)
     );
     
     // 8-bit ALU B input MUX
-    MUX4to1#(.DATA_SIZE(8)) ALU_B_MUX(
-        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL_8),
+    MUX6to1#(.DATA_SIZE(8)) ALU_B_MUX(
+        .In0(RF_DY_OUT), .In1(MEM_DOUT), .In2(OPCODE), .In3(BIT_SEL_8), .In4(SP_DOUT[15:8]),.In5(SP_DOUT[7:0]),
         .Sel(ALU_B_SEL), .Out(ALU_B)
     );
     
-    // 16-bit ALU B input MUX
-    MUX4to1#(.DATA_SIZE(16)) ALU_16_B_MUX(
-        .In0(ALU_16_OUT), .In1(16'h0000), .In2(), .In3(),
-        .Sel(ALU_16_B_SEL), .Out(ALU_16_B)
+    // 16-bit ALU A input MUX
+    MUX4to1#(.DATA_SIZE(16)) ALU_16_A_MUX(
+        .In0(HL_PTR), .In1(SP_DOUT), .In2(), .In3(),
+        .Sel(ALU_16_A_SEL), .Out(ALU_16_A)
     );
     
     // 8-bit ALU Instantiation
@@ -203,13 +204,13 @@ module Wrapper(
     
     // 16-bit ALU Instantiation
     ALU_16 ALU_16(
-        .ALU_FUN(ALU_16_FUN), .A(HL_PTR), .B(), .FLAGS_IN(FLAG_REG_OUT[7:4]),
-        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT()
+        .ALU_FUN(ALU_16_FUN), .A(ALU_16_A), .B({8'b0,IMMED_DATA_LOW}), .FLAGS_IN(FLAG_REG_OUT[7:4]),
+        .ALU_OUT(ALU_16_OUT), .FLAGS_OUT(ALU_16_FLAGS_OUT)
     );
     
     // Flag Register MUX
-    MUX2to1 Flag_Reg_MUX(
-        .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_DOUT), 
+    MUX3to1 Flag_Reg_MUX(
+        .In0({ALU_FLAGS_OUT,4'b0000}), .In1(MEM_DOUT), .In2({ALU_16_FLAGS_OUT,4'b0000}),
         .Sel(FLAGS_DATA_SEL), .Out(FLAG_REG_IN)
     );
     
@@ -245,8 +246,8 @@ module Wrapper(
     );
 
     // Stack Pointer Data MUX
-    MUX2to1#(.DATA_SIZE(16)) SP_MUX(
-        .In0(RF_16_OUT), .In1(IMMED_DATA_16),
+    MUX3to1#(.DATA_SIZE(16)) SP_MUX(
+        .In0(RF_16_OUT), .In1(IMMED_DATA_16),.In2(ALU_16_OUT),
         .Sel(SP_DIN_SEL), .Out(SP_DIN)
     );
 
@@ -314,7 +315,7 @@ module Wrapper(
         .ALU_16_SEL(ALU_16_FUN),
         .ALU_OPX_SEL(ALU_A_SEL), 
         .ALU_OPY_SEL(ALU_B_SEL),
-        .ALU_16_B_SEL(ALU_16_B_SEL),
+        .ALU_16_A_SEL(ALU_16_A_SEL),
         .MEM_WE(MEM_WE), .MEM_HOLD(MEM_HOLD), // memory
         // .MEM_DIN_BUF_WE(MEM_DIN_BUF_WE),
         .MEM_ADDR_BUF_WE(MEM_ADDR_BUF_WE),
