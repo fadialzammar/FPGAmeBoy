@@ -38,13 +38,30 @@ module memory_map(
 	output				wr_crd,
 	output				rd_crd,
 
-   //PPU 8000-9FFF & FE00-FE9F & FF40-FF4B
-	output 	[15:0] 	A_ppu,
-	output 	[7:0] 	Di_ppu,
-	input		[7:0]		Do_ppu,
-	output				cs_ppu,
-	output				wr_ppu,
-	output				rd_ppu,
+   //PPU (Video RAM)8000-9FFF 
+	output 	[15:0] 	A_ppu_vram,
+	output 	[7:0] 	Di_ppu_vram,
+	input		[7:0]		Do_ppu_vram,
+	output				cs_ppu_vram,
+	output				wr_ppu_vram,
+	output				rd_ppu_vram,
+    
+    //PPU  (OAM)FE00-FE9F 
+	output 	[15:0] 	A_ppu_oam,
+	output 	[7:0] 	Di_ppu_oam,
+	input		[7:0]		Do_ppu_oam,
+	output				cs_ppu_oam,
+	output				wr_ppu_oam,
+	output				rd_ppu_oam,
+	
+	//PPU (MMIO)FF40-FF4B
+	output 	[15:0] 	A_ppu_regs,
+	output 	[7:0] 	Di_ppu_regs,
+	input		[7:0]		Do_ppu_regs,
+	output				cs_ppu_regs,
+	output				wr_ppu_regs,
+	output				rd_ppu_regs,
+	
    
 	//RAM C000-DFFF
 	output 	[15:0] 	A_ram,
@@ -82,36 +99,46 @@ module memory_map(
 
 
 assign A_crd = A_cpu;
-assign A_ppu = A_cpu;
+assign A_ppu_vram = A_cpu;
+assign A_ppu_oam = A_cpu;
+assign A_ppu_mmio = A_cpu;
 assign A_ram = A_cpu - 16'hC000;
 assign A_wsram = A_cpu - 16'hFF00;
 assign A_timer = A_cpu;
 
 assign wr_crd =   cs_crd ? wr_cpu : 1'b0;
-assign wr_ppu = cs_ppu ? wr_cpu : 1'b0;
+assign wr_ppu_vram = cs_ppu_vram ? wr_cpu : 1'b0;
+assign wr_ppu_oam = cs_ppu_oam ? wr_cpu : 1'b0;
+assign wr_ppu_mmio = cs_ppu_mmio ? wr_cpu : 1'b0;
 assign wr_ram =   cs_ram ? wr_cpu : 1'b0;
 assign wr_wsram = cs_wsram ? wr_cpu : 1'b0;
 assign wr_ctrlMgr = cs_ctrlMgr ? wr_cpu : 1'b0;
 assign wr_timer = cs_timer ? wr_cpu : 1'b0;
 
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
-assign rd_ppu = cs_ppu ? rd_cpu : 1'b0;
+assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : 1'b0;
+assign rd_ppu_oam = cs_ppu_oam ? rd_cpu : 1'b0;
+assign rd_ppu_mmio = cs_ppu_mmio ? rd_cpu : 1'b0;
 assign rd_ram =   cs_ram ? rd_cpu : 1'b0;
 assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
 assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 
 assign cs_crd = (A_cpu >= 16'h0000 && A_cpu < 16'h8000) || (A_cpu >= 16'hA000 && A_cpu < 16'hC000);
-assign cs_ppu = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
+assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
+assign cs_ppu_oam = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
+assign cs_ppu_mmio = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_ctrlMgr = A_cpu == 16'hFF00;
 assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
 assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
 
-assign Di_cpu = cs_crd ? Do_crd : (cs_ppu ? Do_ppu : (cs_ram ? Do_ram : (cs_wsram ? Do_wsram : (cs_ctrlMgr ? Do_ctrlMgr : (cs_timer ? Do_timer : 8'b0 )))));
+assign Di_cpu = cs_crd ? Do_crd : (cs_ppu_vram ? Do_ppu_vram : (cs_ppu_oam ? Do_ppu_oam :(cs_ppu_regs ? Do_ppu_regs :(cs_ram ? Do_ram : (cs_wsram ? Do_wsram : (cs_ctrlMgr ? Do_ctrlMgr : (cs_timer ? Do_timer : 8'b0 )))))));
 
 assign Di_crd = cs_crd ? Do_cpu : 8'b0;
-assign Di_ppu = cs_ppu ? Do_cpu : 8'b0;
+assign Di_ppu_vram = cs_ppu_vram ? Do_cpu : 8'b0;
+assign Di_ppu_oam = cs_ppu_oam ? Do_cpu : 8'b0;
+assign Di_ppu_regs = cs_ppu_regs ? Do_cpu : 8'b0;
 assign Di_ram = cs_ram ? Do_cpu : 8'b0;
 assign Di_wsram = cs_wsram ? Do_cpu : 8'b0;
 assign Di_ctrlMgr = cs_ctrlMgr ? Do_cpu : 8'b0;
