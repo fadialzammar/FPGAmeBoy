@@ -7,6 +7,9 @@ module top(
     input RST
 );
 
+////////////////////////////
+// CPU
+////////////////////////////
 logic [7:0] CPU_DATA_IN, CPU_DATA_OUT, CPU_OPCODE;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
@@ -24,7 +27,9 @@ CPU_Wrapper CPU(
     .PC             (PROG_COUNT)
 );
 
-// Program ROM Instantiation
+////////////////////////////
+// ProgRom / Cartridge
+////////////////////////////
 logic [15:0] PROG_COUNT;
 
 ProgRom ProgRom(
@@ -49,27 +54,101 @@ Memory Memory(
     .DOUT           (MEM_DOUT)
 );
 
+////////////////////////////
+// PPU
+////////////////////////////
+logic PPU_WE, PPU_RE, PPU_HOLD;
+logic [15:0] PPU_ADDR;
+logic [7:0] PPU_DIN, PPU_DOUT;
+
+logic VRAM_WE, VRAM_RE, VRAM_HOLD;
+logic [15:0] VRAM_ADDR;
+logic [7:0] VRAM_DIN, VRAM_DOUT;
+
+logic OAM_WE, OAM_RE, OAM_HOLD;
+logic [15:0] OAM_ADDR;
+logic [7:0] OAM_DIN, OAM_DOUT;
+
+logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
+logic [1:0] VGA_PIXEL;
+
+assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
+assign VRAM_RE = ~VRAM_HOLD;
+assign OAM_RE = ~OAM_HOLD;
+
+ppu PPU(
+    .clk            (CLK),
+    .rst            (RST),
+    // MMIO Bus, 0xFF40 - 0xFF4B, always visible to CPU
+    .mmio_a         (PPU_ADDR),
+    .mmio_dout      (PPU_DOUT),
+    .mmio_din       (PPU_DIN),
+    .mmio_rd        (PPU_RE),
+    .mmio_wr        (PPU_WE),
+    // VRAM Bus, 0x800 - 0x9FFF
+    .vram_a         (VRAM_ADDR),
+    .vram_dout      (VRAM_DOUT),
+    .vram_din       (VRAM_DIN),
+    .vram_rd        (VRAM_RE),
+    .vram_wr        (VRAM_WE),
+    // OAM Bus,  0xFE00 - 0xFE9F
+    .oam_a          (OAM_ADDR),
+    .oam_dout       (OAM_DOUT),
+    .oam_din        (OAM_DIN),
+    .oam_rd         (OAM_RE),
+    .oam_wr         (OAM_WE),
+    // Interrupt interface
+    .int_vblank_req (),
+    .int_lcdc_req   (),
+    .int_vblank_ack (),
+    .int_lcdc_ack   (),
+    // Pixel output
+    .cpl            (VGA_CLK),          // Pixel Clock, = ~clk
+    .pixel          (VGA_PIXEL),        // Pixel Output
+    .valid          (VGA_PIXEL_VALID),  // Pixel Valid
+    .hs             (VGA_HS),           // Horizontal Sync, High Valid
+    .vs             (VGA_VS),           // Vertical Sync, High Valid
+    //Debug output
+    .scx            (),
+    .scy            (),
+    .state          ()
+    );
+
 memory_map memory_map(
-    //Cpu 0000-FFFF
+    //CPU 0000-FFFF
     .A_cpu          (CPU_ADDR_OUT),
     .Di_cpu         (CPU_DATA_IN),
     .Do_cpu         (CPU_DATA_OUT),
     .wr_cpu         (CPU_WE_OUT),
     .rd_cpu         (CPU_RE_OUT),
-    //Cartridge 0000-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory
+    //Cartridge 0000-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
     .A_crd          (),
     .Di_crd         (),
     .Do_crd         (),
     .cs_crd         (),
     .wr_crd         (),
     .rd_crd         (),
-    //PPU 8000-9FFF & FE00-FE9F & FF40-FF4B
-    .A_ppu          (PPU_ADDR),
-    .Di_ppu         (PPU_DIN),
-    .Do_ppu         (PPU_DOUT),
-    .cs_ppu         (),
-    .wr_ppu         (PPU_WE),
-    .rd_ppu         (PPU_RE),
+    //PPU (Video RAM) 8000-9FFF 
+    .A_ppu_vram     (VRAM_ADDR),
+    .Di_ppu_vram    (VRAM_DIN),
+    .Do_ppu_vram    (VRAM_DOUT),
+    .cs_ppu_vram    (),
+    .wr_ppu_vram    (VRAM_WE),
+    .rd_ppu_vram    (VRAM_RE),
+    //PPU  (OAM) FE00-FE9F
+    .A_ppu_oam      (OAM_ADDR),
+    .Di_ppu_oam     (OAM_DIN),
+    .Do_ppu_oam     (OAM_DOUT),
+    .cs_ppu_oam     (),
+    .wr_ppu_oam     (OAM_WE),
+    .rd_ppu_oam     (OAM_RE),
+    //PPU (MMIO) FF40-FF4B
+    .A_ppu_regs     (PPU_ADDR),
+    .Di_ppu_regs    (PPU_DIN),
+    .Do_ppu_regs    (PPU_DOUT),
+    .cs_ppu_regs    (),
+    .wr_ppu_regs    (PPU_WE),
+    .rd_ppu_regs    (PPU_RE),
     //RAM C000-DFFF
     .A_ram          (MEM_ADDR),
     .Di_ram         (MEM_DIN),
@@ -99,67 +178,5 @@ memory_map memory_map(
     .wr_wsram       (),
     .rd_wsram       ()
    );
-
-
-// PPU Instantiation
-logic [15:0] PPU_ADDR;
-logic [7:0] PPU_DIN, PPU_DOUT;
-logic PPU_WE, PPU_RE;
-
-// video_controller PPU(
-//     .reset          (RST),
-//     .clock          (CLK),
-
-//     .int_vblank_ack (),
-//     .int_vblank_req (),
-//     .int_lcdc_ack   (),
-//     .int_lcdc_req   (),
-
-//     .A              (PPU_ADDR),
-//     .Di             (PPU_DIN),
-//     .Do             (PPU_DOUT),
-//     .rd_n           ()
-// );
-
-logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
-logic [1:0] VGA_PIXEL;
-
-ppu PPU(
-    .clk            (CLK),
-    .rst            (RST),
-    // MMIO Bus, 0xFF40 - 0xFF4B, always visible to CPU
-    .mmio_a         (PPU_ADDR),
-    .mmio_dout      (PPU_DOUT),
-    .mmio_din       (PPU_DIN),
-    .mmio_rd        (PPU_RE),
-    .mmio_wr        (PPU_WE),
-    // VRAM Bus, 0x800 - 0x9FFF
-    .vram_a         (),
-    .vram_dout      (),
-    .vram_din       (),
-    .vram_rd        (),
-    .vram_wr        (),
-    // OAM Bus,  0xFE00 - 0xFE9F
-    .oam_a          (),
-    .oam_dout       (),
-    .oam_din        (),
-    .oam_rd         (),
-    .oam_wr         (),
-    // Interrupt interface
-    .int_vblank_req (),
-    .int_lcdc_req   (),
-    .int_vblank_ack (),
-    .int_lcdc_ack   (),
-    // Pixel output
-    .cpl            (VGA_CLK),          // Pixel Clock, = ~clk
-    .pixel          (VGA_PIXEL),        // Pixel Output
-    .valid          (VGA_PIXEL_VALID),  // Pixel Valid
-    .hs             (VGA_HS),           // Horizontal Sync, High Valid
-    .vs             (VGA_VS),           // Vertical Sync, High Valid
-    //Debug output
-    .scx            (),
-    .scy            (),
-    .state          ()
-    );
 
 endmodule
