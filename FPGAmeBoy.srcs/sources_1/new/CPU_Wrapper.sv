@@ -5,7 +5,7 @@
 // 
 // Create Date: 02/17/2021 09:06:22 PM
 // Design Name: 
-// Module Name: Wrapper
+// Module Name: CPUWrapper
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,15 +20,23 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module Wrapper(
+module CPU_Wrapper(
     input CLK,
-    input CPU_RESET
+    input RST,
+    input [7:0] MEM_DOUT,     // from Memory to CPU
+    input [7:0] OPCODE,
+
+    output [7:0] MEM_DIN,     // from CPU to Memory
+    output MEM_WE,
+    output MEM_RE,
+    output [15:0] MEM_ADDR_IN,  // from CPU to Memory
+    output [15:0] PC    // TODO: change to 10 bits?
     );
     
     // Program Counter Signals
     logic PC_LD;
     logic [15:0] PC_DIN;
-    logic [15:0] PC;
+    // logic [15:0] PC;
     logic [15:0] RET_PC, CALL_PC, CALL_PC_FALSE, JP_PC, JR_PC, JR_PC_FALSE;
     logic [15:0] CALL_PC_IN;
     logic [15:0] CU_PC_ADDR;
@@ -87,8 +95,8 @@ module Wrapper(
     logic [15:0] SP_DOUT;
     
     // Memory signals    
-    logic [7:0] MEM_DIN, MEM_DOUT;
-    logic [15:0] MEM_ADDR_IN;
+    // logic [7:0] MEM_DIN, MEM_DOUT;
+    // logic [15:0] MEM_ADDR_IN;
     logic [15:0] HL_PTR;
     logic [15:0] MEM_ADDR_BUF_OUT;
     logic MEM_ADDR_BUF_WE;
@@ -100,7 +108,7 @@ module Wrapper(
     assign BIT_SEL_8 = {5'b00000, BIT_SEL};
     
     // Control signals
-    logic [7:0] OPCODE;
+    // logic [7:0] OPCODE;
     logic PC_INC;                   // program counter
     logic PC_HIGH_FLAG, PC_LOW_FLAG;
     logic [2:0] PC_MUX_SEL;
@@ -110,7 +118,8 @@ module Wrapper(
     logic [1:0] FLAGS_DATA_SEL;
     logic SP_LD, SP_INCR, SP_DECR;   // stack pointer
     logic [1:0] SP_DIN_SEL;
-    logic MEM_WE;                    // memory
+    // logic MEM_WE;                    // memory
+    logic MEM_HOLD;
     logic [2:0] MEM_ADDR_SEL;
     logic [3:0] MEM_DATA_SEL;
     logic INTR_REG_SEL;
@@ -147,6 +156,8 @@ module Wrapper(
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
     assign CALL_PC_FALSE = PC + 2; // CALL not taken due to conditional (skip immediat values)
     
+    assign MEM_RE = ~MEM_HOLD;
+
     // CALL Data MUX
      MUX2to1 #(.DATA_SIZE(16)) CALL_MUX(
         .In0(CALL_PC_FALSE), .In1(CALL_PC),
@@ -237,13 +248,6 @@ module Wrapper(
         .DX_OUT(RF_DX_OUT), .DY_OUT(RF_DY_OUT), 
         .WE(RF_WR), .CLK(CLK)
     );
-    
-    // Program Counter Instantiation
-    ProgRom ProgRom(
-        .PROG_CLK(CLK),
-        .PROG_ADDR(PC),
-        .PROG_IR(OPCODE)
-    );
 
     // Stack Pointer Data MUX
     MUX3to1#(.DATA_SIZE(16)) SP_MUX(
@@ -287,20 +291,10 @@ module Wrapper(
         .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
-    // Memory Instantiation
-    Memory Memory(
-        .CLK(CLK), 
-        .WE(MEM_WE),
-        .HOLD(MEM_HOLD), 
-        .ADDR(MEM_ADDR_IN), 
-        .DIN(MEM_DIN),
-        .DOUT(MEM_DOUT)
-    );
-    
     // Control Unit Instantiation
     ControlUnit ControlUnit(
         // Inputs
-        .CLK(CLK), .INTR(), .RESET(CPU_RESET),
+        .CLK(CLK), .INTR(), .RESET(RST),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
@@ -329,7 +323,7 @@ module Wrapper(
         .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), // H Flag control
         .FLAGS_DATA_SEL(FLAGS_DATA_SEL),        
         .I_CLR(), .I_SET(), .FLG_LD_SEL(), // interrupts
-        .RST(RST),       // reset
+        .RST(RST),       // FIXME: duplicate resets
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL),
         .RST_MUX_SEL(RST_MUX_SEL)

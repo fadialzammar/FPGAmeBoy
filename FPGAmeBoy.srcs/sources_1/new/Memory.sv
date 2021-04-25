@@ -46,7 +46,8 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
          end
 //      mem[17733] = 8'h1A; // REG A
     //   mem[515] = 8'hEE;
-     mem[258] = 8'hBB;     //mem[0x0102]
+    //  mem[258] = 8'hBB;     //mem[0x0102]
+     mem[4602] = 8'hBB;   //mem[0xD1FA - 0xC000 = 0x11FA]
      mem[515] = 8'hCC;     //mem[0x0203]
      mem[772] = 8'hDD;     //mem[0x0304]
      mem[1029] = 8'hEE;    //mem[0x0405]

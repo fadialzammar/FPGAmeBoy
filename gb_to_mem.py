@@ -1,0 +1,19 @@
+import sys
+
+with open(sys.argv[1], 'rb') as f_in:
+    binary = f_in.read()
+
+hex_list = ['{:02x}'.format(c) for c in binary]
+
+hex_str = ''
+i = 0
+
+for opcode in hex_list:
+    hex_str += opcode + " "
+    i += 1
+    if i == 16:
+        hex_str += '\n'
+        i = 0
+
+with open(sys.argv[2], 'w') as f_out:
+    f_out.write(hex_str)
