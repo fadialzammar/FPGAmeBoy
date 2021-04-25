@@ -32,7 +32,7 @@ module ProgRom(
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
-        $readmemh("CB_roll_shift.mem", rom, 0, 1023);
+        $readmemh("ld_tests.mem", rom);
     end 
     
     always_ff @(posedge PROG_CLK)

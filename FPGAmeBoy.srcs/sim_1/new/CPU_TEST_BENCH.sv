@@ -22,13 +22,13 @@
 
 module CPU_TEST_BENCH();
 
-     logic CLK=0, CPU_RESET=0;
+     logic CLK=0, RST=0;
      logic [15:0] SWITCHES,LEDS;
      logic [7:0] CATHODES,VGA_RGB;
      logic [3:0] ANODES;
      logic [4:0] counter;
      
-     Wrapper DUT (.*);
+     top DUT (.*);
     
      initial forever  #10  CLK =  ! CLK; 
 
