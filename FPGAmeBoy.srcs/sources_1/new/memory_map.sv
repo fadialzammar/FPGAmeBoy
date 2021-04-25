@@ -125,9 +125,9 @@ assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 
 assign cs_crd = (A_cpu >= 16'h0000 && A_cpu < 16'h8000) || (A_cpu >= 16'hA000 && A_cpu < 16'hC000);
-assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
-assign cs_ppu_oam = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
-assign cs_ppu_mmio = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF) || (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0) || (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
+assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF);
+assign cs_ppu_oam = (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0);
+assign cs_ppu_mmio = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_ctrlMgr = A_cpu == 16'hFF00;
 assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
