@@ -53,6 +53,25 @@ Memory Memory(
     .DIN            (MEM_DIN),
     .DOUT           (MEM_DOUT)
 );
+////////////////////////////
+// TIMER
+////////////////////////////
+
+logic TIMER_WR, TIMER_RE, TIMER_CS;
+logic [15:0] A_ADDR;
+logic [7:0] TIMER_DIN, TIMER_DOUT;
+
+timer timer(
+    .clk        (CLK),
+    .RST        (RST),
+    .REG_ADR    (A_ADDR),
+    .DIN        (TIMER_DIN),
+    .wr         (TIMER_WR),
+    .rd         (TIMER_RE),
+    .cs         (TIMER_CS),
+    .DOUT       (TIMER_DOUT),
+    .TIMER_IRQ  ()
+);
 
 ////////////////////////////
 // PPU
@@ -164,12 +183,12 @@ memory_map memory_map(
     .wr_ctrlMgr     (),
     .rd_ctrlMgr     (),
     //Timer FF04-FF07
-    .A_timer        (),
-    .Di_timer       (),
-    .Do_timer       (),
-    .cs_timer       (),
-    .wr_timer       (),
-    .rd_timer       (),
+    .A_timer        (A_ADDR),
+    .Di_timer       (TIMER_DIN),
+    .Do_timer       (TIMER_DOUT),
+    .cs_timer       (TIMER_CS),
+    .wr_timer       (TIMER_WR),
+    .rd_timer       (TIMER_RE),
     //Working & Stack RAM FF05-FF40
     .A_wsram        (),
     .Di_wsram       (),
