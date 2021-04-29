@@ -27,6 +27,9 @@ module CPU_TEST_BENCH();
      logic [7:0] CATHODES,VGA_RGB;
      logic [3:0] ANODES;
      logic [4:0] counter;
+    // Display outputs
+     logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
+     logic [1:0] VGA_PIXEL;
      
      top DUT (.*);
     
