@@ -4,7 +4,10 @@
 
 module top(
     input CLK,
-    input RST
+    input RST,
+    // Display outputs
+    output logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID,
+    output logic [1:0] VGA_PIXEL
 );
 
 ////////////////////////////
@@ -69,8 +72,8 @@ logic OAM_WE, OAM_RE, OAM_HOLD;
 logic [15:0] OAM_ADDR;
 logic [7:0] OAM_DIN, OAM_DOUT;
 
-logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
-logic [1:0] VGA_PIXEL;
+//logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
+//logic [1:0] VGA_PIXEL;
 
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 assign VRAM_RE = ~VRAM_HOLD;
@@ -113,6 +116,112 @@ ppu PPU(
     .scy            (),
     .state          ()
     );
+    
+////////////////////////////
+// DMA 
+////////////////////////////
+logic DMA_RE; // DMA Memory Write Enable
+logic DMA_WE; // DMA Memory Read Enable
+logic [15:0] DMA_ADDR; // Main Address Bus
+logic [7:0]  DMA_DIN; // Main Data Bus
+logic [7:0]  DMA_DOUT;
+logic [7:0]  DMA_MMIO_DOUT;
+logic DMA_MMIO_WE; 
+// Flags for indicating DMA use and CPU disable
+logic dma_occupy_extbus; // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
+logic dma_occupy_vidbus; // 0x8000 - 0x9FFF
+logic dma_occupy_oambus; // 0xFE00 - 0xFE9F
+
+// DMA Instantiation
+dma DMA(
+    .clk                    (CLK),
+    .rst                    (RST),
+    .dma_rd                 (DMA_RE),
+    .dma_wr                 (DMA_WE),
+    .dma_a                  (DMA_ADDR),
+    .dma_din                (DMA_DIN),
+    .dma_dout               (DMA_DOUT),
+    .mmio_wr                (DMA_MMIO_WE),
+    .mmio_din               (CPU_DATA_OUT),
+    .mmio_dout              (DMA_MMIO_DOUT),
+    // DMA use
+    // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
+    .dma_occupy_extbus      (dma_occupy_extbus),
+    // 0x8000 - 0x9FFF
+    .dma_occupy_vidbus      (dma_occupy_vidbus),
+    // 0xFE00 - 0xFE9F
+    .dma_occupy_oambus      (dma_occupy_oambus)
+);
+    
+// DMA interface Logic
+// VRAM
+assign VRAM_ADDR = dma_occupy_vidbus ? DMA_ADDR : VRAM_ADDR;
+assign VRAM_WE   = dma_occupy_vidbus ? 1'b0     : VRAM_WE;
+assign VRAM_RE   = dma_occupy_vidbus ? DMA_RE   : VRAM_RE;
+// OAM RAM
+assign OAM_ADDR = dma_occupy_oambus ? DMA_ADDR : OAM_ADDR;
+assign OAM_WE   = dma_occupy_oambus ? DMA_WE   : OAM_WE;
+assign OAM_RE   = dma_occupy_oambus ? DMA_RE   : OAM_RE;
+assign OAM_DIN  = dma_occupy_oambus ? DMA_DOUT : OAM_DIN;
+
+//always_comb 
+//begin
+//    // DMA in use
+//    // Data, Adddres, and control set by DMA
+//    // DMA using VRAM bus
+//    if (dma_occupy_vidbus)
+//        begin
+//            VRAM_ADDR = DMA_ADDR;
+//            VRAM_WE   = 1'b0;
+//            VRAM_RE   = DMA_RE;
+//        end
+//    // DMA using OAM bus
+//    else if (dma_occupy_oambus)
+//        begin
+//            OAM_ADDR = DMA_ADDR;
+//            OAM_DIN  = DMA_DOUT;
+//            OAM_WE   = DMA_WE;
+//            OAM_RE   = DMA_RE;    
+//        end
+        
+//     else
+//        begin
+//            VRAM_ADDR = CPU_DATA_OUT;
+//            VRAM_WE   = CPU_WE_OUT;
+//            VRAM_RE   = CPU_RE_OUT;
+            
+//            OAM_ADDR = CPU_ADDR_OUT;
+//            OAM_DIN  = CPU_DATA_OUT;
+//            OAM_WE   = CPU_WE_OUT;
+//            OAM_RE   = CPU_RE_OUT;
+//        end
+//end
+
+////////////////////////////
+// High RAM FF80-FFFE
+////////////////////////////
+logic [7:0] HRAM [0:127];
+logic [15:0] HRAM_ADDR;
+logic [7:0] HRAM_DIN, HRAM_DOUT;
+logic HRAM_WE, HRAM_RE;
+
+// Write on rising edge
+always @(posedge CLK) 
+begin
+    if (HRAM_WE)
+        begin
+            HRAM[HRAM_ADDR] <= HRAM_DIN;
+        end
+end
+
+// Read on falling edge
+ always_ff@(negedge CLK)
+    begin
+        if (HRAM_RE)
+        begin
+            HRAM_DOUT <= HRAM[HRAM_ADDR];
+        end
+    end
 
 memory_map memory_map(
     //CPU 0000-FFFF
@@ -176,7 +285,14 @@ memory_map memory_map(
     .Do_wsram       (),
     .cs_wsram       (),
     .wr_wsram       (),
-    .rd_wsram       ()
+    .rd_wsram       (),
+    // High Ram FF80-FFFE
+    .A_HRAM         (HRAM_ADDR),
+	.Di_HRAM        (HRAM_DIN),
+	.Do_HRAM        (HRAM_DOUT),
+	.cs_HRAM        (),
+	.wr_HRAM        (HRAM_WE),
+	.rd_HRAM        (HRAM_RE)
    );
 
 endmodule

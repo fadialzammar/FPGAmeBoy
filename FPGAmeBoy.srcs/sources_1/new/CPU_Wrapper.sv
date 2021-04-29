@@ -128,7 +128,7 @@ module CPU_Wrapper(
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
-    logic [7:0] INTR_REG_DIN = 8'h00;
+    logic [7:0] INTR_REG_DIN;
     
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values

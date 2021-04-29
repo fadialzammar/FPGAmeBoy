@@ -21,8 +21,6 @@
 
 module memory_map(
 
-
-
 	//Cpu 0000-FFFF
 	input 	[15:0] 	A_cpu,
 	output 	[7:0] 	Di_cpu,
@@ -62,7 +60,6 @@ module memory_map(
 	output				wr_ppu_regs,
 	output				rd_ppu_regs,
 	
-   
 	//RAM C000-DFFF
 	output 	[15:0] 	A_ram,
 	output 	[7:0] 	Di_ram,
@@ -72,7 +69,7 @@ module memory_map(
 	output				rd_ram,
    
    //Controller Manager FF00
-   output 	[15:0] 	A_ctrlMgr,
+    output 	[15:0] 	A_ctrlMgr,
 	output 	[7:0] 	Di_ctrlMgr,
 	input		[7:0]		Do_ctrlMgr,
 	output				cs_ctrlMgr,
@@ -93,7 +90,15 @@ module memory_map(
 	input		[7:0]		Do_wsram,
 	output				cs_wsram,
 	output				wr_wsram,
-	output				rd_wsram
+	output				rd_wsram,
+	
+	//High RAM FF80 - FFFE
+	output 	[15:0] 	A_HRAM,
+	output 	[7:0] 	Di_HRAM,
+	input   [7:0]   Do_HRAM,
+	output			cs_HRAM,
+	output			wr_HRAM,
+	output			rd_HRAM
 	
 );
 
@@ -105,6 +110,8 @@ assign A_ppu_regs = A_cpu;
 assign A_ram = A_cpu - 16'hC000;
 assign A_wsram = A_cpu - 16'hFF00;
 assign A_timer = A_cpu;
+// Might be A_HRAM = A_cpu - 16'hFF80
+assign A_HRAM = A_cpu - 16'hFF80;
 
 assign wr_crd =   cs_crd ? wr_cpu : 1'b0;
 assign wr_ppu_vram = cs_ppu_vram ? wr_cpu : 1'b0;
@@ -114,6 +121,7 @@ assign wr_ram =   cs_ram ? wr_cpu : 1'b0;
 assign wr_wsram = cs_wsram ? wr_cpu : 1'b0;
 assign wr_ctrlMgr = cs_ctrlMgr ? wr_cpu : 1'b0;
 assign wr_timer = cs_timer ? wr_cpu : 1'b0;
+assign wr_HRAM = cs_HRAM ? wr_cpu : 1'b0;
 
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
 assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : 1'b0;
@@ -123,6 +131,7 @@ assign rd_ram =   cs_ram ? rd_cpu : 1'b0;
 assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
 assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
+assign rd_HRAM = cs_HRAM ? rd_cpu : 1'b0;
 
 assign cs_crd = (A_cpu >= 16'h0000 && A_cpu < 16'h8000) || (A_cpu >= 16'hA000 && A_cpu < 16'hC000);
 assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF);
@@ -132,6 +141,7 @@ assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_ctrlMgr = A_cpu == 16'hFF00;
 assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
 assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
+assign cs_HRAM = (A_cpu >= 16'hFF80 && A_cpu < 16'hFFFE);
 
 assign Di_cpu = cs_crd ? Do_crd : (
 				cs_ppu_vram ? Do_ppu_vram : (
@@ -139,9 +149,10 @@ assign Di_cpu = cs_crd ? Do_crd : (
 				cs_ppu_regs ? Do_ppu_regs : (
 				cs_ram ? Do_ram : (
 				cs_wsram ? Do_wsram : (
+				cs_HRAM ? Do_HRAM : (
 				cs_ctrlMgr ? Do_ctrlMgr : (
 				cs_timer ? Do_timer : 8'b0
-				)))))));
+				))))))));
 
 assign Di_crd = cs_crd ? Do_cpu : 8'b0;
 assign Di_ppu_vram = cs_ppu_vram ? Do_cpu : 8'b0;
@@ -149,6 +160,7 @@ assign Di_ppu_oam = cs_ppu_oam ? Do_cpu : 8'b0;
 assign Di_ppu_regs = cs_ppu_regs ? Do_cpu : 8'b0;
 assign Di_ram = cs_ram ? Do_cpu : 8'b0;
 assign Di_wsram = cs_wsram ? Do_cpu : 8'b0;
+assign Di_HRAM = cs_HRAM ? Do_cpu : 8'b0;
 assign Di_ctrlMgr = cs_ctrlMgr ? Do_cpu : 8'b0;
 assign Di_timer = cs_timer ? Do_cpu : 8'b0;
 
