@@ -112,25 +112,12 @@ ppu PPU(
     .scx            (),
     .scy            (),
     .state          ()
-    );
-
-// This is not good
-logic[7:0] HL_DATA, MEM_DATA_CPU;
-logic HL_HOLD;
-always_ff@(posedge CLK)
-    begin
-    if(HL_HOLD==1)
-        HL_DATA <= MEM_DATA_CPU;
-    end
-    
-MUX2to1#(.DATA_SIZE(8)) HL_HOLD_MUX(
-    .In0(MEM_DATA_CPU), .In1(HL_DATA), .Out(CPU_DATA_IN), .Sel(HL_HOLD)
-);    
+    ); 
 
 memory_map memory_map(
     //CPU 0000-FFFF
     .A_cpu          (CPU_ADDR_OUT),
-    .Di_cpu         (MEM_DATA_CPU),
+    .Di_cpu         (CPU_DATA_IN),
     .Do_cpu         (CPU_DATA_OUT),
     .wr_cpu         (CPU_WE_OUT),
     .rd_cpu         (CPU_RE_OUT),

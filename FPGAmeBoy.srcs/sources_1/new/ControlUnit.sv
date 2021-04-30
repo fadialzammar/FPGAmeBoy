@@ -55,7 +55,8 @@ module ControlUnit(
         output logic IO_STRB,                           // IO
         output logic [15:0] PC_ADDR_OUT,                 //address to program counter for jumps
         output logic [2:0] BIT_SEL,                      // BIT select signal
-        output logic [2:0] RST_MUX_SEL
+        output logic [2:0] RST_MUX_SEL,
+        output logic HL_HOLD
     ); 
     // RF Data Mux
     parameter RF_MUX_ALU             = 0; // ALU output
@@ -77,7 +78,8 @@ module ControlUnit(
     parameter MEM_ADDR_BUF      = 4; // Buffer for RF_16_OUT
     parameter MEM_ADDR_FF_IMMED = 5; // 0xFF00 + immediate value
     parameter MEM_ADDR_FF_DY    = 6; // 0xFF00 + value of DY register
-    parameter MEM_ADDR_INTR     = 7; // Interrput Register Address
+    parameter MEM_ADDR_INTR     = 7; // Interput Register Address
+    parameter MEM_ADDR_HL_BUF   = 8; // HL Buffer Address
     
     // Memory Data MUX
     parameter MEM_DATA_DX      = 0; // DX output of the Reg File
@@ -253,7 +255,7 @@ module ControlUnit(
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
         H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
-        HL_FLAG = 0; BIT_SEL = 0; 
+        HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0;
 
         case (PS)
             INIT: 
@@ -3227,10 +3229,11 @@ module ControlUnit(
                     endcase // OPCODE_HOLD
                     end
                 HL_ARITH: begin
+                    HL_HOLD = 1;
                     RF_ADRX = REG_H;
                     RF_ADRY = REG_L;
                     MEM_HOLD = 1;        
-                    MEM_ADDR_SEL = 2'b11;
+                    MEM_ADDR_SEL = MEM_ADDR_HL_BUF;
                     //RF_ADRX = REG_A;
                     ALU_SEL = HL_ALU_FUN;
                     ALU_OPY_SEL = 3'b001;
@@ -3279,6 +3282,8 @@ module ControlUnit(
                         endcase
                     end
                     HL_ARITH: begin
+                        HL_HOLD = 1;
+                        MEM_ADDR_SEL = MEM_ADDR_HL_BUF;
                         NS = FETCH;
                         MEM_HOLD = 1;
                         case(HL_CODE)

@@ -272,10 +272,20 @@ module CPU_Wrapper(
             MEM_ADDR_BUF_OUT = RF_16_OUT;
     end
     
+    // This is not good
+    logic[15:0] HL_ADDR;
+    logic HL_HOLD;
+    // HL_State Buffer
+    always_ff@(posedge HL_HOLD)
+    begin
+        if(HL_HOLD==1)
+            HL_ADDR <= MEM_ADDR_IN;
+    end
+    
     // Memory Address MUX
-    MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+    MUX9to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
-        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
+        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .In8(HL_ADDR), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
 
     // Interrupt Enable/Disable Values MUX
@@ -326,7 +336,8 @@ module CPU_Wrapper(
         .RST(RST),       // FIXME: duplicate resets
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL),
-        .RST_MUX_SEL(RST_MUX_SEL)
+        .RST_MUX_SEL(RST_MUX_SEL),
+        .HL_HOLD(HL_HOLD)
     );
-   
+  
 endmodule
