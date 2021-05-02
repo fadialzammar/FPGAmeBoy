@@ -57,20 +57,20 @@ Memory Memory(
 // TIMER
 ////////////////////////////
 
-logic TIMER_WR, TIMER_RE, TIMER_CS;
+logic TIMER_WR, TIMER_RE, TIMER_CS,TIMER_INTERUPT;
 logic [15:0] A_ADDR;
 logic [7:0] TIMER_DIN, TIMER_DOUT;
 
 timer timer(
     .clk        (CLK),
     .RST        (RST),
-    .REG_ADR    (A_ADDR),
+    .REG_ADDR    (A_ADDR),
     .DIN        (TIMER_DIN),
     .wr         (TIMER_WR),
     .rd         (TIMER_RE),
     .cs         (TIMER_CS),
     .DOUT       (TIMER_DOUT),
-    .TIMER_IRQ  ()
+    .TIMER_IRQ  (TIMER_INTERUPT)
 );
 
 ////////////////////////////

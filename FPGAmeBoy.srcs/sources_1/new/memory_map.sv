@@ -21,8 +21,6 @@
 
 module memory_map(
 
-
-
 	//Cpu 0000-FFFF
 	input 	[15:0] 	A_cpu,
 	output 	[7:0] 	Di_cpu,
@@ -82,7 +80,7 @@ module memory_map(
    //Timer FF04-FF07
 	output 	[15:0] 	A_timer,
 	output 	[7:0] 	Di_timer,
-	input		[7:0]		Do_timer,
+	input	[7:0]		Do_timer,
 	output				cs_timer,
 	output				wr_timer,
 	output				rd_timer,
@@ -130,7 +128,7 @@ assign cs_ppu_oam = (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0);
 assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_ctrlMgr = A_cpu == 16'hFF00;
-assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
+assign cs_timer = (A_cpu >= 16'hFF04) && (A_cpu < 16'hFF08);
 assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
 
 assign Di_cpu = cs_crd ? Do_crd : (
