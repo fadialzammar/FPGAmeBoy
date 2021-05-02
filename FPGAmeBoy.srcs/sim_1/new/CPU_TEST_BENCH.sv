@@ -22,18 +22,14 @@
 
 module CPU_TEST_BENCH();
 
-     logic CLK=0, RST=0;
-     logic [15:0] SWITCHES,LEDS;
-     logic [7:0] CATHODES,VGA_RGB;
-     logic [3:0] ANODES;
-     logic [4:0] counter;
-    // Display outputs
-     logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
-     logic [1:0] VGA_PIXEL;
+     logic CLK100=0, RST=0;
+     logic PIXEL_CLK, VGA_HS, VGA_VS, PIXEL_VALID;
+     // logic [1:0] VGA_PIXEL;
+     logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
      top DUT (.*);
     
-     initial forever  #10  CLK =  ! CLK; 
+     initial forever  #10  CLK100 =  ! CLK100; 
 
 
 endmodule

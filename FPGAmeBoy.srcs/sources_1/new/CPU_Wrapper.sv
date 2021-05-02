@@ -323,7 +323,7 @@ module CPU_Wrapper(
         .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), // H Flag control
         .FLAGS_DATA_SEL(FLAGS_DATA_SEL),        
         .I_CLR(), .I_SET(), .FLG_LD_SEL(), // interrupts
-        .RST(RST),       // FIXME: duplicate resets
+        // .RST(RST),       // FIXME: duplicate resets
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL),
         .RST_MUX_SEL(RST_MUX_SEL)

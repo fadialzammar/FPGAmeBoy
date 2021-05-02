@@ -4,9 +4,9 @@
 ## - rename the used ports (in each line, after get_ports) according to the top level signal names in the project
 
 ## Clock signal
-#set_property PACKAGE_PIN W5 [get_ports clk]							
-	#set_property IOSTANDARD LVCMOS33 [get_ports clk]
-	#create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports clk]
+set_property PACKAGE_PIN W5 [get_ports CLK100]							
+	set_property IOSTANDARD LVCMOS33 [get_ports CLK100]
+	create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports CLK100]
  
 ## Switches
 #set_property PACKAGE_PIN V17 [get_ports {sw[0]}]					
@@ -108,8 +108,8 @@
 
 
 ##Buttons
-#set_property PACKAGE_PIN U18 [get_ports btnC]						
-	#set_property IOSTANDARD LVCMOS33 [get_ports btnC]
+set_property PACKAGE_PIN U18 [get_ports RST]						
+	set_property IOSTANDARD LVCMOS33 [get_ports RST]
 #set_property PACKAGE_PIN T18 [get_ports btnU]						
 	#set_property IOSTANDARD LVCMOS33 [get_ports btnU]
 #set_property PACKAGE_PIN W19 [get_ports btnL]						
@@ -233,34 +233,34 @@
 
 
 ##VGA Connector
-#set_property PACKAGE_PIN G19 [get_ports {vgaRed[0]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[0]}]
-#set_property PACKAGE_PIN H19 [get_ports {vgaRed[1]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[1]}]
-#set_property PACKAGE_PIN J19 [get_ports {vgaRed[2]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[2]}]
-#set_property PACKAGE_PIN N19 [get_ports {vgaRed[3]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[3]}]
-#set_property PACKAGE_PIN N18 [get_ports {vgaBlue[0]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[0]}]
-#set_property PACKAGE_PIN L18 [get_ports {vgaBlue[1]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[1]}]
-#set_property PACKAGE_PIN K18 [get_ports {vgaBlue[2]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[2]}]
-#set_property PACKAGE_PIN J18 [get_ports {vgaBlue[3]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[3]}]
-#set_property PACKAGE_PIN J17 [get_ports {vgaGreen[0]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[0]}]
-#set_property PACKAGE_PIN H17 [get_ports {vgaGreen[1]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[1]}]
-#set_property PACKAGE_PIN G17 [get_ports {vgaGreen[2]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[2]}]
-#set_property PACKAGE_PIN D17 [get_ports {vgaGreen[3]}]				
-	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[3]}]
-#set_property PACKAGE_PIN P19 [get_ports Hsync]						
-	#set_property IOSTANDARD LVCMOS33 [get_ports Hsync]
-#set_property PACKAGE_PIN R19 [get_ports Vsync]						
-	#set_property IOSTANDARD LVCMOS33 [get_ports Vsync]
+set_property PACKAGE_PIN G19 [get_ports {VGA_RED[0]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_RED[0]}]
+set_property PACKAGE_PIN H19 [get_ports {VGA_RED[1]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_RED[1]}]
+set_property PACKAGE_PIN J19 [get_ports {VGA_RED[2]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_RED[2]}]
+set_property PACKAGE_PIN N19 [get_ports {VGA_RED[3]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_RED[3]}]
+set_property PACKAGE_PIN N18 [get_ports {VGA_BLUE[0]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_BLUE[0]}]
+set_property PACKAGE_PIN L18 [get_ports {VGA_BLUE[1]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_BLUE[1]}]
+set_property PACKAGE_PIN K18 [get_ports {VGA_BLUE[2]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_BLUE[2]}]
+set_property PACKAGE_PIN J18 [get_ports {VGA_BLUE[3]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_BLUE[3]}]
+set_property PACKAGE_PIN J17 [get_ports {VGA_GREEN[0]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_GREEN[0]}]
+set_property PACKAGE_PIN H17 [get_ports {VGA_GREEN[1]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_GREEN[1]}]
+set_property PACKAGE_PIN G17 [get_ports {VGA_GREEN[2]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_GREEN[2]}]
+set_property PACKAGE_PIN D17 [get_ports {VGA_GREEN[3]}]				
+	set_property IOSTANDARD LVCMOS33 [get_ports {VGA_GREEN[3]}]
+set_property PACKAGE_PIN P19 [get_ports VGA_HS]						
+	set_property IOSTANDARD LVCMOS33 [get_ports VGA_HS]
+set_property PACKAGE_PIN R19 [get_ports VGA_VS]						
+	set_property IOSTANDARD LVCMOS33 [get_ports VGA_VS]
 
 
 ##USB-RS232 Interface
