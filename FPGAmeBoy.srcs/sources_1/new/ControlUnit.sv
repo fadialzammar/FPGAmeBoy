@@ -214,6 +214,7 @@ module ControlUnit(
      logic IMMED_16_FLAG = 1'b0;
      // Flag for Immediate Low Byte Load
      logic LOW_IMMED = 1'b0;
+     logic HIGH_IMMED = 1'b0;
      //Used for saving the last immediate address values
      logic [7:0] LAST_IMMED_ADDR_LOW, LAST_IMMED_ADDR_HIGH;
      //Used for saving the last immediate address values
@@ -2156,36 +2157,64 @@ module ControlUnit(
                     8'b110??01?: // jump nn, conditional jumps
                     begin
                         // Flag for Immediate Low Byte Load
-                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
-                        // Flag for 16 bit Immediates
-                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
-                        IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
-                        // Saves the new Immediate Value Data Low Byte for writing
-                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
-                        // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                        IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
-                        // Saves the new Immediate Value Data High Byte for writing
-                        LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
-                        PC_MUX_SEL = PC_MUX_JP;
-                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
+                        case  (LOW_IMMED)
+                            // High Byte
+                            1'b0:
+                            begin
+                                // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = OPCODE;
+                                // Set the IMMED_ADDR_LOW output value to its proper value
+                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW - 1;                     
+                                // Reset the HIGH_IMMED Flag
+                                HIGH_IMMED = 1'b0;
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
+                                // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                                PC_MUX_SEL = PC_MUX_JP;
+                            end
+                            // Low Byte
+                            1'b1:
+                            begin
+                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = OPCODE;
+                                // Saves the new Immediate Value Address Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
+                                // Set the HIGH_IMMED Flag high
+                                HIGH_IMMED = 1'b1;
+                            end
+                        endcase   
                     end
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        // Flag for Immediate Low Byte Load
-                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
-                        // Flag for 16 bit Immediates
-                        IMMED_16_FLAG = LOW_IMMED ? 1'b1 : 1'b0;
-                        IMMED_DATA_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_DATA_LOW;
-                        // Saves the new Immediate Value Data Low Byte for writing
-                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;                       
-                        // Set the IMMED_DATA_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                        IMMED_DATA_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_DATA_HIGH;
-                        // Saves the new Immediate Value Data High Byte for writing
-                        LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;
-                        PC_MUX_SEL = PC_CU_PC_ADDR;
-                        PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;// OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                        PC_LD = ~LOW_IMMED ? 1'b1 : 1'b0;
-                    end
+                        case  (LOW_IMMED)
+                            // High Byte
+                            1'b0:
+                            begin
+                                // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_DATA_HIGH = OPCODE;
+                                // Set the IMMED_ADDR_LOW output value to its proper value
+                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                     
+                                // Reset the HIGH_IMMED Flag
+                                HIGH_IMMED = 1'b0;
+                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
+                                PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
+                                // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                                PC_MUX_SEL = PC_CU_PC_ADDR;
+                            end
+                            // Low Byte
+                            1'b1:
+                            begin
+                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = OPCODE;
+                                // Saves the new Immediate Value Address Low Byte for writing
+                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
+                                // Set the HIGH_IMMED Flag high
+                                HIGH_IMMED = 1'b1;
+                            end
+                        endcase  
+                     end
                     8'b11101010: begin  // LD (nn), A
                         // Flag for Immediate Low Byte Load
                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;

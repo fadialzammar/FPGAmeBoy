@@ -33,6 +33,7 @@ module ProgRom(
     // initalize the ROM with the prog_rom.mem file
     initial begin
         $readmemh("ld_tests.mem", rom);
+
     end 
     
     always_ff @(posedge PROG_CLK)
