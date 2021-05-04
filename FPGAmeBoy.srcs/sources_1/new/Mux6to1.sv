@@ -18,9 +18,9 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module MUX10to1
+module MUX11to1
     #(parameter DATA_SIZE = 8)(
-    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, In6, In7, In8, In9, In10 //8-bit inputs 
+    input [DATA_SIZE - 1:0] In0, In1, In2, In3, In4, In5, In6, In7, In8, In9, In10, //8-bit inputs 
     input [3:0] Sel, //selector signal
     output logic [DATA_SIZE - 1:0] Out //8-bit output
     );

@@ -24,6 +24,7 @@ module ControlUnit(
         input CLK, C, Z, N, H, INTR, RESET,
         input [7:0] OPCODE,
         input [15:0] PC,
+        input [2:0] INTR_ID,
         output logic PC_LD, PC_INC,                     // program counter
         output logic PC_HIGH_FLAG, PC_LOW_FLAG,
         output logic [2:0] PC_MUX_SEL,
@@ -38,7 +39,7 @@ module ControlUnit(
         output logic [2:0] ALU_OPY_SEL, 
         output logic MEM_WE, MEM_HOLD,                 // memory
         output logic MEM_ADDR_BUF_WE,
-        output logic [2:0] MEM_ADDR_SEL, 
+        output logic [3:0] MEM_ADDR_SEL, 
         output logic [3:0] MEM_DATA_SEL,
         output logic INTR_REG_SEL,
         output logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH,  //16-bit Immediates
@@ -56,7 +57,8 @@ module ControlUnit(
         output logic [15:0] PC_ADDR_OUT,                 //address to program counter for jumps
         output logic [2:0] BIT_SEL,                      // BIT select signal
         output logic [2:0] RST_MUX_SEL,
-        output logic HL_HOLD
+        output logic HL_HOLD,
+        output logic IME
     ); 
     // RF Data Mux
     parameter RF_MUX_ALU             = 0; // ALU output
@@ -140,6 +142,7 @@ module ControlUnit(
     parameter PC_RST_ADDR   = 3;
     parameter PC_MUX_RET    = 4;   // RET PC Address
     parameter PC_MUX_CALL   = 5;   // CALL PC Address
+    parameter PC_MUX_INTR   = 6;
     
     // CALL Data MUX
     parameter CALL_MUX_FALSE = 0; // CALL not taken
@@ -230,6 +233,12 @@ module ControlUnit(
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
+     
+     // Interrupt Master Enable
+     logic [1:0] IME_DELAY = 0;
+     logic IME_EN = 0;
+     logic INTR_HOLD = 0;
+     logic FETCH_FLAG = 0;
     
      
     always_ff @(posedge CLK) begin
@@ -238,7 +247,6 @@ module ControlUnit(
         else
             PS <= NS;
     end
-
     
     always_comb begin
         I_SET = 0; I_CLR = 0; RST=0; IO_STRB = 0;
@@ -255,7 +263,7 @@ module ControlUnit(
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
         H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
-        HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0;
+        HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0; MEM_HOLD = 0;
 
         case (PS)
             INIT: 
@@ -267,7 +275,11 @@ module ControlUnit(
             FETCH:
             begin
                 PC_INC = 1;
-                if (CB_FLAG == 1)
+                if (INTR == 1)
+                    begin
+                        NS = INTERRUPT;
+                    end
+                else if (CB_FLAG == 1)
                     NS = CB_EXEC;
                 else if (IMMED_FLAG == 1)
                     begin
@@ -275,6 +287,15 @@ module ControlUnit(
                     end               
                 else
                     NS = EXEC;
+                    
+                // IME delay logic
+                if(IME_DELAY==1) 
+                begin
+                    IME = IME_EN;
+                    IME_DELAY = 0;
+                end
+                else if (IME_DELAY > 0)
+                    IME_DELAY = IME_DELAY - 1;
             end
 
             EXEC:
@@ -295,6 +316,16 @@ module ControlUnit(
                         Z_FLAG_LD = 0;
                         N_FLAG_LD = 0;
                         H_FLAG_LD = 0;
+                    end
+                    8'b11111011:  // EI enable interrupt
+                    begin 
+                        IME_DELAY = 2;
+                        IME_EN = 1;
+                    end
+                    8'b11110011:  // DI disable interrupt
+                    begin 
+                        IME_DELAY = 2;
+                        IME_EN = 0; 
                     end
                     
                     // ============== Takes 8 cycles ============== //
@@ -2279,6 +2310,11 @@ module ControlUnit(
                         MEM_WE = 1'b1;
                       
                         case (SP_OPCODE) inside
+                          8'b00000000:  /// INTERRUPT - PUSH
+                            begin
+                                // Memory Data select set to DX output of the Reg File
+                                MEM_DATA_SEL = MEM_DATA_PC_LOW;      
+                            end
                           8'b11??0101: /// PUSH nn
                             begin
                                 // Low Byte used set by RF_ADRX except for the Flag Register Values
@@ -2391,6 +2427,7 @@ module ControlUnit(
                                 PC_LOW_FLAG = 1'b1;
                                 PC_MUX_SEL = PC_MUX_RET;
                                 PC_LD = 1'b1;
+                                IME_DELAY = 1;
                             end
                             
                             8'b110??000: // RET Z, RET NZ, RET C, RET NC : POP low byte and load the PC with the popped address
@@ -2449,6 +2486,14 @@ module ControlUnit(
                         MEM_WE = 1'b1;
                       
                         case (SP_OPCODE) inside
+                          8'b00000000:
+                          begin
+                                MEM_DATA_SEL = MEM_DATA_PC_HIGH;
+                                PC_LD = 1;
+                                PC_MUX_SEL = PC_MUX_INTR;
+
+                          end
+                        
                           8'b11??0101: /// PUSH nn
                             begin
                                 // High Byte used set by RF_ADRX
@@ -2658,6 +2703,7 @@ module ControlUnit(
                             // Store values needed for later
                             HL_CODE = 1; 
                             HL_FLAG = 1;
+                            HL_HOLD = 1;
                             HL_FUNC_FLAG = HL_ARITH;
                             NS = HL_FETCH;
                         end                                                        
@@ -3107,7 +3153,7 @@ module ControlUnit(
                             RF_ADRY = REG_L;
 
                             // ALU B input mux select
-                            ALU_OPY_SEL = 2'b01; // Select data from memory
+                            ALU_OPY_SEL = ALU_B_MUX_MEM; // Select data from memory
                             // Reset control lines
                             RF_WR = 0;
                             C_FLAG_LD = 0;
@@ -3134,7 +3180,8 @@ module ControlUnit(
                     NS = INTERRUPT;  
                 // Reset the CB Flag
                 CB_FLAG = 1'b0;
-                NS = FETCH;
+                if(NS != HL_FETCH)
+                    NS = FETCH;
             end // CB_EXEC
           
             HL_FETCH: begin
@@ -3229,18 +3276,18 @@ module ControlUnit(
                     endcase // OPCODE_HOLD
                     end
                 HL_ARITH: begin
-                    HL_HOLD = 1;
                     RF_ADRX = REG_H;
                     RF_ADRY = REG_L;
-                    MEM_HOLD = 1;        
+                    //MEM_HOLD = 1; 
+                    HL_HOLD = 1;   
                     MEM_ADDR_SEL = MEM_ADDR_HL_BUF;
                     //RF_ADRX = REG_A;
                     ALU_SEL = HL_ALU_FUN;
-                    ALU_OPY_SEL = 3'b001;
-                    C_FLAG_LD = 1;
-                    Z_FLAG_LD = 1;
-                    N_FLAG_LD = 1;
-                    H_FLAG_LD = 1;
+                    ALU_OPY_SEL = ALU_B_MUX_MEM;
+//                    C_FLAG_LD = 1;
+//                    Z_FLAG_LD = 1;
+//                    N_FLAG_LD = 1;
+//                    H_FLAG_LD = 1;
                 end
                 endcase
                 if (NS != FETCH)
@@ -3351,6 +3398,15 @@ module ControlUnit(
                 NS = FETCH;
 
             end // HL_4
+            
+            INTERRUPT: begin
+                IME = 0;
+                NS = SP_LOW;
+                PUSH_FLAG = 1;
+                SP_OPCODE = 8'b00000000;
+                
+                
+            end // INTR
         endcase // PS
     end
 endmodule
