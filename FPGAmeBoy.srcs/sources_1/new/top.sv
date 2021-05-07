@@ -6,14 +6,46 @@ module top(
     input CLK,
     input RST,
     // Display outputs
-    output logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID,
-    output logic [1:0] VGA_PIXEL
+    output logic VGA_HS, VGA_VS,
+    output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
+);
+
+////////////////////////////
+// Clock Divider (10MHz clock)  /*** Currently not connected ***/
+////////////////////////////
+    logic SCLK;
+    
+    C_DIV divider(
+        .CLK        (CLK),
+        .CLK_DIV    (SCLK)
+    );
+    
+////////////////////////////
+// Boot ROM
+////////////////////////////
+logic [15:0] PROG_COUNT;
+logic [15:0] BROM_ADDR;
+logic [7:0] BROM_IR;
+BROM BROM(
+    .CLK            (CLK),
+    .BROM_ADDR      (BROM_ADDR),
+    .BROM_IR        (BROM_IR)
+);
+
+////////////////////////////
+//  ProgRom / Cartridge
+////////////////////////////
+logic [7:0] CPU_OPCODE;
+ProgRom ProgRom(
+    .PROG_CLK       (CLK),
+    .PROG_ADDR      (PROG_COUNT),
+    .PROG_IR        (CPU_OPCODE)
 );
 
 ////////////////////////////
 // CPU
 ////////////////////////////
-logic [7:0] CPU_DATA_IN, CPU_DATA_OUT, CPU_OPCODE;
+logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
 
@@ -31,17 +63,8 @@ CPU_Wrapper CPU(
 );
 
 ////////////////////////////
-// ProgRom / Cartridge
+// RAM C000-DFFF
 ////////////////////////////
-logic [15:0] PROG_COUNT;
-
-ProgRom ProgRom(
-    .PROG_CLK       (CLK),
-    .PROG_ADDR      (PROG_COUNT),
-    .PROG_IR        (CPU_OPCODE)
-);
-
-// Memory Instantiation
 logic MEM_WE, MEM_RE, MEM_HOLD;
 logic [15:0] MEM_ADDR;
 logic [7:0] MEM_DIN, MEM_DOUT;
@@ -72,8 +95,7 @@ logic OAM_WE, OAM_RE, OAM_HOLD;
 logic [15:0] OAM_ADDR;
 logic [7:0] OAM_DIN, OAM_DOUT;
 
-//logic VGA_CLK, VGA_HS, VGA_VS, VGA_PIXEL_VALID;
-//logic [1:0] VGA_PIXEL;
+logic [1:0] VGA_PIXEL;
 
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 assign VRAM_RE = ~VRAM_HOLD;
@@ -152,50 +174,6 @@ dma DMA(
     // 0xFE00 - 0xFE9F
     .dma_occupy_oambus      (dma_occupy_oambus)
 );
-    
-// DMA interface Logic
-// VRAM
-assign VRAM_ADDR = dma_occupy_vidbus ? DMA_ADDR : VRAM_ADDR;
-assign VRAM_WE   = dma_occupy_vidbus ? 1'b0     : VRAM_WE;
-assign VRAM_RE   = dma_occupy_vidbus ? DMA_RE   : VRAM_RE;
-// OAM RAM
-assign OAM_ADDR = dma_occupy_oambus ? DMA_ADDR : OAM_ADDR;
-assign OAM_WE   = dma_occupy_oambus ? DMA_WE   : OAM_WE;
-assign OAM_RE   = dma_occupy_oambus ? DMA_RE   : OAM_RE;
-assign OAM_DIN  = dma_occupy_oambus ? DMA_DOUT : OAM_DIN;
-
-//always_comb 
-//begin
-//    // DMA in use
-//    // Data, Adddres, and control set by DMA
-//    // DMA using VRAM bus
-//    if (dma_occupy_vidbus)
-//        begin
-//            VRAM_ADDR = DMA_ADDR;
-//            VRAM_WE   = 1'b0;
-//            VRAM_RE   = DMA_RE;
-//        end
-//    // DMA using OAM bus
-//    else if (dma_occupy_oambus)
-//        begin
-//            OAM_ADDR = DMA_ADDR;
-//            OAM_DIN  = DMA_DOUT;
-//            OAM_WE   = DMA_WE;
-//            OAM_RE   = DMA_RE;    
-//        end
-        
-//     else
-//        begin
-//            VRAM_ADDR = CPU_DATA_OUT;
-//            VRAM_WE   = CPU_WE_OUT;
-//            VRAM_RE   = CPU_RE_OUT;
-            
-//            OAM_ADDR = CPU_ADDR_OUT;
-//            OAM_DIN  = CPU_DATA_OUT;
-//            OAM_WE   = CPU_WE_OUT;
-//            OAM_RE   = CPU_RE_OUT;
-//        end
-//end
 
 ////////////////////////////
 // High RAM FF80-FFFE
@@ -223,17 +201,63 @@ end
         end
     end
 
+////////////////////////////
+// VGA
+////////////////////////////
+// Mapping 2-bit pixel color to a 12-bit VGA output
+always_comb begin
+    case (VGA_PIXEL)
+        2'b00: begin
+            VGA_RED = 4'h0;
+            VGA_GREEN = 4'h0;
+            VGA_BLUE = 4'h0;
+        end
+        2'b01: begin
+            VGA_RED = 4'h6;
+            VGA_GREEN = 4'h6;
+            VGA_BLUE = 4'h6;
+        end
+        2'b10: begin
+            VGA_RED = 4'hb;
+            VGA_GREEN = 4'hb;
+            VGA_BLUE = 4'hb;
+        end
+        2'b11: begin
+            VGA_RED = 4'hf;
+            VGA_GREEN = 4'hf;
+            VGA_BLUE = 4'hf;
+        end
+    endcase
+end
+    
+////////////////////////////
+// Memory Map
+////////////////////////////
 memory_map memory_map(
     //CPU 0000-FFFF
-    .A_cpu          (CPU_ADDR_OUT),
-    .Di_cpu         (CPU_DATA_IN),
-    .Do_cpu         (CPU_DATA_OUT),
-    .wr_cpu         (CPU_WE_OUT),
-    .rd_cpu         (CPU_RE_OUT),
-    //Cartridge 0000-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
+    .A_cpu              (CPU_ADDR_OUT),
+    .Di_cpu             (CPU_DATA_IN),
+    .Do_cpu             (CPU_DATA_OUT),
+    .wr_cpu             (CPU_WE_OUT),
+    .rd_cpu             (CPU_RE_OUT),
+    // DMA (VRAM 8000-H9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
+    .A_DMA              (DMA_ADDR),
+	.Di_DMA             (DMA_DIN),
+	.cs_DMA             (),
+	.Do_DMA             (DMA_DOUT),
+	.wr_DMA             (DMA_WE),
+	.rd_DMA             (DMA_RE),
+	.dma_occupy_vidbus  (dma_occupy_vidbus),
+	.dma_occupy_oambus  (dma_occupy_oambus), 
+	.dma_occupy_extbus  (dma_occupy_extbus),
+	//Boot Rom 0000 - 00FF
+	.A_BROM            (BROM_ADDR),
+	.cs_BROM           (),
+	.Do_BROM           (BROM_IR),
+    //Cartridge 0100-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
     .A_crd          (),
     .Di_crd         (),
-    .Do_crd         (),
+    .Do_crd         (PROG_IR),
     .cs_crd         (),
     .wr_crd         (),
     .rd_crd         (),
