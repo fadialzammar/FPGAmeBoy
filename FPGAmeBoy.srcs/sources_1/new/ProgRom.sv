@@ -23,12 +23,13 @@
 
 module ProgRom(
     input PROG_CLK,
-    input [9:0] PROG_ADDR,
+    input RE,
+    input [15:0] PROG_ADDR,
     output logic [7:0] PROG_IR
     );
       
     (* rom_style="{distributed | block}" *) // force the ROM to be block memory
-     logic [7:0] rom[0:1023];
+     logic [7:0] rom[0:65535];
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
@@ -37,6 +38,7 @@ module ProgRom(
     
     always_ff @(posedge PROG_CLK)
     begin
-        PROG_IR <= rom[PROG_ADDR];
+        //if (RE)
+            PROG_IR <= rom[PROG_ADDR];
     end
 endmodule

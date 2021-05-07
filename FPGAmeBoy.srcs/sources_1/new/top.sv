@@ -15,13 +15,15 @@ module top(
 logic [3:0] clk_counter = 0;
 logic CLK = 0;
 always_ff @ (posedge CLK100) begin
-    if (RST) begin
-        clk_counter <= 0;
-        CLK <= 0;
-    end
-    else clk_counter <= clk_counter + 1;
-    if (clk_counter == 9) begin
+    // if (RST) begin
+    //     clk_counter <= 0;
+    //     CLK <= 0;
+    // end
+    // else 
+    clk_counter <= clk_counter + 1;
+    if (clk_counter == 4) begin
         CLK <= ~CLK;
+        clk_counter <= 0;
     end
 end
 
@@ -246,6 +248,38 @@ end
         end
     end
 
+
+////////////////////////////
+// PPU Regs FF40-FF47
+////////////////////////////
+logic [7:0] FAKE_PPU_REGS [0:15];
+logic [3:0] FAKE_PPU_ADDR;
+logic [7:0] FAKE_PPU_DIN, FAKE_PPU_DOUT;
+logic FAKE_PPU_WE, FAKE_PPU_RE;
+
+// Write on rising edge
+always @(posedge CLK) 
+begin
+    if (FAKE_PPU_WE)
+        begin
+            FAKE_PPU_REGS[FAKE_PPU_ADDR] <= FAKE_PPU_DIN;
+        end
+end
+
+// Read on falling edge
+ always_ff@(negedge CLK)
+    begin
+        if (FAKE_PPU_RE)
+        begin
+            FAKE_PPU_DOUT <= FAKE_PPU_REGS[FAKE_PPU_ADDR];
+        end
+    end
+
+initial begin
+    FAKE_PPU_REGS[0] = 8'h91;
+    // FAKE_PPU_REGS[0] = 8'h
+end
+
 ////////////////////////////
 // Memory Map
 ////////////////////////////
@@ -278,12 +312,12 @@ memory_map memory_map(
     .wr_ppu_oam     (OAM_WE),
     .rd_ppu_oam     (OAM_RE),
     //PPU (MMIO) FF40-FF4B
-    .A_ppu_regs     (PPU_ADDR),
-    .Di_ppu_regs    (PPU_DIN),
-    .Do_ppu_regs    (PPU_DOUT),
+    .A_ppu_regs     (FAKE_PPU_ADDR),
+    .Di_ppu_regs    (FAKE_PPU_DIN),
+    .Do_ppu_regs    (FAKE_PPU_DOUT),
     .cs_ppu_regs    (),
-    .wr_ppu_regs    (PPU_WE),
-    .rd_ppu_regs    (PPU_RE),
+    .wr_ppu_regs    (FAKE_PPU_WE),
+    .rd_ppu_regs    (FAKE_PPU_RE),
     //RAM C000-DFFF
     .A_ram          (MEM_ADDR),
     .Di_ram         (MEM_DIN),
@@ -328,24 +362,24 @@ memory_map memory_map(
 always_comb begin
     case (PPU_PIXEL)
         2'b00: begin
-            VGA_RED = 4'h0;
-            VGA_GREEN = 4'h0;
-            VGA_BLUE = 4'h0;
+            VGA_RED = 4'hf;
+            VGA_GREEN = 4'hf;
+            VGA_BLUE = 4'hf;
         end
         2'b01: begin
-            VGA_RED = 4'h6;
-            VGA_GREEN = 4'h6;
-            VGA_BLUE = 4'h6;
-        end
-        2'b10: begin
             VGA_RED = 4'hb;
             VGA_GREEN = 4'hb;
             VGA_BLUE = 4'hb;
         end
+        2'b10: begin
+            VGA_RED = 4'h6;
+            VGA_GREEN = 4'h6;
+            VGA_BLUE = 4'h6;
+        end
         2'b11: begin
-            VGA_RED = 4'hf;
-            VGA_GREEN = 4'hf;
-            VGA_BLUE = 4'hf;
+            VGA_RED = 4'h0;
+            VGA_GREEN = 4'h0;
+            VGA_BLUE = 4'h0;
         end
     endcase
 end
