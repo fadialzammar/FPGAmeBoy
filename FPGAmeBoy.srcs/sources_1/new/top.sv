@@ -3,8 +3,9 @@
 // Top level wrapper for the FPGAmeBoy
 
 module top(
-    input CLK100,
+    input CLK,
     input RST,
+    input [4:0] INTR,
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -40,7 +41,6 @@ ProgRom ProgRom(
     .PROG_CLK       (CLK),
     .PROG_ADDR      (PROG_COUNT),
     .PROG_IR        (CPU_OPCODE)
-
 );
 
 ////////////////////////////
@@ -55,12 +55,16 @@ CPU_Wrapper CPU(
     .RST            (RST),
     .MEM_DOUT       (CPU_DATA_IN),
     .OPCODE         (CPU_OPCODE),
+    .INT_EN         (D_IE),
+    .INT_FLAG       (D_IF),
 
     .MEM_DIN        (CPU_DATA_OUT),
     .MEM_WE         (CPU_WE_OUT),
     .MEM_RE         (CPU_RE_OUT),
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
-    .PC             (PROG_COUNT)
+    .PC             (PROG_COUNT),
+    .INTR_ID         (INT_ID),
+    .INT_CLR        (INT_CLR)
 );
 
 ////////////////////////////
@@ -280,7 +284,13 @@ memory_map memory_map(
 	.Do_HRAM        (HRAM_DOUT),
 	.cs_HRAM        (),
 	.wr_HRAM        (HRAM_WE),
-	.rd_HRAM        (HRAM_RE)
+	.rd_HRAM        (HRAM_RE),
+        // Hardware I/O Registers FF00-FF40
+	.A_io           (A_io),
+	.Di_io          (Di_io),
+	.Do_io          (Do_io),
+	.cs_io          (),
+	.wr_io          (wr_io)
    );
 
 ////////////////////////////
@@ -311,4 +321,34 @@ always_comb begin
         end
     endcase
 end
+
+   
+   
+ 
+// IO Registers instantiation
+   logic [15:0] A_io;
+   logic [7:0] Di_io, Do_io;
+   logic wr_io;
+   logic [7:0] D_IF, D_IE;
+   logic INT_CLR;
+   logic [2:0] INT_ID;
+
+   
+   logic [7:0] INT_IN;
+   assign INT_IN = {3'b000, INTR};
+   
+   // IO/Control Registers
+    IO_Reg IO_Reg(
+        .ADR(A_io[7:0]),
+        .D_IN(Di_io),
+        .CLK(CLK),
+        .WE(wr_io),
+        .INT_IN(INT_IN),
+        .D_OUT(Do_io),
+        .D_IE(D_IE),
+        .D_IF(D_IF), 
+        .INT_ID(INT_ID),
+        .INT_CLR(INT_CLR)
+    );
+    
 endmodule
