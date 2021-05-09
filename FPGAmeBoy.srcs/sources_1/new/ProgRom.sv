@@ -33,6 +33,7 @@ module ProgRom(
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
+
         $readmemh("Tetris_Time.mem", rom);
     end 
     

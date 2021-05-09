@@ -49,7 +49,7 @@ ProgRom ProgRom(
 logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
-
+logic [15:0] PROG_COUNT;
 CPU_Wrapper CPU(
     .CLK            (CLK),
     .RST            (RST),
@@ -70,6 +70,7 @@ CPU_Wrapper CPU(
 ////////////////////////////
 // RAM C000-DFFF
 ////////////////////////////
+
 logic MEM_WE, MEM_RE, MEM_HOLD;
 logic [15:0] MEM_ADDR;
 logic [7:0] MEM_DIN, MEM_DOUT;

@@ -140,7 +140,7 @@ module CPU_Wrapper(
     assign IMMED_ADDR = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
     assign IMMED_ADDR_1 = IMMED_ADDR + 1;
     
-    assign JP_PC = {IMMED_DATA_HIGH, IMMED_DATA_LOW}-1;
+
     
     logic [15:0] IMMED_DATA_16;
     // Concatenate the High and Low Bytes of the Immediate Data Values
@@ -192,6 +192,7 @@ module CPU_Wrapper(
     );
   
     // PC Data MUX
+
     MUX7to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
         .In4(RET_PC), .In5(CALL_PC_IN), .In6(INTR_ADDR), .Sel(PC_MUX_SEL), .Out(PC_DIN)
