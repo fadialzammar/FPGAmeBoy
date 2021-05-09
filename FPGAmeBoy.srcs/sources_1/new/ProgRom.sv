@@ -33,7 +33,7 @@ module ProgRom(
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
-        $readmemh("call_not_taken.mem", rom);
+        $readmemh("Tetris_Time.mem", rom);
     end 
     
     always_ff @(posedge PROG_CLK)

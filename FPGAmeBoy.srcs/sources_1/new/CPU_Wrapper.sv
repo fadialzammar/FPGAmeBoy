@@ -147,7 +147,7 @@ module CPU_Wrapper(
 
     // RET PC High and Low Bytes
     logic [7:0] RET_PC_LOW, RET_PC_HIGH;   
-    logic [15:0] PC_OFFSET;
+    logic [15:0] PC_OFFSET, INTR_RET_PC;
     // Offset for CALL/RET to bypass the immediate values
     assign PC_OFFSET = PC + 2;
     // Set the Return PC low byte to the low byte popped off the stack
@@ -158,6 +158,7 @@ module CPU_Wrapper(
     assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
     assign CALL_PC_FALSE = PC_OFFSET; // CALL not taken due to conditional (skip immediat values)
+    assign INTR_RET_PC = {RET_PC_HIGH,RET_PC_LOW} - 2;
     
     assign MEM_RE = ~MEM_HOLD;
 
@@ -177,9 +178,9 @@ module CPU_Wrapper(
     );
   
     // PC Data MUX
-    MUX6to1#(.DATA_SIZE(16)) PC_MUX(
+    MUX7to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
-        .In4(RET_PC), .In5(CALL_PC_IN), .Sel(PC_MUX_SEL), .Out(PC_DIN)
+        .In4(RET_PC), .In5(CALL_PC_IN), .In6(INTR_RET_PC), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
    // Program Counter Instantiation
