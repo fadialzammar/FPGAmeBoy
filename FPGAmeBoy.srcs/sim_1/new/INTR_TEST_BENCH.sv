@@ -46,6 +46,12 @@ module INTR_TEST_BENCH();
         #100
         INTR = 0;
         #300
-        INTR = 1;
+        INTR = 2;
+        #315
+        INTR = 0;
+        #40
+        INTR = 2;
+        #10
+        INTR = 0;
      end
 endmodule

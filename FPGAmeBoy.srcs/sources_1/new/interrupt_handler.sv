@@ -23,14 +23,15 @@
 
 module interrupt_handler(
     input [7:0] D_IE, D_IF,
-    input IME,
-    output logic INTR,
+    input IME, INT_CLR,
+    output logic INTR = 0,
     output logic [2:0] INTR_ID
     );
     logic [7:0] interrupts;
-    assign interrupts = D_IE && D_IF;
+    
     always@(*)
     begin
+    interrupts = D_IE & D_IF;
     
     if(IME == 1)
     begin
@@ -39,28 +40,36 @@ module interrupt_handler(
             INTR = 1;
             INTR_ID = 0;
         end
-        else if(interrupts[1])      // V-Blank
+        else if(interrupts[1] == 1)      // V-Blank
         begin
             INTR = 1;
             INTR_ID = 1;
         end
-        else if(interrupts[2])      // Timer
+        else if(interrupts[2] == 1)      // Timer
         begin
             INTR = 1;
             INTR_ID = 2;
         end
-        else if(interrupts[3])       // Serial IO Transfer
+        else if(interrupts[3] == 1)       // Serial IO Transfer
         begin
             INTR = 1;
             INTR_ID = 3;
         end
-       else if(interrupts[4])    // Controller Input
+       else if(interrupts[4] == 1)    // Controller Input
         begin
             INTR = 1;
             INTR_ID = 4;
         end
     end  
+    
     else
         INTR = 0; 
+        
+    if(INT_CLR == 1)
+    begin
+        INTR = 0;
+    end
+    
     end 
+    
 endmodule

@@ -24,7 +24,8 @@
 module IO_Reg(
     input [7:0] ADR,
     input [7:0] D_IN, INT_IN,
-    input IME,
+    input [2:0] INT_ID,
+    input IME, INT_CLR,
     input CLK, WE,
     output logic [7:0] D_OUT, D_IE, D_IF
 );
@@ -46,11 +47,14 @@ begin
 end
 
 // Write Interrupt flags on incoming interrupt signal
-//always_ff @ (posedge INT_IN, negedge INT_IN)
-//begin
-//    mem[15] <= INT_IN;
-//end
-assign mem[15] = INT_IN;
+always_ff @ (posedge INT_IN)
+begin
+    mem[15] <= INT_IN;
+end
+always_ff @ (posedge INT_CLR)
+begin
+    mem[15][INT_ID] <= 0;
+end
 
 //asynchronous read to ports x and y
 assign D_OUT = mem[ADR];

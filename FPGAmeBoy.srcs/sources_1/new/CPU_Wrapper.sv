@@ -31,7 +31,9 @@ module CPU_Wrapper(
     output MEM_WE,
     output MEM_RE,
     output [15:0] MEM_ADDR_IN,  // from CPU to Memory
-    output [15:0] PC    // TODO: change to 10 bits?
+    output [15:0] PC,    // TODO: change to 10 bits?
+    output [2:0] INTR_ID,
+    output INT_CLR
     );
     
     // Program Counter Signals
@@ -305,7 +307,8 @@ module CPU_Wrapper(
         .D_IE(INT_EN),
         .D_IF(INT_FLAG),
         .INTR(INTR),
-        .INTR_ID(INTR_ID)
+        .INTR_ID(INTR_ID),
+        .INT_CLR(INT_CLR)
     );
     // Memory Data MUX
     MUX10to1 MEM_DATA_MUX(
@@ -351,8 +354,7 @@ module CPU_Wrapper(
         .BIT_SEL(BIT_SEL),
         .RST_MUX_SEL(RST_MUX_SEL),
         .HL_HOLD(HL_HOLD),
-        .IME(IME),
-        .INTR_ID(INTR_ID)
+        .IME(IME), .INTR_ID(INTR_ID), .INT_CLR(INT_CLR) // Interrupts
     );
   
 endmodule

@@ -58,7 +58,8 @@ module ControlUnit(
         output logic [2:0] BIT_SEL,                      // BIT select signal
         output logic [2:0] RST_MUX_SEL,
         output logic HL_HOLD,
-        output logic IME
+        output logic IME,
+        output logic INT_CLR
     ); 
     // RF Data Mux
     parameter RF_MUX_ALU             = 0; // ALU output
@@ -263,8 +264,13 @@ module ControlUnit(
         Z_FLAG_LD = 0; Z_FLAG_SET = 0; Z_FLAG_CLR = 0; 
         N_FLAG_LD = 0; N_FLAG_SET = 0; N_FLAG_CLR = 0; 
         H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
-        HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0; MEM_HOLD = 0;
-
+        HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0; MEM_HOLD = 0; 
+        INT_CLR = 0;
+        
+        if (INTR) 
+        begin
+            NS = INTERRUPT;
+        end
         case (PS)
             INIT: 
             begin
@@ -2491,7 +2497,7 @@ module ControlUnit(
                                 MEM_DATA_SEL = MEM_DATA_PC_HIGH;
                                 PC_LD = 1;
                                 PC_MUX_SEL = PC_MUX_INTR;
-
+                                INT_CLR = 1;
                           end
                         
                           8'b11??0101: /// PUSH nn

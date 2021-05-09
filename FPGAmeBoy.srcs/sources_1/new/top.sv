@@ -27,7 +27,9 @@ CPU_Wrapper CPU(
     .MEM_WE         (CPU_WE_OUT),
     .MEM_RE         (CPU_RE_OUT),
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
-    .PC             (PROG_COUNT)
+    .PC             (PROG_COUNT),
+    .INTR_ID         (INT_ID),
+    .INT_CLR        (INT_CLR)
 );
 
 ////////////////////////////
@@ -195,6 +197,9 @@ memory_map memory_map(
    logic [7:0] Di_io, Do_io;
    logic wr_io;
    logic [7:0] D_IF, D_IE;
+   logic INT_CLR;
+   logic [2:0] INT_ID;
+
    
    logic [7:0] INT_IN;
    assign INT_IN = {3'b000, INTR};
@@ -208,7 +213,9 @@ memory_map memory_map(
         .INT_IN(INT_IN),
         .D_OUT(Do_io),
         .D_IE(D_IE),
-        .D_IF(D_IF)
+        .D_IF(D_IF), 
+        .INT_ID(INT_ID),
+        .INT_CLR(INT_CLR)
     );
     
 endmodule
