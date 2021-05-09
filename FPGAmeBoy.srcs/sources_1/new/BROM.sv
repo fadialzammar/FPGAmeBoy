@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 02/17/2021 09:49:31 PM
+// Create Date: 05/03/2021 05:15:55 PM
 // Design Name: 
-// Module Name: ProgRom
+// Module Name: BROM
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,26 +20,23 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-
-module ProgRom(
-    input PROG_CLK,
-    input RE,
-    input [15:0] PROG_ADDR,
-    output logic [7:0] PROG_IR
+module BROM(
+    input CLK,
+    input [15:0] BROM_ADDR,
+    output logic [7:0] BROM_IR
     );
       
     (* rom_style="{distributed | block}" *) // force the ROM to be block memory
-     logic [7:0] rom[0:65535];
+     logic [7:0] rom[0:255];
      
-    // initalize the ROM with the prog_rom.mem file
+    // initalize the ROM with the BOOTROM.mem file
     initial begin
-
-        $readmemh("Tetris_Time.mem", rom);
+        $readmemh("BOOTROM.mem", rom);
     end 
     
-    always_ff @(posedge PROG_CLK)
-    begin
-        //if (RE)
-            PROG_IR <= rom[PROG_ADDR];
-    end
+    always_ff @(posedge CLK)
+        begin
+            BROM_IR <= rom[BROM_ADDR];
+        end
+
 endmodule

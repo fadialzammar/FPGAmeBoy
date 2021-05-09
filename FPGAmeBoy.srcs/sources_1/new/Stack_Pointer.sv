@@ -27,7 +27,7 @@ module Stack_Pointer(
     input RST,
     input CLK,
     input [15:0] DIN,
-    output logic [15:0] DOUT = 16'hFFFE
+    output logic [15:0] DOUT = 16'hCFFE
     );
         
         //Synchronous register logic
