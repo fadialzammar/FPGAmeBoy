@@ -51,7 +51,6 @@ module ControlUnit(
         output logic H_FLAG_LD, H_FLAG_SET, H_FLAG_CLR, // H Flag control
         output logic [1:0] FLAGS_DATA_SEL,
         output logic I_CLR, I_SET, FLG_LD_SEL,          // interrupts
-        // output logic RST,                               // reset
         output logic IO_STRB,                           // IO
         output logic [15:0] PC_ADDR_OUT,                 //address to program counter for jumps
         output logic [2:0] BIT_SEL,                      // BIT select signal
@@ -240,7 +239,7 @@ module ControlUnit(
 
     
     always_comb begin
-        I_SET = 0; I_CLR = 0; /*RST=0;*/ IO_STRB = 0;
+        I_SET = 0; I_CLR = 0; IO_STRB = 0;
         PC_LD = 0; PC_INC = 0; PC_MUX_SEL = 0;
         PC_HIGH_FLAG = 0; PC_LOW_FLAG = 0;
         RF_WR=0; RF_ADRX = 0; RF_ADRY = 0;  RF_WR_SEL=0;
@@ -259,7 +258,6 @@ module ControlUnit(
         case (PS)
             INIT: 
             begin
-                // RST = 1;
                 NS = FETCH;
             end
 

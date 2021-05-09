@@ -187,7 +187,6 @@
    <wvobject fp_name="group72" type="group">
       <obj_property name="label">MEMORY</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/WE" type="logic">
          <obj_property name="ElementShortName">WE</obj_property>
          <obj_property name="ObjectShortName">WE</obj_property>
@@ -325,6 +324,58 @@
          <obj_property name="ElementShortName">DOUT[15:0]</obj_property>
          <obj_property name="ObjectShortName">DOUT[15:0]</obj_property>
       </wvobject>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ControlUnit/PS" type="array">
+      <obj_property name="ElementShortName">PS[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PS[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/ProgRom/PROG_IR" type="array">
+      <obj_property name="ElementShortName">PROG_IR[7:0]</obj_property>
+      <obj_property name="ObjectShortName">PROG_IR[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ProgCount/PC_COUNT" type="array">
+      <obj_property name="ElementShortName">PC_COUNT[15:0]</obj_property>
+      <obj_property name="ObjectShortName">PC_COUNT[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/MEM_DIN" type="array">
+      <obj_property name="ElementShortName">MEM_DIN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">MEM_DIN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/MEM_DOUT" type="array">
+      <obj_property name="ElementShortName">MEM_DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">MEM_DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/DOUT" type="array">
+      <obj_property name="ElementShortName">DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/ADDR" type="array">
+      <obj_property name="ElementShortName">ADDR[15:0]</obj_property>
+      <obj_property name="ObjectShortName">ADDR[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/ADDR_SIZE" type="array">
+      <obj_property name="ElementShortName">ADDR_SIZE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ADDR_SIZE[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/CLK" type="logic">
+      <obj_property name="ElementShortName">CLK</obj_property>
+      <obj_property name="ObjectShortName">CLK</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/DATA_SIZE" type="array">
+      <obj_property name="ElementShortName">DATA_SIZE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">DATA_SIZE[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/DIN" type="array">
+      <obj_property name="ElementShortName">DIN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DIN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/DOUT" type="array">
+      <obj_property name="ElementShortName">DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/WE" type="logic">
+      <obj_property name="ElementShortName">WE</obj_property>
+      <obj_property name="ObjectShortName">WE</obj_property>
    </wvobject>
    <wvobject fp_name="group270" type="group">
       <obj_property name="label">Memory Map</obj_property>
@@ -611,6 +662,7 @@
    <wvobject fp_name="group524" type="group">
       <obj_property name="label">HRAM</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/HRAM" type="array">
          <obj_property name="ElementShortName">HRAM[0:127][7:0]</obj_property>
          <obj_property name="ObjectShortName">HRAM[0:127][7:0]</obj_property>

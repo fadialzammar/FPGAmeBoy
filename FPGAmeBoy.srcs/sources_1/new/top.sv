@@ -6,31 +6,47 @@ module top(
     input CLK100,
     input RST,
     // Display outputs
-    output logic VGA_HS, VGA_VS, //PIXEL_VALID, PIXEL_CLK,
-    // output logic [1:0] VGA_PIXEL
+    output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
 );
-// Clock divider
-// 100MHz oscillator clock to 4.19MHz Game Boy clock
-logic [3:0] clk_counter = 0;
-logic CLK = 0;
-always_ff @ (posedge CLK100) begin
-    // if (RST) begin
-    //     clk_counter <= 0;
-    //     CLK <= 0;
-    // end
-    // else 
-    clk_counter <= clk_counter + 1;
-    if (clk_counter == 4) begin
-        CLK <= ~CLK;
-        clk_counter <= 0;
-    end
-end
+
+////////////////////////////
+// Clock Divider (10MHz clock)  /*** Currently not connected ***/
+////////////////////////////
+    logic SCLK;
+    
+    C_DIV divider(
+        .CLK        (CLK),
+        .CLK_DIV    (SCLK)
+    );
+    
+////////////////////////////
+// Boot ROM
+////////////////////////////
+logic [15:0] PROG_COUNT;
+logic [15:0] BROM_ADDR;
+logic [7:0] BROM_IR;
+BROM BROM(
+    .CLK            (CLK),
+    .BROM_ADDR      (BROM_ADDR),
+    .BROM_IR        (BROM_IR)
+);
+
+////////////////////////////
+//  ProgRom / Cartridge
+////////////////////////////
+logic [7:0] CPU_OPCODE;
+ProgRom ProgRom(
+    .PROG_CLK       (CLK),
+    .PROG_ADDR      (PROG_COUNT),
+    .PROG_IR        (CPU_OPCODE)
+
+);
 
 ////////////////////////////
 // CPU
 ////////////////////////////
-logic [7:0] CPU_DATA_IN, CPU_DATA_OUT, CPU_OPCODE;
+logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
 
@@ -48,17 +64,8 @@ CPU_Wrapper CPU(
 );
 
 ////////////////////////////
-// ProgRom / Cartridge
+// RAM C000-DFFF
 ////////////////////////////
-logic [15:0] PROG_COUNT;
-
-ProgRom ProgRom(
-    .PROG_CLK       (CLK),
-    .PROG_ADDR      (PROG_COUNT),
-    .PROG_IR        (CPU_OPCODE)
-);
-
-// Memory Instantiation
 logic MEM_WE, MEM_RE, MEM_HOLD;
 logic [15:0] MEM_ADDR;
 logic [7:0] MEM_DIN, MEM_DOUT;
@@ -91,11 +98,6 @@ logic [7:0] OAM_DIN, OAM_DOUT;
 
 logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
-
-// logic VGA_VS, VGA_HS;
-
-// assign VGA_nVS = VGA_VS;
-// assign VGA_nHS = VGA_HS;
 
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 assign VRAM_RE = ~VRAM_HOLD;
@@ -142,85 +144,28 @@ ppu PPU(
     .state          (ppu_debug_state)
     );
     
-// ////////////////////////////
-// // DMA 
-// ////////////////////////////
-// logic DMA_RE; // DMA Memory Write Enable
-// logic DMA_WE; // DMA Memory Read Enable
-// logic [15:0] DMA_ADDR; // Main Address Bus
-// logic [7:0]  DMA_DIN; // Main Data Bus
-// logic [7:0]  DMA_DOUT;
-// logic [7:0]  DMA_MMIO_DOUT;
-// logic DMA_MMIO_WE; 
-// // Flags for indicating DMA use and CPU disable
-// logic dma_occupy_extbus; // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
-// logic dma_occupy_vidbus; // 0x8000 - 0x9FFF
-// logic dma_occupy_oambus; // 0xFE00 - 0xFE9F
-
-// // DMA Instantiation
-// dma DMA(
-//     .clk                    (CLK),
-//     .rst                    (RST),
-//     .dma_rd                 (DMA_RE),
-//     .dma_wr                 (DMA_WE),
-//     .dma_a                  (DMA_ADDR),
-//     .dma_din                (DMA_DIN),
-//     .dma_dout               (DMA_DOUT),
-//     .mmio_wr                (DMA_MMIO_WE),
-//     .mmio_din               (CPU_DATA_OUT),
-//     .mmio_dout              (DMA_MMIO_DOUT),
-//     // DMA use
-//     // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
-//     .dma_occupy_extbus      (dma_occupy_extbus),
-//     // 0x8000 - 0x9FFF
-//     .dma_occupy_vidbus      (dma_occupy_vidbus),
-//     // 0xFE00 - 0xFE9F
-//     .dma_occupy_oambus      (dma_occupy_oambus)
-// );
-    
-// // DMA interface Logic
-// // VRAM
-// assign VRAM_ADDR = dma_occupy_vidbus ? DMA_ADDR : VRAM_ADDR;
-// assign VRAM_WE   = dma_occupy_vidbus ? 1'b0     : VRAM_WE;
-// assign VRAM_RE   = dma_occupy_vidbus ? DMA_RE   : VRAM_RE;
-// // OAM RAM
-// assign OAM_ADDR = dma_occupy_oambus ? DMA_ADDR : OAM_ADDR;
-// assign OAM_WE   = dma_occupy_oambus ? DMA_WE   : OAM_WE;
-// assign OAM_RE   = dma_occupy_oambus ? DMA_RE   : OAM_RE;
-// assign OAM_DIN  = dma_occupy_oambus ? DMA_DOUT : OAM_DIN;
-
-//always_comb 
-//begin
-//    // DMA in use
-//    // Data, Adddres, and control set by DMA
-//    // DMA using VRAM bus
-//    if (dma_occupy_vidbus)
-//        begin
-//            VRAM_ADDR = DMA_ADDR;
-//            VRAM_WE   = 1'b0;
-//            VRAM_RE   = DMA_RE;
-//        end
-//    // DMA using OAM bus
-//    else if (dma_occupy_oambus)
-//        begin
-//            OAM_ADDR = DMA_ADDR;
-//            OAM_DIN  = DMA_DOUT;
-//            OAM_WE   = DMA_WE;
-//            OAM_RE   = DMA_RE;    
-//        end
-        
-//     else
-//        begin
-//            VRAM_ADDR = CPU_DATA_OUT;
-//            VRAM_WE   = CPU_WE_OUT;
-//            VRAM_RE   = CPU_RE_OUT;
-            
-//            OAM_ADDR = CPU_ADDR_OUT;
-//            OAM_DIN  = CPU_DATA_OUT;
-//            OAM_WE   = CPU_WE_OUT;
-//            OAM_RE   = CPU_RE_OUT;
-//        end
-//end
+////////////////////////////
+// DMA 
+////////////////////////////
+dma DMA(
+    .clk                    (CLK),
+    .rst                    (RST),
+    .dma_rd                 (DMA_RE),
+    .dma_wr                 (DMA_WE),
+    .dma_a                  (DMA_ADDR),
+    .dma_din                (DMA_DIN),
+    .dma_dout               (DMA_DOUT),
+    .mmio_wr                (DMA_MMIO_WE),
+    .mmio_din               (CPU_DATA_OUT),
+    .mmio_dout              (DMA_MMIO_DOUT),
+    // DMA use
+    // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
+    .dma_occupy_extbus      (dma_occupy_extbus),
+    // 0x8000 - 0x9FFF
+    .dma_occupy_vidbus      (dma_occupy_vidbus),
+    // 0xFE00 - 0xFE9F
+    .dma_occupy_oambus      (dma_occupy_oambus)
+);
 
 ////////////////////////////
 // High RAM FF80-FFFE
@@ -248,52 +193,35 @@ end
         end
     end
 
-
-////////////////////////////
-// PPU Regs FF40-FF47
-////////////////////////////
-logic [7:0] FAKE_PPU_REGS [0:15];
-logic [3:0] FAKE_PPU_ADDR;
-logic [7:0] FAKE_PPU_DIN, FAKE_PPU_DOUT;
-logic FAKE_PPU_WE, FAKE_PPU_RE;
-
-// Write on rising edge
-always @(posedge CLK) 
-begin
-    if (FAKE_PPU_WE)
-        begin
-            FAKE_PPU_REGS[FAKE_PPU_ADDR] <= FAKE_PPU_DIN;
-        end
-end
-
-// Read on falling edge
- always_ff@(negedge CLK)
-    begin
-        if (FAKE_PPU_RE)
-        begin
-            FAKE_PPU_DOUT <= FAKE_PPU_REGS[FAKE_PPU_ADDR];
-        end
-    end
-
-initial begin
-    FAKE_PPU_REGS[0] = 8'h91;
-    // FAKE_PPU_REGS[0] = 8'h
-end
-
+    
 ////////////////////////////
 // Memory Map
 ////////////////////////////
 memory_map memory_map(
     //CPU 0000-FFFF
-    .A_cpu          (CPU_ADDR_OUT),
-    .Di_cpu         (CPU_DATA_IN),
-    .Do_cpu         (CPU_DATA_OUT),
-    .wr_cpu         (CPU_WE_OUT),
-    .rd_cpu         (CPU_RE_OUT),
-    //Cartridge 0000-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
+    .A_cpu              (CPU_ADDR_OUT),
+    .Di_cpu             (CPU_DATA_IN),
+    .Do_cpu             (CPU_DATA_OUT),
+    .wr_cpu             (CPU_WE_OUT),
+    .rd_cpu             (CPU_RE_OUT),
+    // DMA (VRAM 8000-H9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
+    .A_DMA              (DMA_ADDR),
+	.Di_DMA             (DMA_DIN),
+	.cs_DMA             (),
+	.Do_DMA             (DMA_DOUT),
+	.wr_DMA             (DMA_WE),
+	.rd_DMA             (DMA_RE),
+	.dma_occupy_vidbus  (dma_occupy_vidbus),
+	.dma_occupy_oambus  (dma_occupy_oambus), 
+	.dma_occupy_extbus  (dma_occupy_extbus),
+	//Boot Rom 0000 - 00FF
+	.A_BROM            (BROM_ADDR),
+	.cs_BROM           (),
+	.Do_BROM           (BROM_IR),
+    //Cartridge 0100-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
     .A_crd          (),
     .Di_crd         (),
-    .Do_crd         (),
+    .Do_crd         (PROG_IR),
     .cs_crd         (),
     .wr_crd         (),
     .rd_crd         (),
