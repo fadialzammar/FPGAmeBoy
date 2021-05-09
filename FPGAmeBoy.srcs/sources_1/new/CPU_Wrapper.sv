@@ -25,12 +25,15 @@ module CPU_Wrapper(
     input RST,
     input [7:0] MEM_DOUT,     // from Memory to CPU
     input [7:0] OPCODE,
-
+    input [7:0] INT_EN, INT_FLAG,
+    
     output [7:0] MEM_DIN,     // from CPU to Memory
     output MEM_WE,
     output MEM_RE,
     output [15:0] MEM_ADDR_IN,  // from CPU to Memory
-    output [15:0] PC    // TODO: change to 10 bits?
+    output [15:0] PC,    // TODO: change to 10 bits?
+    output [2:0] INTR_ID,
+    output INT_CLR
     );
     
     // Program Counter Signals
@@ -94,6 +97,10 @@ module CPU_Wrapper(
     logic [15:0] SP_DIN;
     logic [15:0] SP_DOUT;
     
+    // Interrupt Signals
+    logic [2:0] INTR_ID;
+    logic INTR;
+    
     // Memory signals    
     // logic [7:0] MEM_DIN, MEM_DOUT;
     // logic [15:0] MEM_ADDR_IN;
@@ -120,15 +127,11 @@ module CPU_Wrapper(
     logic [1:0] SP_DIN_SEL;
     // logic MEM_WE;                    // memory
     logic MEM_HOLD;
-    logic [2:0] MEM_ADDR_SEL;
+    logic [3:0] MEM_ADDR_SEL;
     logic [3:0] MEM_DATA_SEL;
-    logic INTR_REG_SEL;
     logic [7:0] IMMED_ADDR_LOW, IMMED_ADDR_HIGH;
     logic [7:0] IMMED_DATA_LOW, IMMED_DATA_HIGH;
 
-    // Interrupt Register
-    logic [15:0] INTR_REG = 16'hFFFF;
-    logic [7:0] INTR_REG_DIN = 8'h00;
     
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
@@ -172,11 +175,20 @@ module CPU_Wrapper(
         .In0(16'h0000), .In1(16'h0008), .In2(16'h0010), .In3(16'h0018), .In4(16'h0020), .In5(16'h0028), .In6(16'h0030), .In7(16'h0038),
         .Sel(RST_MUX_SEL), .Out(RST_ADDR)
     );
+    
+   // Interrupt Address Values    
+    logic [3:0] INTR_MUX_SEL;
+    logic [15:0] INTR_ADDR;
+    
+    MUX5to1#(.DATA_SIZE(16)) INTR_MUX(
+        .In0(16'h0040), .In1(16'h0048), .In2(16'h0050), .In3(16'h0058), .In4(16'h0060),
+        .Sel(INTR_ID), .Out(INTR_ADDR)
+    );
   
     // PC Data MUX
-    MUX6to1#(.DATA_SIZE(16)) PC_MUX(
+    MUX7to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
-        .In4(RET_PC), .In5(CALL_PC_IN), .Sel(PC_MUX_SEL), .Out(PC_DIN)
+        .In4(RET_PC), .In5(CALL_PC_IN), .In6(INTR_ADDR), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
    // Program Counter Instantiation
@@ -272,18 +284,32 @@ module CPU_Wrapper(
             MEM_ADDR_BUF_OUT = RF_16_OUT;
     end
     
+    // This is not good
+    logic[15:0] HL_ADDR;
+    logic HL_HOLD;
+    // HL_State Buffer
+    always_ff@(posedge CLK)
+    begin
+        if(HL_HOLD==1)
+            HL_ADDR <= RF_16_OUT;
+    end
+    
+    
     // Memory Address MUX
-    MUX8to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
+    MUX9to1#(.DATA_SIZE(16)) MEM_ADDR_MUX(
         .In0(SP_DOUT), .In1(IMMED_ADDR), .In2(IMMED_ADDR_1), .In3(RF_16_OUT), .In4(MEM_ADDR_BUF_OUT),
-        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
-    );
-
-    // Interrupt Enable/Disable Values MUX
-    MUX2to1 INTR_MUX(
-        .In0(8'h00), .In1(8'hFF),
-        .Sel(INTR_REG_SEL), .Out(INTR_REG_DIN)
+        .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .In8(HL_ADDR), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
+    // Interrupt Enable/Disable Values MUX
+    interrupt_handler intr(
+        .IME(IME),
+        .D_IE(INT_EN),
+        .D_IF(INT_FLAG),
+        .INTR(INTR),
+        .INTR_ID(INTR_ID),
+        .INT_CLR(INT_CLR)
+    );
     // Memory Data MUX
     MUX10to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
@@ -294,7 +320,7 @@ module CPU_Wrapper(
     // Control Unit Instantiation
     ControlUnit ControlUnit(
         // Inputs
-        .CLK(CLK), .INTR(), .RESET(RST),
+        .CLK(CLK), .INTR(INTR), .RESET(RST),
         .C(C_FLAG), .Z(Z_FLAG), .N(N_FLAG), .H(H_FLAG), 
         .OPCODE(OPCODE), .PC(PC), // Memory Line
         // Outputs
@@ -326,7 +352,9 @@ module CPU_Wrapper(
         .RST(RST),       // FIXME: duplicate resets
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL),
-        .RST_MUX_SEL(RST_MUX_SEL)
+        .RST_MUX_SEL(RST_MUX_SEL),
+        .HL_HOLD(HL_HOLD),
+        .IME(IME), .INTR_ID(INTR_ID), .INT_CLR(INT_CLR) // Interrupts
     );
-   
+  
 endmodule

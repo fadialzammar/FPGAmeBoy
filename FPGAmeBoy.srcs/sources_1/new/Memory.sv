@@ -61,7 +61,8 @@ module Memory #(parameter ADDR_SIZE = 16, DATA_SIZE = 8)(
 
      // LDH testing
      mem[65315] = 8'hAB;   //mem[0xFF23]
-     mem[517] = 8'h1A; // REG A
+     mem[49425] = 8'h1A; // REG A
+     mem[273] = 8'h1A; // REG A
     end
   
     always_ff@(posedge CLK)
