@@ -4,8 +4,7 @@
 
 module top(
     input CLK,
-    input RST,
-    input [4:0] INTR
+    input RST
 );
 
 ////////////////////////////
@@ -20,16 +19,12 @@ CPU_Wrapper CPU(
     .RST            (RST),
     .MEM_DOUT       (CPU_DATA_IN),
     .OPCODE         (CPU_OPCODE),
-    .INT_EN         (D_IE),
-    .INT_FLAG       (D_IF),
 
     .MEM_DIN        (CPU_DATA_OUT),
     .MEM_WE         (CPU_WE_OUT),
     .MEM_RE         (CPU_RE_OUT),
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
-    .PC             (PROG_COUNT),
-    .INTR_ID         (INT_ID),
-    .INT_CLR        (INT_CLR)
+    .PC             (PROG_COUNT)
 );
 
 ////////////////////////////
@@ -117,7 +112,7 @@ ppu PPU(
     .scx            (),
     .scy            (),
     .state          ()
-    ); 
+    );
 
 memory_map memory_map(
     //CPU 0000-FFFF
@@ -181,41 +176,7 @@ memory_map memory_map(
     .Do_wsram       (),
     .cs_wsram       (),
     .wr_wsram       (),
-    .rd_wsram       (),
-    // Hardware I/O Registers FF00-FF40
-	.A_io           (A_io),
-	.Di_io          (Di_io),
-	.Do_io          (Do_io),
-	.cs_io          (),
-	.wr_io          (wr_io)
+    .rd_wsram       ()
    );
-   
-   
- 
-// IO Registers instantiation
-   logic [15:0] A_io;
-   logic [7:0] Di_io, Do_io;
-   logic wr_io;
-   logic [7:0] D_IF, D_IE;
-   logic INT_CLR;
-   logic [2:0] INT_ID;
 
-   
-   logic [7:0] INT_IN;
-   assign INT_IN = {3'b000, INTR};
-   
-   // IO/Control Registers
-    IO_Reg IO_Reg(
-        .ADR(A_io[7:0]),
-        .D_IN(Di_io),
-        .CLK(CLK),
-        .WE(wr_io),
-        .INT_IN(INT_IN),
-        .D_OUT(Do_io),
-        .D_IE(D_IE),
-        .D_IF(D_IF), 
-        .INT_ID(INT_ID),
-        .INT_CLR(INT_CLR)
-    );
-    
 endmodule
