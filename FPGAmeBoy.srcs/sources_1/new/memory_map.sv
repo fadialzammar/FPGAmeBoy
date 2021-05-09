@@ -161,7 +161,7 @@ assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_ctrlMgr = A_cpu == 16'hFF00;
 assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
 assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
-assign cs_HRAM = (A_cpu >= 16'hFF80 && A_cpu < 16'hFFFE);
+assign cs_HRAM = (A_cpu >= 16'hFF80 && A_cpu < 16'hFFFF);
 
 always_comb
     begin

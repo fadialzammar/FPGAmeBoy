@@ -1,3 +1,6 @@
+# Run in command line: python3 gb_to_mem.py <input.gb> <output.mem>
+# Author: Fadi Alzammar
+
 import sys
 
 with open(sys.argv[1], 'rb') as f_in:
