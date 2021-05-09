@@ -128,7 +128,7 @@ module CPU_Wrapper(
 
     // Interrupt Register
     logic [15:0] INTR_REG = 16'hFFFF;
-    logic [7:0] INTR_REG_DIN = 8'h00;
+    logic [7:0] INTR_REG_DIN;
     
     logic [15:0] IMMED_ADDR, IMMED_ADDR_1;
     // Concatenate the High and Low Bytes of the Immediate Address Values
@@ -144,17 +144,21 @@ module CPU_Wrapper(
     logic [15:0] SP_IMMED_VAL;
     // Set equal to the Stack Pointer DOUT + an Immediate Value
     assign SP_IMMED_VAL = SP_DOUT + IMMED_DATA_LOW;
-   
+
     // RET PC High and Low Bytes
     logic [7:0] RET_PC_LOW, RET_PC_HIGH;   
+    logic [15:0] PC_OFFSET, INTR_RET_PC;
+    // Offset for CALL/RET to bypass the immediate values
+    assign PC_OFFSET = PC + 2;
     // Set the Return PC low byte to the low byte popped off the stack
     assign RET_PC_LOW = PC_LOW_FLAG && !PC_HIGH_FLAG ? MEM_DOUT : RET_PC_LOW;
     // Set the Return PC high byte to the high byte popped off the stack
     assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
     // Concatenate the High and Low Bytes of the PC Address Values
-    assign RET_PC = {RET_PC_HIGH,RET_PC_LOW} + 2; // + 2 to bypass the immediate values after CALL
+    assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
-    assign CALL_PC_FALSE = PC + 2; // CALL not taken due to conditional (skip immediat values)
+    assign CALL_PC_FALSE = PC_OFFSET; // CALL not taken due to conditional (skip immediat values)
+    assign INTR_RET_PC = {RET_PC_HIGH,RET_PC_LOW} - 2;
     
     assign MEM_RE = ~MEM_HOLD;
 
@@ -174,9 +178,9 @@ module CPU_Wrapper(
     );
   
     // PC Data MUX
-    MUX6to1#(.DATA_SIZE(16)) PC_MUX(
+    MUX7to1#(.DATA_SIZE(16)) PC_MUX(
         .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
-        .In4(RET_PC), .In5(CALL_PC_IN), .Sel(PC_MUX_SEL), .Out(PC_DIN)
+        .In4(RET_PC), .In5(CALL_PC_IN), .In6(INTR_RET_PC), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
    // Program Counter Instantiation
@@ -286,7 +290,7 @@ module CPU_Wrapper(
     
     // Memory Data MUX
     MUX10to1 MEM_DATA_MUX(
-        .In0(RF_DX_OUT), .In1(PC[7:0]), .In2(PC[15:8]), .In3(FLAG_REG_OUT), 
+        .In0(RF_DX_OUT), .In1(PC_OFFSET[7:0]), .In2(PC_OFFSET[15:8]), .In3(FLAG_REG_OUT), 
         .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN), 
         .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
@@ -323,7 +327,6 @@ module CPU_Wrapper(
         .H_FLAG_LD(H_FLAG_LD), .H_FLAG_SET(H_FLAG_SET), .H_FLAG_CLR(H_FLAG_CLR), // H Flag control
         .FLAGS_DATA_SEL(FLAGS_DATA_SEL),        
         .I_CLR(), .I_SET(), .FLG_LD_SEL(), // interrupts
-        .RST(RST),       // FIXME: duplicate resets
         .IO_STRB(),    // IO
         .BIT_SEL(BIT_SEL),
         .RST_MUX_SEL(RST_MUX_SEL)

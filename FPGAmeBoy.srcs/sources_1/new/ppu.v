@@ -109,7 +109,8 @@ module ppu(
     reg [7:0] reg_ly_last;
     reg [1:0] reg_mode_last; // Next mode based on next state
     
-    wire reg_lcd_en = reg_lcdc[7];          //0=Off, 1=On
+    // wire reg_lcd_en = reg_lcdc[7];          //0=Off, 1=On
+    reg reg_lcd_en = 1;
     wire reg_win_disp_sel = reg_lcdc[6];    //0=9800-9BFF, 1=9C00-9FFF
     wire reg_win_en = reg_lcdc[5];          //0=Off, 1=On
     wire reg_bg_win_data_sel = reg_lcdc[4]; //0=8800-97FF, 1=8000-8FFF
@@ -236,22 +237,55 @@ module ppu(
     assign cpl = ~clk;
     //assign pixel = pf_output_pixel;
     
-    // HV Timing
-    localparam PPU_H_FRONT  = 9'd76;
-    localparam PPU_H_SYNC   = 9'd4;    // So front porch + sync = OAM search
-    localparam PPU_H_TOTAL  = 9'd456;
-    localparam PPU_H_PIXEL  = 9'd160;
+//    // HV Timing
+//    localparam PPU_H_FRONT  = 9'd76;
+//    localparam PPU_H_SYNC   = 9'd4;    // So front porch + sync = OAM search
+//    localparam PPU_H_TOTAL  = 9'd456;
+//    localparam PPU_H_PIXEL  = 9'd160;
+//    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
+//    localparam PPU_H_OUTPUT = 8'd168;
+
+//    localparam PPU_V_ACTIVE = 8'd144;
+//    localparam PPU_V_BACK   = 8'd9;
+//    localparam PPU_V_SYNC   = 8'd1;  
+//    localparam PPU_V_BLANK  = 8'd10;
+//    localparam PPU_V_TOTAL  = 8'd154;
+
+//    // HV Timing
+//    // 10MHz 800 x 600 @ 60Hz
+    localparam PPU_H_FRONT  = 9'd10;
+    localparam PPU_H_SYNC   = 9'd32;    // So front porch + sync = OAM search
+    localparam PPU_H_TOTAL  = 9'd264;
+    localparam PPU_H_PIXEL  = 9'd200;
     // 8 null pixels in the front for objects which have x < 8, 8 bit counter
-    localparam PPU_H_OUTPUT = 8'd168;
-    localparam PPU_V_ACTIVE = 8'd144;
-    localparam PPU_V_BACK   = 8'd9;
-    localparam PPU_V_SYNC   = 8'd1;  
-    localparam PPU_V_BLANK  = 8'd10;
-    localparam PPU_V_TOTAL  = 8'd154;
+    localparam PPU_H_OUTPUT = 8'd200;
+    
+    localparam PPU_V_ACTIVE = 10'd600;
+    localparam PPU_V_BACK   = 10'd23;
+    localparam PPU_V_SYNC   = 10'd4;  
+    localparam PPU_V_BLANK  = 10'd28;
+    // Visible area + Front Porch
+    localparam PPU_V_TOTAL  = 10'd628;
+
+// HV Timing
+//    // 5MHz 800 x 600 @ 60Hz
+//    localparam PPU_H_FRONT  = 9'd5;
+//    localparam PPU_H_SYNC   = 9'd16;    // So front porch + sync = OAM search
+//    localparam PPU_H_TOTAL  = 9'd132;
+//    localparam PPU_H_PIXEL  = 9'd100;
+//    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
+//    localparam PPU_H_OUTPUT = 8'd100;
+    
+//    localparam PPU_V_ACTIVE = 10'd600;
+//    localparam PPU_V_BACK   = 10'd23;
+//    localparam PPU_V_SYNC   = 10'd4;  
+//    localparam PPU_V_BLANK  = 10'd28;
+//    // Visible area + Front Porch
+//    localparam PPU_V_TOTAL  = 10'd628;
    
     // Raw timing counter
     reg [8:0] h_count;
-    reg [7:0] v_count;
+    reg [9:0] v_count;
     
     // HV counter
     always @(posedge clk)
