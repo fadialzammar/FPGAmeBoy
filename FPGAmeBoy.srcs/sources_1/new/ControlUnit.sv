@@ -2284,7 +2284,7 @@ module ControlUnit(
                                 // Reset the HIGH_IMMED Flag
                                 HIGH_IMMED = 1'b0;
                                 // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                                PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;
+                                PC_ADDR_OUT = ({8'b00000000,IMMED_DATA_LOW} + PC)-3;
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
