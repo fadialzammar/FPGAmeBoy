@@ -23,7 +23,6 @@
 
 module ProgRom(
     input PROG_CLK,
-    input RE,
     input [15:0] PROG_ADDR,
     output logic [7:0] PROG_IR
     );

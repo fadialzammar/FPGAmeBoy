@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 05/03/2021 05:15:55 PM
+// Create Date: 03/14/2021 12:52:41 AM
 // Design Name: 
-// Module Name: BROM
+// Module Name: clk_div
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,23 +20,22 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module BROM(
+module  C_DIV(
     input CLK,
-    input [15:0] BROM_ADDR,
-    output logic [7:0] BROM_IR
+    output logic CLK_DIV=0
     );
-      
-    (* rom_style="{distributed | block}" *) // force the ROM to be block memory
-     logic [7:0] rom[0:255];
-     
-    // initalize the ROM with the BOOTROM.mem file
-    initial begin
-        $readmemh("JP_TEST.mem", rom);
-    end 
-    
-    always_ff @(posedge CLK)
-        begin
-            BROM_IR <= rom[BROM_ADDR];
-        end
 
+    logic [5:0] clk_div_counter = 6'h00;
+    
+    // Clock Divider to create 10 MHz refresh from 100 MHz clock
+    always_ff @(posedge CLK) 
+    begin
+        clk_div_counter = clk_div_counter + 1;   
+        if (clk_div_counter == 6'h05) 
+        begin    
+            clk_div_counter = 6'h00;
+            CLK_DIV = ~CLK_DIV;    
+        end
+    end  
+      
 endmodule

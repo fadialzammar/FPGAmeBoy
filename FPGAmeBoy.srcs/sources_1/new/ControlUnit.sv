@@ -187,8 +187,8 @@ module ControlUnit(
     typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, HL_4, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
 
     STATE NS, PS = INIT;
-    //indicates jump is ready
-    logic JUMP_FLAG = 1'b0;
+    // Used for signed jump val
+    logic OPCODE_SIGNED = 4'b1111;
     
      // Flag used for identifying that NS after EXEC is SP_LOW
      logic SP_LOW_FLAG = 1'b0;
@@ -2271,37 +2271,31 @@ module ControlUnit(
                             end
                         endcase   
                     end
-                    8'b0001??00: //jump, add n to current address and jump to it
+                    8'b00011000: //jump, add n to current address and jump to it,
+                                //changed to 8 bit offset from 16 bit
                     begin
-                        case  (LOW_IMMED)
-                            // High Byte
-                            1'b0:
-                            begin
-                                // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                                IMMED_DATA_HIGH = OPCODE;
-                                // Set the IMMED_ADDR_LOW output value to its proper value
-                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                     
-                                // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
-                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                                PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;
-                                // Load the PC with the immediate value address when the data is valid
-                                PC_LD = 1'b1;
-                                // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                                //PC MUX set to appropriate value
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                            end
-                            // Low Byte
-                            1'b1:
-                            begin
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_DATA_LOW = OPCODE;
-                                // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
-                                // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;
-                            end
-                        endcase  
+                                // OPCODE= low byte + current addr (PC)
+                                PC_ADDR_OUT = IMMED_DATA_LOW[3] ? ((PC - ((IMMED_DATA_LOW || OPCODE_SIGNED) + 1))-3) : ((IMMED_DATA_LOW + PC)-3);
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
                      end
+
+                    8'b001??000: //jump conditional, add n to current address and jump to it,
+                                //changed to 8 bit offset from 16 bit
+                    begin
+                                //PC MUX set to appropriate value
+                                PC_MUX_SEL = PC_CU_PC_ADDR;
+                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = OPCODE;
+                                // OPCODE= low byte + current addr (PC); SIGNED
+                                PC_ADDR_OUT = IMMED_DATA_LOW[3] ? ((PC - ((IMMED_DATA_LOW || OPCODE_SIGNED) + 1))-3) : ((IMMED_DATA_LOW + PC)-3);
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
+                     end 
 
                     8'b11101010: begin  // LD (nn), A
                         // Flag for Immediate Low Byte Load
