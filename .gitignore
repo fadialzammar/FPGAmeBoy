@@ -55,3 +55,4 @@ vivado_pid*.zip
 .svlint.toml
 *.ip_user_files/
 *.xpr
+*.xpr
