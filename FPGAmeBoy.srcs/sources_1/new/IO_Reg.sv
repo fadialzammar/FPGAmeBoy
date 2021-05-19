@@ -27,7 +27,7 @@ module IO_Reg(
     input [2:0] INT_ID,
     input IME, INT_CLR,
     input CLK, WE,
-    output logic [7:0] D_OUT, D_IE, D_IF
+    output logic [7:0] D_OUT, D_IE, D_IF, BROM_DI
 );
 
 logic [7:0] mem [0:255];
@@ -37,28 +37,53 @@ initial begin
     for (int i = 0; i < 256; i++) begin
         mem[i] = 0;
     end
+    mem['h05] = 'h00;
+    mem['h06] = 'h00;
+    mem['h07] = 'h00;
+    mem['h10] = 'h80;
+    mem['h11] = 'hBF;
+    mem['h12] = 'hF3;
+    mem['h14] = 'hBF;
+    mem['h16] = 'h3F;
+    mem['h17] = 'h00;
+    mem['h19] = 'hBF;
+    mem['h1A] = 'h7F;
+    mem['h1B] = 'hFF;
+    mem['h1C] = 'h9F;
+    mem['h1E] = 'hBF;
+    mem['h20] = 'hFF;
+    mem['h21] = 'h00;
+    mem['h22] = 'h00;
+    mem['h23] = 'hBF;
+    mem['h24] = 'h77;
+    mem['h25] = 'hF3;
+    mem['h26] = 'hF1;
+    mem['h40] = 'h91;
+    mem['hFF] = 'h00;
 end
 
 //create synchronous write to port X
-always_ff @ (posedge D_IN)
+always_ff @ (posedge CLK)
 begin
-    if (WE == 1)
+    if ((WE == 1) && (ADR != 15)) 
         mem[ADR] <= D_IN;
+    if(INT_CLR)
+        mem[15][INT_ID] <= 0;
+    else
+        mem[15] <= INT_IN | mem[15];
 end
 
-// Write Interrupt flags on incoming interrupt signal
-always_ff @ (posedge INT_IN)
-begin
-    mem[15] <= INT_IN;
-end
-always_ff @ (posedge INT_CLR)
-begin
-    mem[15][INT_ID] <= 0;
-end
+
+//always_ff @ (posedge INT_CLR)
+//begin
+//    mem[15][INT_ID] <= 0;
+//end
 
 //asynchronous read to ports x and y
 assign D_OUT = mem[ADR];
+
 // Always outputting interrupt data
 assign D_IE  = mem[255];
 assign D_IF  = mem[15];
+assign BROM_DI = mem[80];
 endmodule

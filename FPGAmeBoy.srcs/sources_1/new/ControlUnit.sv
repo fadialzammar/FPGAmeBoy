@@ -94,6 +94,8 @@ module ControlUnit(
     parameter MEM_DATA_ALU     = 7;
     parameter MEM_DATA_IMMED   = 8; // Immediate value
     parameter MEM_DATA_DY      = 9; // DY output of the Reg File
+    parameter MEM_DATA_PC_INT_LOW = 10;
+    parameter MEM_DATA_PC_INT_HIGH = 11;
     
     // Interrupt Register MUX
     parameter INTR_MUX_LOW  = 0; // Low input to the Interrupt Register
@@ -307,7 +309,7 @@ module ControlUnit(
 
             EXEC:
             begin              
-                        
+                 
                 case (OPCODE) inside
                 
                     8'b00000000:  // NOP
@@ -331,7 +333,7 @@ module ControlUnit(
                     end
                     8'b11110011:  // DI disable interrupt
                     begin 
-                        IME_DELAY = 2;
+                        IME_DELAY = 1;
                         IME_EN = 0; 
                     end
                     
@@ -2251,7 +2253,7 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
                                 IMMED_DATA_HIGH = OPCODE;
                                 // Set the IMMED_ADDR_LOW output value to its proper value
-                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW - 1;                     
+                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                     
                                 // Reset the HIGH_IMMED Flag
                                 HIGH_IMMED = 1'b0;
                                 // Load the PC with the immediate value address when the data is valid
@@ -2273,36 +2275,27 @@ module ControlUnit(
                     end
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
-                        case  (LOW_IMMED)
-                            // High Byte
-                            1'b0:
-                            begin
-                                // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                                IMMED_DATA_HIGH = OPCODE;
-                                // Set the IMMED_ADDR_LOW output value to its proper value
-                                IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                     
-                                // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
-                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                                PC_ADDR_OUT = ({IMMED_DATA_HIGH,IMMED_DATA_LOW} + PC)-3;
-                                // Load the PC with the immediate value address when the data is valid
-                                PC_LD = 1'b1;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                            end
-                            // Low Byte
-                            1'b1:
-                            begin
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_DATA_LOW = OPCODE;
-                                // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
-                                // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;
-                            end
-                        endcase  
+                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
+                                PC_ADDR_OUT = ({8'b00000000,IMMED_DATA_LOW} + PC)-3;
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
                      end
-
+                    8'b001??000: //jump, add n to current address and jump to it
+                    begin
+                                // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
+                                PC_MUX_SEL = PC_CU_PC_ADDR;
+                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_DATA_LOW = OPCODE;
+                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
+                                PC_ADDR_OUT = ({8'b00000000,IMMED_DATA_LOW} + PC)-1;
+                                // Load the PC with the immediate value address when the data is valid
+                                PC_LD = 1'b1;
+                     end
+                     
                     8'b11101010: begin  // LD (nn), A
                         // Flag for Immediate Low Byte Load
                         LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
@@ -2405,7 +2398,7 @@ module ControlUnit(
                           8'b00000000:  /// INTERRUPT - PUSH
                             begin
                                 // Memory Data select set to DX output of the Reg File
-                                MEM_DATA_SEL = MEM_DATA_PC_LOW;      
+                                MEM_DATA_SEL = MEM_DATA_PC_INT_LOW;      
                             end
                           8'b11??0101: /// PUSH nn
                             begin
@@ -2580,7 +2573,7 @@ module ControlUnit(
                         case (SP_OPCODE) inside
                           8'b00000000:
                           begin
-                                MEM_DATA_SEL = MEM_DATA_PC_HIGH;
+                                MEM_DATA_SEL = MEM_DATA_PC_INT_HIGH;
                                 PC_LD = 1;
                                 PC_MUX_SEL = PC_MUX_INTR;
                                 INT_CLR = 1;

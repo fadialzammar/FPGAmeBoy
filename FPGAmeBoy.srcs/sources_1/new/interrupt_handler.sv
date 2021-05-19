@@ -24,8 +24,9 @@
 module interrupt_handler(
     input [7:0] D_IE, D_IF,
     input IME, INT_CLR,
+    output logic ppu_vblank_ack, ppu_lcdc_ack, timer_ack,
     output logic INTR = 0,
-    output logic [2:0] INTR_ID
+    output reg [2:0] INTR_ID
     );
     logic [7:0] interrupts;
     
@@ -33,6 +34,7 @@ module interrupt_handler(
     begin
     interrupts = D_IE & D_IF;
     
+    // Generate Interrupt signals
     if(IME == 1)
     begin
         if(interrupts[0] == 1)
@@ -60,14 +62,43 @@ module interrupt_handler(
             INTR = 1;
             INTR_ID = 4;
         end
+        else
+        begin
+            INTR = 0;
+            INTR_ID = 7;
+        end
     end  
-    
     else
-        INTR = 0; 
-        
+        INTR = 0;
+    
+    // Clear interrupt flag after ISR is executed
     if(INT_CLR == 1)
     begin
         INTR = 0;
+        // Generate PPU/TIM ack signals
+        case(INTR_ID)
+            // PPU VBLANK
+            0:
+            begin
+                ppu_vblank_ack = 1;
+            end
+            // PPU LCDC
+            1:
+            begin
+                ppu_lcdc_ack = 1;
+            end
+            // Timer
+            2:
+            begin
+                timer_ack = 1;
+            end
+            default:
+            begin
+                ppu_vblank_ack = 0;
+                ppu_lcdc_ack = 0;
+                timer_ack = 0;
+            end
+        endcase
     end
     
     end 

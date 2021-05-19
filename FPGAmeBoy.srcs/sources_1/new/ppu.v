@@ -92,18 +92,18 @@ module ppu(
     integer i;
     
     // PPU registers
-    reg [7:0] reg_lcdc; //$FF40 LCD Control (R/W)
-    reg [7:0] reg_stat; //$FF41 LCDC Status (R/W)
-    reg [7:0] reg_scy;  //$FF42 Scroll Y (R/W)
-    reg [7:0] reg_scx;  //$FF43 Scroll X (R/W)
-    reg [7:0] reg_ly;   //$FF44 LCDC Y-Coordinate (R) Write will reset the counter
-    reg [7:0] reg_dma;  //$FF46 DMA, actually handled outside of PPU for now
-    reg [7:0] reg_lyc;  //$FF45 LY Compare (R/W)
-    reg [7:0] reg_bgp;  //$FF47 BG Palette Data (R/W) Non-CGB mode only
-    reg [7:0] reg_obp0; //$FF48 Object Palette 0 Data (R/W) Non-CGB mode only
-    reg [7:0] reg_obp1; //$FF49 Object Palette 1 Data (R/W) Non-CGB mode only
-    reg [7:0] reg_wy;   //$FF4A Window Y Position (R/W)
-    reg [7:0] reg_wx;   //$FF4B Window X Position (R/W)
+    reg [7:0] reg_lcdc = 'h91; //$FF40 LCD Control (R/W)
+    reg [7:0] reg_stat = 'h00;//$FF41 LCDC Status (R/W)
+    reg [7:0] reg_scy  = 'h00;//$FF42 Scroll Y (R/W)
+    reg [7:0] reg_scx  = 'h00;  //$FF43 Scroll X (R/W)
+    reg [7:0] reg_ly  = 'h00;   //$FF44 LCDC Y-Coordinate (R) Write will reset the counter
+    reg [7:0] reg_dma  = 'h00;  //$FF46 DMA, actually handled outside of PPU for now
+    reg [7:0] reg_lyc  = 'h00;  //$FF45 LY Compare (R/W)
+    reg [7:0] reg_bgp  = 'hFC;  //$FF47 BG Palette Data (R/W) Non-CGB mode only
+    reg [7:0] reg_obp0  = 'hFF; //$FF48 Object Palette 0 Data (R/W) Non-CGB mode only
+    reg [7:0] reg_obp1  = 'hFF; //$FF49 Object Palette 1 Data (R/W) Non-CGB mode only
+    reg [7:0] reg_wy  = 'h00;   //$FF4A Window Y Position (R/W)
+    reg [7:0] reg_wx  = 'h00;   //$FF4B Window X Position (R/W)
     
     // Some interrupt related register
     reg [7:0] reg_ly_last;

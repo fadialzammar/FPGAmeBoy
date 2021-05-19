@@ -42,6 +42,13 @@ initial begin
     for (int i = 0; i < (1<<ADDR_SIZE); i++) begin
         mem[i] = 0;
     end
+    mem[7] = 'h01;
+    mem[0] = 'h00;
+    mem[1] = 'h13;
+    mem[2] = 'h00;
+    mem[3] = 'hD8;
+    mem[4] = 'h01;
+    mem[5] = 'h4D;
 end
 
 //create synchronous write to port X

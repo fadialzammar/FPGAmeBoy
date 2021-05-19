@@ -31,7 +31,7 @@ module Flag_Reg(
     input Z_FLAG_SET,
     input Z_FLAG_CLR,
 
-    output logic Z_OUT = 1'b0,
+    output logic Z_OUT = 1'b1,
 
     
     // Subtract Flag
@@ -49,7 +49,7 @@ module Flag_Reg(
     input H_FLAG_SET,
     input H_FLAG_CLR,    
   
-    output logic H_OUT = 1'b0,
+    output logic H_OUT = 1'b1,
 
     
     // Carry Flag
@@ -58,7 +58,7 @@ module Flag_Reg(
     input C_FLAG_SET,
     input C_FLAG_CLR,
 
-    output logic C_OUT = 1'b0
+    output logic C_OUT = 1'b1
     );
     
     // Zero Flag Register

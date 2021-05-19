@@ -5,7 +5,7 @@
 module top(
     input CLK,
     input RST,
-    input [4:0] INTR,
+    input [2:0] INTR_in,
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -49,7 +49,7 @@ ProgRom ProgRom(
 logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
-logic [15:0] PROG_COUNT;
+
 CPU_Wrapper CPU(
     .CLK            (CLK),
     .RST            (RST),
@@ -104,6 +104,10 @@ logic [7:0] OAM_DIN, OAM_DOUT;
 logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
 
+logic [4:0] INTR;
+logic ppu_vblank_req=0, ppu_lcdc_req = 0;
+
+assign INTR = {INTR_in, ppu_lcdc_req, ppu_vblank_req};
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 assign VRAM_RE = ~VRAM_HOLD;
 assign OAM_RE = ~OAM_HOLD;
@@ -133,10 +137,10 @@ ppu PPU(
     .oam_rd         (OAM_RE),
     .oam_wr         (OAM_WE),
     // Interrupt interface
-    .int_vblank_req (),
-    .int_lcdc_req   (),
-    .int_vblank_ack (),
-    .int_lcdc_ack   (),
+    .int_vblank_req (ppu_vblank_req),
+    .int_lcdc_req   (ppu_lcdc_req),
+    .int_vblank_ack (ppu_vblank_ack),
+    .int_lcdc_ack   (ppu_lcdc_ack),
     // Pixel output
     .cpl            (PIXEL_CLK),          // Pixel Clock, = ~clk
     .pixel          (PPU_PIXEL),        // Pixel Output

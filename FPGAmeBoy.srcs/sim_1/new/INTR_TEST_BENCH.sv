@@ -5,7 +5,7 @@
 // 
 // Create Date: 05/03/2021 03:53:35 PM
 // Design Name: 
-// Module Name: INTR_TEST_BENCH
+// Module Name: INTR_in_TEST_BENCH
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -27,31 +27,18 @@ module INTR_TEST_BENCH();
      logic [7:0] CATHODES,VGA_RGB;
      logic [3:0] ANODES;
      logic [4:0] counter;
-     logic [4:0] INTR = 0;
+     logic [2:0] INTR_in = 0;
+     logic VGA_HS, VGA_VS;
+     logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
      top DUT (.*);
     
      initial forever  #10  CLK =  ! CLK; 
      
      initial begin
-        INTR = 1;
+        RST = 1;
+        INTR_in = 0;
         #5
-        INTR = 0;
-        #25
-        INTR = 3;
-        #5
-        INTR = 0;
-        #50
-        INTR = 2;
-        #100
-        INTR = 0;
-        #300
-        INTR = 2;
-        #315
-        INTR = 0;
-        #40
-        INTR = 2;
-        #10
-        INTR = 0;
+        RST = 0;
      end
 endmodule

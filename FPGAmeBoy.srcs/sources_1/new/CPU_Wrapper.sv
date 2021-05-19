@@ -33,7 +33,7 @@ module CPU_Wrapper(
     output [15:0] MEM_ADDR_IN,  // from CPU to Memory
     output [15:0] PC,    // TODO: change to 10 bits?
     output [2:0] INTR_ID,
-    output INT_CLR
+    output INT_CLR, ppu_vblank_ack, ppu_lcdc_ack, timer_ack
     );
     
     // Program Counter Signals
@@ -162,8 +162,11 @@ module CPU_Wrapper(
     // Concatenate the High and Low Bytes of the PC Address Values
     assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
+    
+    assign JP_PC = {IMMED_DATA_HIGH, IMMED_DATA_LOW}-1;
+    
     assign CALL_PC_FALSE = PC_OFFSET; // CALL not taken due to conditional (skip immediat values)
-    assign INTR_RET_PC = {RET_PC_HIGH,RET_PC_LOW} - 2;
+    assign INTR_RET_PC = {RET_PC_HIGH,RET_PC_LOW} - 3;
     
     assign MEM_RE = ~MEM_HOLD;
 
@@ -194,7 +197,7 @@ module CPU_Wrapper(
     // PC Data MUX
 
     MUX7to1#(.DATA_SIZE(16)) PC_MUX(
-        .In0(JP_PC), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
+        .In0(IMMED_DATA_16), .In1(CU_PC_ADDR), .In2(RF_16_OUT), .In3(RST_ADDR),
         .In4(RET_PC), .In5(CALL_PC_IN), .In6(INTR_ADDR), .Sel(PC_MUX_SEL), .Out(PC_DIN)
     );
     
@@ -291,7 +294,7 @@ module CPU_Wrapper(
             MEM_ADDR_BUF_OUT = RF_16_OUT;
     end
     
-    // This is not good
+
     logic[15:0] HL_ADDR;
     logic HL_HOLD;
     // HL_State Buffer
@@ -308,20 +311,25 @@ module CPU_Wrapper(
         .In5({8'hFF, IMMED_ADDR_LOW}), .In6({8'hFF, RF_DY_OUT}), .In7(), .In8(HL_ADDR), .Sel(MEM_ADDR_SEL), .Out(MEM_ADDR_IN)
     );
     
-    // Interrupt Enable/Disable Values MUX
+    // Interrupt Handler
     interrupt_handler intr(
         .IME(IME),
         .D_IE(INT_EN),
         .D_IF(INT_FLAG),
         .INTR(INTR),
         .INTR_ID(INTR_ID),
-        .INT_CLR(INT_CLR)
+        .INT_CLR(INT_CLR),
+        .ppu_vblank_ack(ppu_vblank_ack),
+        .ppu_lcdc_ack(ppu_lcdc_ack),
+        .timer_ack(timer_ack)
     );
+    logic [15:0] PC_INT;
+    assign PC_INT = PC - 1;
     // Memory Data MUX
-    MUX10to1 MEM_DATA_MUX(
+    MUX12to1 MEM_DATA_MUX(
         .In0(RF_DX_OUT), .In1(PC_OFFSET[7:0]), .In2(PC_OFFSET[15:8]), .In3(FLAG_REG_OUT), 
         .In4(SP_DOUT[7:0]), .In5(SP_DOUT[15:8]), .In6(INTR_REG_DIN), 
-        .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
+        .In7(ALU_OUT), .In8(IMMED_DATA_LOW), .In9(RF_DY_OUT), .In10(PC_INT[7:0]), .In11(PC_INT[15:8]), .Sel(MEM_DATA_SEL), .Out(MEM_DIN)
     );
     
     // Control Unit Instantiation

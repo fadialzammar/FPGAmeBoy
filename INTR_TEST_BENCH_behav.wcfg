@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="384940fs"></ZoomStartTime>
-      <ZoomEndTime time="720741fs"></ZoomEndTime>
-      <Cursor1Time time="1000000fs"></Cursor1Time>
+      <ZoomStartTime time="3872460fs"></ZoomStartTime>
+      <ZoomEndTime time="3908461fs"></ZoomEndTime>
+      <Cursor1Time time="4008260fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="117"></NameColumnWidth>
-      <ValueColumnWidth column_width="72"></ValueColumnWidth>
+      <NameColumnWidth column_width="186"></NameColumnWidth>
+      <ValueColumnWidth column_width="74"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="14" />
+   <WVObjectSize size="24" />
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CLK" type="logic">
       <obj_property name="ElementShortName">CLK</obj_property>
       <obj_property name="ObjectShortName">CLK</obj_property>
@@ -35,6 +35,10 @@
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/INTR" type="array">
       <obj_property name="ElementShortName">INTR[4:0]</obj_property>
       <obj_property name="ObjectShortName">INTR[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/IO_Reg/INT_CLR" type="logic">
+      <obj_property name="ElementShortName">INT_CLR</obj_property>
+      <obj_property name="ObjectShortName">INT_CLR</obj_property>
    </wvobject>
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/intr/IME" type="logic">
       <obj_property name="ElementShortName">IME</obj_property>
@@ -52,9 +56,18 @@
       <obj_property name="ElementShortName">[16][7:0]</obj_property>
       <obj_property name="ObjectShortName">[16][7:0]</obj_property>
    </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/IO_Reg/mem[255]" type="array">
+      <obj_property name="ElementShortName">[255][7:0]</obj_property>
+      <obj_property name="ObjectShortName">[255][7:0]</obj_property>
+   </wvobject>
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/ControlUnit/PC" type="array">
       <obj_property name="ElementShortName">PC[15:0]</obj_property>
       <obj_property name="ObjectShortName">PC[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/ControlUnit/PC" type="array">
+      <obj_property name="ElementShortName">PC[15:0]</obj_property>
+      <obj_property name="ObjectShortName">PC[15:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/ControlUnit/INTR_ID" type="array">
       <obj_property name="ElementShortName">INTR_ID[2:0]</obj_property>
@@ -69,12 +82,39 @@
       <obj_property name="ObjectShortName">NS[31:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/IO_Reg/INT_ID" type="array">
-      <obj_property name="ElementShortName">INT_ID[3:0]</obj_property>
-      <obj_property name="ObjectShortName">INT_ID[3:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
+      <obj_property name="ElementShortName">INT_ID[2:0]</obj_property>
+      <obj_property name="ObjectShortName">INT_ID[2:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/intr/INTR_ID" type="array">
       <obj_property name="ElementShortName">INTR_ID[2:0]</obj_property>
       <obj_property name="ObjectShortName">INTR_ID[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/IO_Reg/INT_CLR" type="logic">
+      <obj_property name="ElementShortName">INT_CLR</obj_property>
+      <obj_property name="ObjectShortName">INT_CLR</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/PC_MUX/Out" type="array">
+      <obj_property name="ElementShortName">Out[15:0]</obj_property>
+      <obj_property name="ObjectShortName">Out[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/PC_MUX/In4" type="array">
+      <obj_property name="ElementShortName">In4[15:0]</obj_property>
+      <obj_property name="ObjectShortName">In4[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/PC_MUX/Sel" type="array">
+      <obj_property name="ElementShortName">Sel[2:0]</obj_property>
+      <obj_property name="ObjectShortName">Sel[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/ProgCount/PC_LD" type="logic">
+      <obj_property name="ElementShortName">PC_LD</obj_property>
+      <obj_property name="ObjectShortName">PC_LD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/Flag_Reg/Z_OUT" type="logic">
+      <obj_property name="ElementShortName">Z_OUT</obj_property>
+      <obj_property name="ObjectShortName">Z_OUT</obj_property>
+   </wvobject>
+   <wvobject fp_name="/INTR_TEST_BENCH/DUT/CPU/Flag_Reg/C_OUT" type="logic">
+      <obj_property name="ElementShortName">C_OUT</obj_property>
+      <obj_property name="ObjectShortName">C_OUT</obj_property>
    </wvobject>
 </wave_config>
