@@ -237,12 +237,14 @@ module ControlUnit(
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
      
+     // Used for 2's Comp
+     logic [7:0] OPCODE_SIGNED;
+     
      // Interrupt Master Enable
      logic [1:0] IME_DELAY = 0;
      logic IME_EN = 0;
      logic INTR_HOLD = 0;
      logic FETCH_FLAG = 0;
-    
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -1706,7 +1708,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1719,7 +1721,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1732,7 +1734,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1745,7 +1747,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -2273,14 +2275,14 @@ module ControlUnit(
                             end
                         endcase   
                     end
+                    
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
-                                IMMED_DATA_LOW = OPCODE;
-                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                                PC_ADDR_OUT = ({8'b00000000,IMMED_DATA_LOW} + PC)-3;
+                                // No +1 for 2's Comp to account for Fetch increment
+                                OPCODE_SIGNED = ~(OPCODE);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-1);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
@@ -2288,10 +2290,9 @@ module ControlUnit(
                     begin
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
-                                IMMED_DATA_LOW = OPCODE;
-                                // OPCODE= low byte + current addr (PC); maybe need to change to 16 bit offset
-                                PC_ADDR_OUT = ({8'b00000000,IMMED_DATA_LOW} + PC)-1;
+                                // No +1 for 2's Comp to account for Fetch increment
+                                OPCODE_SIGNED = ~(OPCODE);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-1);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
