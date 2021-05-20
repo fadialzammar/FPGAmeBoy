@@ -249,12 +249,12 @@ memory_map memory_map(
     .wr_ppu_oam     (OAM_WE),
     .rd_ppu_oam     (OAM_RE),
     //PPU (MMIO) FF40-FF4B
-    .A_ppu_regs     (FAKE_PPU_ADDR),
-    .Di_ppu_regs    (FAKE_PPU_DIN),
-    .Do_ppu_regs    (FAKE_PPU_DOUT),
+    .A_ppu_regs     (PPU_ADDR),
+    .Di_ppu_regs    (PPU_DIN),
+    .Do_ppu_regs    (PPU_DOUT),
     .cs_ppu_regs    (),
-    .wr_ppu_regs    (FAKE_PPU_WE),
-    .rd_ppu_regs    (FAKE_PPU_RE),
+    .wr_ppu_regs    (PPU_WE),
+    .rd_ppu_regs    (PPU_RE),
     //RAM C000-DFFF
     .A_ram          (MEM_ADDR),
     .Di_ram         (MEM_DIN),
