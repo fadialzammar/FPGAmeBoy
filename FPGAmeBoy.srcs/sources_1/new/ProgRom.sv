@@ -25,7 +25,11 @@ module ProgRom(
     input PROG_CLK,
     input RE,
     input [15:0] PROG_ADDR,
-    output logic [7:0] PROG_IR
+    output logic [7:0] PROG_IR,
+    
+    input [15:0] CART_ADDR,
+    input CART_RE,
+    output logic [7:0] CART_DATA
     );
       
     (* rom_style="{distributed | block}" *) // force the ROM to be block memory
@@ -41,5 +45,6 @@ module ProgRom(
     begin
         //if (RE)
             PROG_IR <= rom[PROG_ADDR];
+            CART_DATA <= rom[CART_ADDR];
     end
 endmodule

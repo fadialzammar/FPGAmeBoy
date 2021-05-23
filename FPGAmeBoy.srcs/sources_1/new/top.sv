@@ -37,10 +37,17 @@ BROM BROM(
 //  ProgRom / Cartridge
 ////////////////////////////
 logic [7:0] CPU_OPCODE;
+logic [15:0] CART_ADDR;
+logic [7:0] CART_DATA;
+logic CART_RE;
+
 ProgRom ProgRom(
     .PROG_CLK       (CLK),
     .PROG_ADDR      (PROG_COUNT),
-    .PROG_IR        (CPU_OPCODE)
+    .PROG_IR        (CPU_OPCODE),
+    .CART_ADDR      (CART_ADDR),
+    .CART_DATA      (CART_DATA),
+    .CART_RE        (CART_RE)
 );
 
 ////////////////////////////
@@ -63,7 +70,7 @@ CPU_Wrapper CPU(
     .MEM_RE         (CPU_RE_OUT),
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
     .PC             (PROG_COUNT),
-    .INTR_ID         (INT_ID),
+    .INTR_ID        (INT_ID),
     .INT_CLR        (INT_CLR)
 );
 
@@ -228,12 +235,12 @@ memory_map memory_map(
 	.cs_BROM           (),
 	.Do_BROM           (BROM_IR),
     //Cartridge 0100-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
-    .A_crd          (),
+    .A_crd          (CART_ADDR),
     .Di_crd         (),
-    .Do_crd         (PROG_IR),
+    .Do_crd         (CART_DATA),
     .cs_crd         (),
     .wr_crd         (),
-    .rd_crd         (),
+    .rd_crd         (CART_RE),
     //PPU (Video RAM) 8000-9FFF 
     .A_ppu_vram     (VRAM_ADDR),
     .Di_ppu_vram    (VRAM_DIN),
@@ -249,12 +256,12 @@ memory_map memory_map(
     .wr_ppu_oam     (OAM_WE),
     .rd_ppu_oam     (OAM_RE),
     //PPU (MMIO) FF40-FF4B
-    .A_ppu_regs     (FAKE_PPU_ADDR),
-    .Di_ppu_regs    (FAKE_PPU_DIN),
-    .Do_ppu_regs    (FAKE_PPU_DOUT),
+    .A_ppu_regs     (PPU_ADDR),
+    .Di_ppu_regs    (PPU_DIN),
+    .Do_ppu_regs    (PPU_DOUT),
     .cs_ppu_regs    (),
-    .wr_ppu_regs    (FAKE_PPU_WE),
-    .rd_ppu_regs    (FAKE_PPU_RE),
+    .wr_ppu_regs    (PPU_WE),
+    .rd_ppu_regs    (PPU_RE),
     //RAM C000-DFFF
     .A_ram          (MEM_ADDR),
     .Di_ram         (MEM_DIN),
