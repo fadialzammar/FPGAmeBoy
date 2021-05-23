@@ -2246,8 +2246,7 @@ module ControlUnit(
                   
                     8'b110??01?: // jump nn, conditional jumps
                     begin
-                        // Flag for Immediate Low Byte Load
-
+                        RF_WR = 1'b0;
                         case  (LOW_IMMED)
                             // High Byte
                             1'b0:
@@ -2278,21 +2277,23 @@ module ControlUnit(
                     
                     8'b0001??00: //jump, add n to current address and jump to it
                     begin
+                                RF_WR = 1'b0;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment
                                 OPCODE_SIGNED = ~(OPCODE);
-                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-1);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-3);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
                     8'b001??000: //jump, add n to current address and jump to it
                     begin
+                                RF_WR = 1'b0;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment
                                 OPCODE_SIGNED = ~(OPCODE);
-                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-1);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-3);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
