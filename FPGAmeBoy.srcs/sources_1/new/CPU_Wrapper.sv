@@ -161,7 +161,7 @@ module CPU_Wrapper(
     assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
     // Concatenate the High and Low Bytes of the PC Address Values
     assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
-    assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW} - 1;
+    assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
     
     assign JP_PC = {IMMED_DATA_HIGH, IMMED_DATA_LOW}-1;
     
