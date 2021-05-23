@@ -152,7 +152,9 @@ ppu PPU(
     .scy            (ppu_debug_scy),
     .state          (ppu_debug_state)
     );
-    
+
+logic DMA_MMIO_WE;
+logic [15:0] DMA_DIN;
 ////////////////////////////
 // DMA 
 ////////////////////////////
@@ -219,6 +221,8 @@ memory_map memory_map(
 	.cs_DMA             (),
 	.Do_DMA             (DMA_DOUT),
 	.wr_DMA             (DMA_WE),
+	.Do_MMIO            (DMA_MMIO_DOUT),
+	.wr_MMIO            (DMA_MMIO_WE),
 	.rd_DMA             (DMA_RE),
 	.dma_occupy_vidbus  (dma_occupy_vidbus),
 	.dma_occupy_oambus  (dma_occupy_oambus), 
@@ -290,7 +294,7 @@ memory_map memory_map(
 	.cs_HRAM        (),
 	.wr_HRAM        (HRAM_WE),
 	.rd_HRAM        (HRAM_RE),
-        // Hardware I/O Registers FF00-FF40
+     // Hardware I/O Registers FF00-FF40
 	.A_io           (A_io),
 	.Di_io          (Di_io),
 	.Do_io          (Do_io),
