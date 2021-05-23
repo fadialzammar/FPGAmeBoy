@@ -38,7 +38,7 @@ module INTR_TEST_BENCH();
      initial begin
         RST = 1;
         INTR_in = 0;
-        #5
+        #50
         RST = 0;
      end
 endmodule
