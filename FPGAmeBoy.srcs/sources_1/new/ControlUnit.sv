@@ -2247,8 +2247,7 @@ module ControlUnit(
                   
                     8'b110??01?: // jump nn, conditional jumps
                     begin
-                        // Flag for Immediate Low Byte Load
-
+                        RF_WR = 1'b0;
                         case  (LOW_IMMED)
                             // High Byte
                             1'b0:
@@ -2278,6 +2277,7 @@ module ControlUnit(
                     end
                     8'b0001??00: //JR, add n to current address and jump to it
                     begin
+                                RF_WR = 1'b0;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment
@@ -2288,6 +2288,7 @@ module ControlUnit(
                      end
                     8'b001??000: //JR, add n to current address and jump to it
                     begin
+                                RF_WR = 1'b0;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment

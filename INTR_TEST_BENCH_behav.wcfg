@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="100730330fs"></ZoomStartTime>
-      <ZoomEndTime time="100938931fs"></ZoomEndTime>
-      <Cursor1Time time="276fs"></Cursor1Time>
+      <ZoomStartTime time="5501010200fs"></ZoomStartTime>
+      <ZoomEndTime time="5501167801fs"></ZoomEndTime>
+      <Cursor1Time time="5501090000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="186"></NameColumnWidth>
+      <NameColumnWidth column_width="182"></NameColumnWidth>
       <ValueColumnWidth column_width="58"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="11" />
+   <WVObjectSize size="12" />
    <wvobject fp_name="/INTR_TEST_BENCH/DUT/CLK" type="logic">
       <obj_property name="ElementShortName">CLK</obj_property>
       <obj_property name="ObjectShortName">CLK</obj_property>
@@ -181,6 +181,103 @@
          <obj_property name="ElementShortName">[5][7:0]</obj_property>
          <obj_property name="ObjectShortName">[5][7:0]</obj_property>
          <obj_property name="label">RegL[7:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group311" type="group">
+      <obj_property name="label">DMA</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_DELAY" type="array">
+         <obj_property name="ElementShortName">DMA_DELAY[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_DELAY[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_IDLE" type="array">
+         <obj_property name="ElementShortName">DMA_IDLE[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_IDLE[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_TRANSFER_READ_ADDR" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_READ_ADDR[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_READ_ADDR[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_TRANSFER_READ_DATA" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_READ_DATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_READ_DATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_TRANSFER_WRITE_DATA" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_WRITE_DATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_WRITE_DATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/DMA_TRANSFER_WRITE_WAIT" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_WRITE_WAIT[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_WRITE_WAIT[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/clk" type="logic">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/count" type="array">
+         <obj_property name="ElementShortName">count[7:0]</obj_property>
+         <obj_property name="ObjectShortName">count[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/cpu_mem_disable" type="logic">
+         <obj_property name="ElementShortName">cpu_mem_disable</obj_property>
+         <obj_property name="ObjectShortName">cpu_mem_disable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_a" type="array">
+         <obj_property name="ElementShortName">dma_a[15:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_a[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_din" type="array">
+         <obj_property name="ElementShortName">dma_din[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_din[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_dout" type="array">
+         <obj_property name="ElementShortName">dma_dout[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_dout[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_occupy_extbus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_extbus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_extbus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_occupy_oambus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_oambus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_oambus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_occupy_vidbus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_vidbus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_vidbus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_rd" type="logic">
+         <obj_property name="ElementShortName">dma_rd</obj_property>
+         <obj_property name="ObjectShortName">dma_rd</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_start_addr" type="array">
+         <obj_property name="ElementShortName">dma_start_addr[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_start_addr[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/dma_wr" type="logic">
+         <obj_property name="ElementShortName">dma_wr</obj_property>
+         <obj_property name="ObjectShortName">dma_wr</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/mmio_din" type="array">
+         <obj_property name="ElementShortName">mmio_din[7:0]</obj_property>
+         <obj_property name="ObjectShortName">mmio_din[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/mmio_dout" type="array">
+         <obj_property name="ElementShortName">mmio_dout[7:0]</obj_property>
+         <obj_property name="ObjectShortName">mmio_dout[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/mmio_wr" type="logic">
+         <obj_property name="ElementShortName">mmio_wr</obj_property>
+         <obj_property name="ObjectShortName">mmio_wr</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/rst" type="logic">
+         <obj_property name="ElementShortName">rst</obj_property>
+         <obj_property name="ObjectShortName">rst</obj_property>
+      </wvobject>
+      <wvobject fp_name="/INTR_TEST_BENCH/DUT/DMA/state" type="array">
+         <obj_property name="ElementShortName">state[2:0]</obj_property>
+         <obj_property name="ObjectShortName">state[2:0]</obj_property>
       </wvobject>
    </wvobject>
 </wave_config>
