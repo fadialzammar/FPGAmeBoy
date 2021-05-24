@@ -119,7 +119,7 @@ module memory_map(
 	output			wr_HRAM,
 	output			rd_HRAM,
 	
-	// Interrupt Enable Flags FFFF
+	// I/O Regs  /  Interrupt Enable Flags FFFF
 	output [15:0] A_io,
 	output [7:0] Di_io,
 	input [7:0] Do_io,
@@ -161,6 +161,7 @@ assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
 assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 assign rd_HRAM = cs_HRAM ? rd_cpu : 1'b0;
+assign rd_io = cs_io ? rd_cpu : 1'b0;
 
 //assign cs_BROM = (A_cpu <= 16'h00FF);
 // Chip Select Logic
@@ -171,9 +172,9 @@ assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 // assign cs_DMA = (A_DMA >= 16'h8000 && A_DMA < 16'h9FFF) || (A_DMA >= 16'hC000 && A_DMA < 16'hDFFF) || (A_DMA >= 16'hFE00 && A_DMA < 16'hFE9F);
 assign cs_DMA = A_cpu == 16'hff46; 
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
-assign cs_ctrlMgr = A_cpu == 16'hFF00;
-assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
-assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
+//assign cs_ctrlMgr = A_cpu == 16'hFF00;
+//ssign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
+//assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
 assign cs_HRAM = (A_cpu >= 16'hFF80 && A_cpu < 16'hFFFF);
 assign cs_io = (A_cpu >= 16'hFF00 && A_cpu < 16'hFF40) || (A_cpu == 16'hFFFF) || (A_cpu == 16'hFF50);
 
@@ -216,12 +217,9 @@ assign Di_cpu = cs_crd & ~dma_occupy_extbus? Do_crd : (
 				cs_ppu_oam ? Do_ppu_oam : (
 				cs_ppu_regs ? Do_ppu_regs : (
 				cs_ram ? Do_ram : (
-				cs_wsram ? Do_wsram : (
 				cs_HRAM ? Do_HRAM : (
-				cs_ctrlMgr ? Do_ctrlMgr : (
-				cs_timer ? Do_timer : (
 				cs_io ? Do_io : 8'b0 
-				))))))))));
+				)))))));
 
 // DMA DIN
 //logic [1:0] DMA_SEL;

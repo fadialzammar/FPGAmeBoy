@@ -45,6 +45,12 @@ module ProgRom(
     begin
         //if (RE)
             PROG_IR <= rom[PROG_ADDR];
+            //CART_DATA <= rom[CART_ADDR];
+    end
+    
+        always_ff @(negedge PROG_CLK)
+    begin
+        //if (RE)
             CART_DATA <= rom[CART_ADDR];
     end
 endmodule
