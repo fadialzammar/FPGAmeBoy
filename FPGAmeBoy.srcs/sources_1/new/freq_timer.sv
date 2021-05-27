@@ -19,16 +19,18 @@
 // Timer for all 4 channels
 //////////////////////////////////////////////////////////////////////////////////
 
-
+//needs testing
 module freq_timer(
     input clk,
     input en,
-    input [19:0] period,
+    input [10:0] freq,
     output logic clk_out = 0
     );
     
     logic [19:0] count = 0;
+    logic [12:0] period;
     
+    assign period = (2048 - freq)*4;
     
     always_ff @ (posedge clk)
     begin

@@ -31,7 +31,7 @@ module BROM(
      
     // initalize the ROM with the BOOTROM.mem file
     initial begin
-        $readmemh("JP_TEST.mem", rom);
+        $readmemh("BOOTROM.mem", rom);
     end 
     
     always_ff @(posedge CLK)

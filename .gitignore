@@ -56,3 +56,5 @@ vivado_pid*.zip
 *.ip_user_files/
 *.xpr
 *.xpr
+FPGAmeBoy.srcs/sources_1/new/Tetris_Time.mem
+FPGAmeBoy.srcs/sources_1/new/BOOTROM.mem

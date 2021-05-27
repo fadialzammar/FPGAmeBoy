@@ -188,7 +188,7 @@ module ControlUnit(
 
     STATE NS, PS = INIT;
     // Used for signed jump val
-    logic OPCODE_SIGNED = 4'b1111;
+    logic signed [7:0] OPCODE_SIGNED;
     
      // Flag used for identifying that NS after EXEC is SP_LOW
      logic SP_LOW_FLAG = 1'b0;
@@ -1704,7 +1704,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1717,7 +1717,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1730,7 +1730,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -1743,7 +1743,7 @@ module ControlUnit(
                         end
                         else
                         begin
-                            PC_ADDR_OUT = PC+2;
+                            PC_ADDR_OUT = PC+1;
                             PC_MUX_SEL = PC_CU_PC_ADDR;
                             PC_LD = 1;
                         end     
@@ -2271,28 +2271,28 @@ module ControlUnit(
                             end
                         endcase   
                     end
-                    8'b00011000: //jump, add n to current address and jump to it,
-                                //changed to 8 bit offset from 16 bit
+                    8'b00011000: // JR: jump, add n to current address and jump to it,
+
                     begin
                                 //PC MUX set to appropriate value
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
-                                IMMED_DATA_LOW = OPCODE;
-                                // OPCODE= low byte + current addr (PC)
-                                PC_ADDR_OUT = IMMED_DATA_LOW[3] ? ((PC - ((IMMED_DATA_LOW || OPCODE_SIGNED) + 1))-3) : ((IMMED_DATA_LOW + PC)-3);
+                                //signed opcode for backward jumps, 2s complement
+                                OPCODE_SIGNED = ~(OPCODE) + 1;
+                                // setting address 
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-2);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
 
-                    8'b001??000: //jump conditional, add n to current address and jump to it,
-                                //changed to 8 bit offset from 16 bit
+                    8'b001??000: // JR: jump conditional, add n to current address and jump to it,
+
                     begin
                                 //PC MUX set to appropriate value
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
-                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
-                                IMMED_DATA_LOW = OPCODE;
+                                //signed opcode for backward jumps, 2s complement
+                                OPCODE_SIGNED = ~(OPCODE) + 1;                               
                                 // OPCODE= low byte + current addr (PC); SIGNED
-                                PC_ADDR_OUT = IMMED_DATA_LOW[3] ? ((PC - ((IMMED_DATA_LOW || OPCODE_SIGNED) + 1))-3) : ((IMMED_DATA_LOW + PC)-3);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 2) : ((OPCODE + PC)-2);
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end 
