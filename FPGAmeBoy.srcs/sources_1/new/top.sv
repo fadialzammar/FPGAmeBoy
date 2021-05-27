@@ -41,21 +41,31 @@ logic [7:0] PROG_IR;
 logic [15:0] CART_ADDR;
 logic [7:0] CART_DATA;
 logic CART_RE;
+logic [7:0] CART_OPCODE;
 
 ProgRom ProgRom(
     .PROG_CLK       (SCLK),
     .PROG_ADDR      (PROG_COUNT),
-    .PROG_IR        (PROG_IR),
+    .PROG_IR        (CART_OPCODE),
     .CART_ADDR      (CART_ADDR),
     .CART_DATA      (CART_DATA),
-    .CART_RE        (CART_RE)
+    .CART_RE        (CART_RE),
+    .RE             ()
 );
 
+
+// literally its own memory map because bandaid fix time
+logic OPCODE_SEL_CART, OPCODE_SEL_HRAM;
+
+assign OPCODE_SEL_CART = (PROG_COUNT <= 16'h7FFF);
+assign OPCODE_SEL_HRAM = (PROG_COUNT >= 16'hFF80) && (PROG_COUNT <= 16'hFFFE);
+assign CPU_OPCODE = OPCODE_SEL_CART ? CART_OPCODE : (
+                    OPCODE_SEL_HRAM ? HRAM_OPCODE : 8'bx);
 
 ////////////////////////////
 // CPU
 ////////////////////////////
-logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
+logic [7:0] CPU_DIN, CPU_DOUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
 logic ppu_vblank_ack, ppu_lcdc_ack, timer_ack;
@@ -63,12 +73,12 @@ logic ppu_vblank_ack, ppu_lcdc_ack, timer_ack;
 CPU_Wrapper CPU(
     .CLK            (SCLK),
     .RST            (RST),
-    .MEM_DOUT       (CPU_DATA_IN),
+    .MEM_DOUT       (CPU_DIN),
     .OPCODE         (CPU_OPCODE),
     .INT_EN         (D_IE),
     .INT_FLAG       (D_IF),
 
-    .MEM_DIN        (CPU_DATA_OUT),
+    .MEM_DIN        (CPU_DOUT),
     .MEM_WE         (CPU_WE_OUT),
     .MEM_RE         (CPU_RE_OUT),
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
@@ -173,7 +183,11 @@ ppu PPU(
     );
 
 logic DMA_MMIO_WE;
-logic [15:0] DMA_DIN;
+logic [7:0] DMA_DIN, DMA_DOUT;
+logic [7:0] DMA_MMIO_DOUT;
+logic DMA_RE, DMA_WE;
+logic [15:0] DMA_ADDR;
+logic dma_occupy_extbus, dma_occupy_vidbus, dma_occupy_oambus;
 ////////////////////////////
 // DMA 
 ////////////////////////////
@@ -186,7 +200,7 @@ dma DMA(
     .dma_din                (DMA_DIN),
     .dma_dout               (DMA_DOUT),
     .mmio_wr                (DMA_MMIO_WE),
-    .mmio_din               (CPU_DATA_OUT),
+    .mmio_din               (CPU_DOUT),
     .mmio_dout              (DMA_MMIO_DOUT),
     // DMA use
     // 0x0000 - 0x7FFF, 0xA000 - 0xFFFF
@@ -204,44 +218,41 @@ logic [7:0] HRAM [0:127];
 logic [15:0] HRAM_ADDR;
 logic [7:0] HRAM_DIN, HRAM_DOUT;
 logic HRAM_WE, HRAM_RE;
+logic [7:0] HRAM_OPCODE;
 
 // Write on rising edge
 always @(posedge SCLK) 
 begin
     if (HRAM_WE)
         begin
-            HRAM[HRAM_ADDR] <= HRAM_DIN;
+            HRAM[HRAM_ADDR[6:0]] <= HRAM_DIN;
         end
 end
 
 // Read on falling edge
- always_ff@(negedge SCLK)
+always_ff@(negedge CLK)
     begin
         if (HRAM_RE)
         begin
-            HRAM_DOUT <= HRAM[HRAM_ADDR];
+            HRAM_DOUT <= HRAM[HRAM_ADDR[6:0]];
         end
     end
 
-// Jank Time
+logic [6:0] HRAM_OPCODE_ADDR;
+assign HRAM_OPCODE_ADDR = PROG_COUNT - 16'hFF80;
 
-//assign CPU_OPCODE = (PROG_COUNT < 16'hFF80) ? PROG_IR : HRAM[PROG_COUNT - 16'hFF81];
-//always_ff@(negedge SCLK)
-//    begin
-//        if (PROG_COUNT >= 16'hFF80)
-//            CPU_OPCODE <= HRAM_DOUT; 
-//        else
-//            CPU_OPCODE <= PROG_IR;
-//    end
-    
+always_ff @ (posedge CLK) begin
+    HRAM_OPCODE <= HRAM[HRAM_OPCODE_ADDR];
+end  
+
 ////////////////////////////
 // Memory Map
 ////////////////////////////
 memory_map memory_map(
     //CPU 0000-FFFF
     .A_cpu              (CPU_ADDR_OUT),
-    .Di_cpu             (CPU_DATA_IN),
-    .Do_cpu             (CPU_DATA_OUT),
+    .Di_cpu             (CPU_DIN),
+    .Do_cpu             (CPU_DOUT),
     .wr_cpu             (CPU_WE_OUT),
     .rd_cpu             (CPU_RE_OUT),
     // DMA (VRAM 8000-H9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)

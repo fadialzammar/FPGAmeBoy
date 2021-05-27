@@ -24,8 +24,7 @@ module memory_map(
 	//Cpu 0000-FFFF
 	input 	[15:0] 	A_cpu,
 	output 	[7:0] 	Di_cpu,
-	input   [7:0]   PROG_OPCODE,
-	output  [7:0]   CPU_OPCODE,
+	// output  [7:0]   CPU_OPCODE,
 	input 	[7:0] 	Do_cpu,
 	input					wr_cpu,
 	input					rd_cpu,

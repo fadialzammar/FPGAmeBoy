@@ -25,7 +25,7 @@ module IO_Reg(
     input [7:0] ADR,
     input [7:0] D_IN, INT_IN,
     input [2:0] INT_ID,
-    input IME, INT_CLR,
+    input INT_CLR,
     input CLK, WE,
     output logic [7:0] D_OUT, D_IE, D_IF, BROM_DI
 );

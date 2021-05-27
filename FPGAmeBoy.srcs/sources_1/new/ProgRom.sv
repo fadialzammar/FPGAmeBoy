@@ -37,19 +37,16 @@ module ProgRom(
      
     // initalize the ROM with the prog_rom.mem file
     initial begin
-
         $readmemh("Tetris_Time.mem", rom);
     end 
     
-    always_ff @(posedge PROG_CLK)
-    begin
+    always_ff @(posedge PROG_CLK) begin
         //if (RE)
             PROG_IR <= rom[PROG_ADDR];
             //CART_DATA <= rom[CART_ADDR];
     end
     
-        always_ff @(negedge PROG_CLK)
-    begin
+    always_ff @(negedge PROG_CLK) begin
         //if (RE)
             CART_DATA <= rom[CART_ADDR];
     end

@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -25,6 +25,7 @@ module CPU_TEST_BENCH();
     logic CLK=0, RST=1;
     // Display outputs
     logic VGA_HS, VGA_VS;
+    logic [2:0] INTR_in = 0;
     logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
      top DUT (.*);

@@ -168,7 +168,7 @@ module CPU_Wrapper(
     assign CALL_PC_FALSE = PC_OFFSET; // CALL not taken due to conditional (skip immediat values)
     assign INTR_RET_PC = {RET_PC_HIGH,RET_PC_LOW} - 3;
     
-    assign MEM_RE = ~MEM_HOLD;
+    assign MEM_RE = ~MEM_HOLD;    
 
     // CALL Data MUX
      MUX2to1 #(.DATA_SIZE(16)) CALL_MUX(
