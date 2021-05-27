@@ -100,7 +100,12 @@ module interrupt_handler(
             end
         endcase
     end
-    
+    else
+    begin
+            ppu_vblank_ack = 0;
+            ppu_lcdc_ack = 0;
+            timer_ack = 0;
+    end
     end 
     
 endmodule

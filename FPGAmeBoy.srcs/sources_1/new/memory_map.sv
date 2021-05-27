@@ -24,7 +24,7 @@ module memory_map(
 	//Cpu 0000-FFFF
 	input 	[15:0] 	A_cpu,
 	output 	[7:0] 	Di_cpu,
-	// output  [7:0]   CPU_OPCODE,
+	output  [7:0]   CPU_OPCODE,
 	input 	[7:0] 	Do_cpu,
 	input					wr_cpu,
 	input					rd_cpu,
@@ -74,7 +74,7 @@ module memory_map(
 	//PPU (MMIO)FF40-FF4B
 	output 	[15:0] 	A_ppu_regs,
 	output 	[7:0] 	Di_ppu_regs,
-	input		[7:0]		Do_ppu_regs,
+	input	[7:0]		Do_ppu_regs,
 	output				cs_ppu_regs,
 	output				wr_ppu_regs,
 	output				rd_ppu_regs,
@@ -82,7 +82,7 @@ module memory_map(
 	//RAM C000-DFFF
 	output 	[15:0] 	A_ram,
 	output 	[7:0] 	Di_ram,
-	input		[7:0]		Do_ram,
+	input	[7:0]		Do_ram,
 	output 				cs_ram,
 	output				wr_ram,
 	output				rd_ram,
@@ -90,7 +90,7 @@ module memory_map(
    //Controller Manager FF00
     output 	[15:0] 	A_ctrlMgr,
 	output 	[7:0] 	Di_ctrlMgr,
-	input		[7:0]		Do_ctrlMgr,
+	input	[7:0]		Do_ctrlMgr,
 	output				cs_ctrlMgr,
 	output				wr_ctrlMgr,
 	output				rd_ctrlMgr,
@@ -119,7 +119,7 @@ module memory_map(
 	output			wr_HRAM,
 	output			rd_HRAM,
 	
-	// I/O Regs  /  Interrupt Enable Flags FFFF
+	// Interrupt Enable Flags FFFF
 	output [15:0] A_io,
 	output [7:0] Di_io,
 	input [7:0] Do_io,
@@ -170,7 +170,6 @@ assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
 assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 assign rd_HRAM = cs_HRAM ? rd_cpu : 1'b0;
-assign rd_io = cs_io ? rd_cpu : 1'b0;
 
 //assign cs_BROM = (A_cpu <= 16'h00FF);
 // Chip Select Logic
@@ -179,7 +178,6 @@ assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF);
 assign cs_ppu_oam = (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0);
 assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 // assign cs_DMA = (A_DMA >= 16'h8000 && A_DMA < 16'h9FFF) || (A_DMA >= 16'hC000 && A_DMA < 16'hDFFF) || (A_DMA >= 16'hFE00 && A_DMA < 16'hFE9F);
-/// +++++ May need to inlude or change to ffb6
 assign cs_DMA = A_cpu == 16'hff46; 
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
@@ -218,6 +216,7 @@ always_comb
 
 
 // Data read into CPU
+
 //cs_crd & ~dma_occupy_extbus? 
 assign Di_cpu = cs_crd ? Do_crd : (
                 cs_DMA ? Do_MMIO : (
@@ -229,7 +228,7 @@ assign Di_cpu = cs_crd ? Do_crd : (
 				cs_joy ? Do_joy : (
 				cs_timer ? Do_timer : (
 				cs_io ? Do_io : 8'b0 
-				)))))));
+				)))))))));
 
 // DMA DIN
 //logic [1:0] DMA_SEL;

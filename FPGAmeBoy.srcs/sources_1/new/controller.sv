@@ -23,15 +23,22 @@
 module joypad(
     input [3:0] rows_in,
     output [7:0] reg_out,
+    output logic int_ctrl,
     input [7:0] data_in,
-    input int_ctrl, WE, CLK 
+    input WE, CLK 
     );
     
     logic [1:0] col; 
     logic [3:0] rows;
+    logic and_rows;
     
     assign reg_out = {2'b11, col, rows};
-    assign int_ctrl = rows[3]&rows[2]&rows[1]&rows[0];
+    assign and_rows = rows[3]&rows[2]&rows[1]&rows[0];
+    
+    always_ff @(negedge and_rows)
+    begin
+        int_ctrl <= 1;
+    end
     
     always_ff @(posedge CLK)
     begin

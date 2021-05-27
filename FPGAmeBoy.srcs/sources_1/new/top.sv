@@ -390,9 +390,6 @@ end
         .D_IE(D_IE),
         .D_IF(D_IF), 
         .INT_ID(INT_ID),
-        .INT_CLR(INT_CLR),
-        .ppu_vblank_ack(ppu_vblank_ack),
-        .ppu_lcdc_ack(ppu_lcdc_ack)
+        .INT_CLR(INT_CLR)
     );
-    
 endmodule
