@@ -28,7 +28,7 @@ logic [15:0] PROG_COUNT;
 logic [15:0] BROM_ADDR;
 logic [7:0] BROM_IR;
 BROM BROM(
-    .CLK            (CLK),
+    .CLK            (SCLK),
     .BROM_ADDR      (BROM_ADDR),
     .BROM_IR        (BROM_IR)
 );
@@ -37,18 +37,20 @@ BROM BROM(
 //  ProgRom / Cartridge
 ////////////////////////////
 logic [7:0] CPU_OPCODE;
+logic [7:0] PROG_IR;
 logic [15:0] CART_ADDR;
 logic [7:0] CART_DATA;
 logic CART_RE;
 
 ProgRom ProgRom(
-    .PROG_CLK       (CLK),
+    .PROG_CLK       (SCLK),
     .PROG_ADDR      (PROG_COUNT),
-    .PROG_IR        (CPU_OPCODE),
+    .PROG_IR        (PROG_IR),
     .CART_ADDR      (CART_ADDR),
     .CART_DATA      (CART_DATA),
     .CART_RE        (CART_RE)
 );
+
 
 ////////////////////////////
 // CPU
@@ -56,9 +58,10 @@ ProgRom ProgRom(
 logic [7:0] CPU_DATA_IN, CPU_DATA_OUT;
 logic [15:0] CPU_ADDR_OUT;
 logic CPU_WE_OUT, CPU_RE_OUT;
+logic ppu_vblank_ack, ppu_lcdc_ack, timer_ack;
 
 CPU_Wrapper CPU(
-    .CLK            (CLK),
+    .CLK            (SCLK),
     .RST            (RST),
     .MEM_DOUT       (CPU_DATA_IN),
     .OPCODE         (CPU_OPCODE),
@@ -71,7 +74,10 @@ CPU_Wrapper CPU(
     .MEM_ADDR_IN    (CPU_ADDR_OUT),
     .PC             (PROG_COUNT),
     .INTR_ID        (INT_ID),
-    .INT_CLR        (INT_CLR)
+    .INT_CLR        (INT_CLR),
+    .ppu_vblank_ack (ppu_vblank_ack), 
+    .ppu_lcdc_ack   (ppu_lcdc_ack), 
+    .timer_ack      (timer_ack)
 );
 
 ////////////////////////////
@@ -85,7 +91,7 @@ logic [7:0] MEM_DIN, MEM_DOUT;
 assign MEM_HOLD = ~MEM_RE;
 
 Memory Memory(
-    .CLK            (CLK), 
+    .CLK            (SCLK), 
     .WE             (MEM_WE),
     .HOLD           (MEM_HOLD), 
     .ADDR           (MEM_ADDR), 
@@ -112,7 +118,13 @@ logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
 
 logic [4:0] INTR;
-logic ppu_vblank_req=0, ppu_lcdc_req = 0;
+logic ppu_vblank_req, ppu_lcdc_req;
+
+// Initialize interrupt requests
+initial begin
+    ppu_vblank_req = 0;
+    ppu_lcdc_req = 0;
+end
 
 assign INTR = {INTR_in, ppu_lcdc_req, ppu_vblank_req};
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
@@ -123,7 +135,7 @@ logic [7:0] ppu_debug_scx;
 logic [7:0] ppu_debug_scy;
 logic [4:0] ppu_debug_state;
 ppu PPU(
-    .clk            (CLK),
+    .clk            (SCLK),
     .rst            (RST),
     // MMIO Bus, 0xFF40 - 0xFF4B, always visible to CPU
     .mmio_a         (PPU_ADDR),
@@ -166,7 +178,7 @@ logic [15:0] DMA_DIN;
 // DMA 
 ////////////////////////////
 dma DMA(
-    .clk                    (CLK),
+    .clk                    (SCLK),
     .rst                    (RST),
     .dma_rd                 (DMA_RE),
     .dma_wr                 (DMA_WE),
@@ -194,7 +206,7 @@ logic [7:0] HRAM_DIN, HRAM_DOUT;
 logic HRAM_WE, HRAM_RE;
 
 // Write on rising edge
-always @(posedge CLK) 
+always @(posedge SCLK) 
 begin
     if (HRAM_WE)
         begin
@@ -203,7 +215,7 @@ begin
 end
 
 // Read on falling edge
- always_ff@(negedge CLK)
+ always_ff@(negedge SCLK)
     begin
         if (HRAM_RE)
         begin
@@ -211,6 +223,16 @@ end
         end
     end
 
+// Jank Time
+
+//assign CPU_OPCODE = (PROG_COUNT < 16'hFF80) ? PROG_IR : HRAM[PROG_COUNT - 16'hFF81];
+//always_ff@(negedge SCLK)
+//    begin
+//        if (PROG_COUNT >= 16'hFF80)
+//            CPU_OPCODE <= HRAM_DOUT; 
+//        else
+//            CPU_OPCODE <= PROG_IR;
+//    end
     
 ////////////////////////////
 // Memory Map
@@ -287,13 +309,6 @@ memory_map memory_map(
     .cs_timer       (),
     .wr_timer       (),
     .rd_timer       (),
-    //Working & Stack RAM FF05-FF40
-    .A_wsram        (),
-    .Di_wsram       (),
-    .Do_wsram       (),
-    .cs_wsram       (),
-    .wr_wsram       (),
-    .rd_wsram       (),
     // High Ram FF80-FFFE
     .A_HRAM         (HRAM_ADDR),
 	.Di_HRAM        (HRAM_DIN),
@@ -357,7 +372,7 @@ end
     IO_Reg IO_Reg(
         .ADR(A_io[7:0]),
         .D_IN(Di_io),
-        .CLK(CLK),
+        .CLK(SCLK),
         .WE(wr_io),
         .INT_IN(INT_IN),
         .D_OUT(Do_io),

@@ -66,6 +66,17 @@ module dma(
     
     reg [2:0] state;
 
+    initial begin 
+        dma_start_addr = 8'h00;
+        state = DMA_IDLE;
+        count = 8'd0;
+        dma_a = 8'h00;
+        dma_dout = 8'h00;
+        dma_wr = 1'b0;
+        dma_rd = 1'b0;
+        cpu_mem_disable = 1'b0;
+    end
+    
     always @(posedge clk) begin
         if (rst) begin
             dma_start_addr <= 8'h00;

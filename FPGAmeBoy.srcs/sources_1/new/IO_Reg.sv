@@ -65,12 +65,15 @@ end
 //create synchronous write to port X
 always_ff @ (posedge CLK)
 begin
-    if ((WE == 1) && (ADR != 15)) 
+    if (WE == 1) 
         mem[ADR] <= D_IN;
-    if(INT_CLR)
+        
+    if (INT_CLR)
         mem[15][INT_ID] <= 0;
-    else
+        
+    else if (WE == 0)
         mem[15] <= INT_IN | mem[15];
+    
 end
 
 

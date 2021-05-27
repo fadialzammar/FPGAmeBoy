@@ -24,6 +24,7 @@ module memory_map(
 	//Cpu 0000-FFFF
 	input 	[15:0] 	A_cpu,
 	output 	[7:0] 	Di_cpu,
+	input   [7:0]   PROG_OPCODE,
 	output  [7:0]   CPU_OPCODE,
 	input 	[7:0] 	Do_cpu,
 	input					wr_cpu,
@@ -32,7 +33,7 @@ module memory_map(
 	// DMA (VRAM 8000-H9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
 	input  [15:0]      A_DMA,
 	output logic [7:0] Di_DMA,
-	output logic [1:0] cs_DMA,
+	output logic       cs_DMA,
 	input  [7:0]       Do_DMA,
 	input              wr_DMA,
 	input  [7:0]       Do_MMIO,
@@ -170,6 +171,7 @@ assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF);
 assign cs_ppu_oam = (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0);
 assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 // assign cs_DMA = (A_DMA >= 16'h8000 && A_DMA < 16'h9FFF) || (A_DMA >= 16'hC000 && A_DMA < 16'hDFFF) || (A_DMA >= 16'hFE00 && A_DMA < 16'hFE9F);
+/// +++++ May need to inlude or change to ffb6
 assign cs_DMA = A_cpu == 16'hff46; 
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
 //assign cs_ctrlMgr = A_cpu == 16'hFF00;
@@ -211,7 +213,8 @@ always_comb
 
 
 // Data read into CPU
-assign Di_cpu = cs_crd & ~dma_occupy_extbus? Do_crd : (
+//cs_crd & ~dma_occupy_extbus? 
+assign Di_cpu = cs_crd ? Do_crd : (
                 cs_DMA ? Do_MMIO : (
 				cs_ppu_vram ? Do_ppu_vram : (
 				cs_ppu_oam ? Do_ppu_oam : (
