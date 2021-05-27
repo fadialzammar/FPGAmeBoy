@@ -26,7 +26,7 @@ module ProgCount(
     input PC_LD,
     input PC_INC,
     input logic [15:0] PC_DIN,
-    output logic [15:0] PC_COUNT= 'h100 // start at 0x100
+    output logic [15:0] PC_COUNT//= 'h100 // start at 0x100
     );
     
     always_ff @(posedge PC_CLK)

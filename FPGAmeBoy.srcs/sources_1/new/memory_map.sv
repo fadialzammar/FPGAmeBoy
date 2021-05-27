@@ -125,7 +125,13 @@ module memory_map(
 	output [7:0] Di_io,
 	input [7:0] Do_io,
 	output cs_io,
-	output wr_io
+	output wr_io,
+	
+	// Joypad Manager
+	output [7:0] Di_joy,
+	input [7:0] Do_joy,
+	output cs_joy,
+	output wr_joy
 );
 
 assign A_crd = A_cpu;
@@ -151,6 +157,9 @@ assign wr_ctrlMgr = cs_ctrlMgr ? wr_cpu : 1'b0;
 assign wr_timer = cs_timer ? wr_cpu : 1'b0;
 assign wr_HRAM = cs_HRAM ? wr_cpu : 1'b0;
 assign wr_io = cs_io ? wr_cpu : 1'b0;
+assign wr_joy = cs_joy ? wr_cpu : 1'b0;
+
+assign wr_MMIO = cs_DMA ? wr_cpu : 1'b0;
 
 // Read Enable
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
@@ -174,14 +183,11 @@ assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 /// +++++ May need to inlude or change to ffb6
 assign cs_DMA = A_cpu == 16'hff46; 
 assign cs_ram = (A_cpu >= 16'hC000 && A_cpu < 16'hE000);
-//assign cs_ctrlMgr = A_cpu == 16'hFF00;
-//ssign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
-//assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
+assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
 assign cs_HRAM = (A_cpu >= 16'hFF80 && A_cpu < 16'hFFFF);
-assign cs_io = (A_cpu >= 16'hFF00 && A_cpu < 16'hFF40) || (A_cpu == 16'hFFFF) || (A_cpu == 16'hFF50);
+assign cs_io = (A_cpu > 16'hFF00 && A_cpu < 16'hFF40) || (A_cpu == 16'hFFFF) || (A_cpu == 16'hFF50);
+assign cs_joy = A_cpu == 16'hFF00;
 
-
-assign wr_MMIO = cs_DMA ? wr_cpu : 1'b0;
 
 // Select DMA input
 // DMA (VRAM 8000-9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
@@ -221,6 +227,8 @@ assign Di_cpu = cs_crd ? Do_crd : (
 				cs_ppu_regs ? Do_ppu_regs : (
 				cs_ram ? Do_ram : (
 				cs_HRAM ? Do_HRAM : (
+				cs_joy ? Do_joy : (
+				cs_timer ? Do_timer : (
 				cs_io ? Do_io : 8'b0 
 				)))))));
 
@@ -258,9 +266,9 @@ assign Di_ppu_regs = cs_ppu_regs ? Do_cpu : 8'b0;
 assign Di_ram = cs_ram ? Do_cpu : 8'b0;
 assign Di_wsram = cs_wsram ? Do_cpu : 8'b0;
 assign Di_HRAM = cs_HRAM ? Do_cpu : 8'b0;
-assign Di_ctrlMgr = cs_ctrlMgr ? Do_cpu : 8'b0;
 assign Di_timer = cs_timer ? Do_cpu : 8'b0;
 assign Di_io = cs_io ? Do_cpu : 8'b0;
+assign Di_joy = cs_joy ? Do_cpu : 8'b0;
 
 
 endmodule

@@ -186,7 +186,7 @@ module ControlUnit(
     localparam INC_16_ALU = 2'b01;
     localparam DEC_16_ALU = 2'b10;
     
-    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, HL_4, SP_LOW, SP_HIGH, IMMED, ALU16} STATE;
+    typedef enum int {INIT, FETCH, EXEC, INTERRUPT, CB_EXEC, HL_EXEC, HL_FETCH, HL_4, SP_LOW, SP_HIGH, IMMED, ALU16, HALT} STATE;
 
     STATE NS, PS = INIT;
     //indicates jump is ready
@@ -245,6 +245,7 @@ module ControlUnit(
      logic IME_EN = 0;
      logic INTR_HOLD = 0;
      logic FETCH_FLAG = 0;
+     logic WAIT_FLAG = 0;
     
      
     always_ff @(posedge CLK) begin
@@ -339,7 +340,15 @@ module ControlUnit(
                         IME_DELAY = 1;
                         IME_EN = 0; 
                     end
+                    8'b00010000: // STOP 
+                    begin
+                            WAIT_FLAG = 1;
+                    end
                     
+                    8'b01110110: // HALT 
+                    begin
+                            WAIT_FLAG = 1;
+                    end
                     // ============== Takes 8 cycles ============== //
                     // Load Stack Pointer Value into 16 bit immediate address location
                     8'b00001000: // LD (a16), SP
@@ -1771,6 +1780,8 @@ module ControlUnit(
                             NS = SP_HIGH;
                         else if (ALU_16)
                             NS= ALU16;
+                        else if (WAIT_FLAG)
+                            NS = HALT;
                         else 
                             NS = FETCH;
                     end
@@ -3494,6 +3505,12 @@ module ControlUnit(
                 
                 
             end // INTR
+            HALT: begin
+                if(INTR)
+                    NS = FETCH;
+                else
+                    NS = HALT;
+            end // HALT
         endcase // PS
     end
 endmodule
