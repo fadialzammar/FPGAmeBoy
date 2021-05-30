@@ -5,7 +5,7 @@
 module top(
     input CLK,
     input RST,
-    input [2:0] INTR_in,
+    input [1:0] INTR_in,
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -128,7 +128,7 @@ logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
 
 logic [4:0] INTR;
-logic ppu_vblank_req, ppu_lcdc_req;
+logic ppu_vblank_req, ppu_lcdc_req, timer_intr_req;
 
 // Initialize interrupt requests
 initial begin
@@ -136,10 +136,10 @@ initial begin
     ppu_lcdc_req = 0;
 end
 
-assign INTR = {INTR_in, ppu_lcdc_req, ppu_vblank_req};
-assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
-assign VRAM_RE = ~VRAM_HOLD;
-assign OAM_RE = ~OAM_HOLD;
+assign INTR = {INTR_in, timer_intr_req, ppu_lcdc_req, ppu_vblank_req};
+//assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
+//assign VRAM_RE = ~VRAM_HOLD;
+//assign OAM_RE = ~OAM_HOLD;
 
 logic [7:0] ppu_debug_scx;
 logic [7:0] ppu_debug_scy;
@@ -230,7 +230,7 @@ begin
 end
 
 // Read on falling edge
-always_ff@(negedge CLK)
+always_ff@(negedge SCLK)
     begin
         if (HRAM_RE)
         begin
@@ -241,10 +241,74 @@ always_ff@(negedge CLK)
 logic [6:0] HRAM_OPCODE_ADDR;
 assign HRAM_OPCODE_ADDR = PROG_COUNT - 16'hFF80;
 
-always_ff @ (posedge CLK) begin
+always_ff @ (posedge SCLK) begin
     HRAM_OPCODE <= HRAM[HRAM_OPCODE_ADDR];
 end  
 
+
+// Timer counter
+logic [1:0] TIMER_CNT = 2'h0;
+
+//initial begin 
+//    TIMER_CNT = 2'h0;
+//end
+
+always_ff@(posedge SCLK)
+begin
+    if (RST)
+        TIMER_CNT <= 2'h0;
+    else 
+        TIMER_CNT <= TIMER_CNT + 1;
+end
+
+
+////////////////////////////
+// Timer
+////////////////////////////
+logic [15:0] TIMER_ADDR;
+logic [7:0]  TIMER_DOUT, TIMER_DIN;
+logic TIMER_RE, TIMER_WE; 
+
+timer timer(
+    .clk            (SCLK),
+    .ct             (TIMER_CNT), // certain things can only happen at 1MHz rate
+    .rst            (RST),
+    .a              (TIMER_ADDR),
+    .dout           (TIMER_DOUT),
+    .din            (TIMER_DIN),
+    .rd             (TIMER_RE),
+    .wr             (TIMER_WE),
+    .int_tim_req    (timer_intr_req),
+    .int_tim_ack    (timer_ack)
+    );
+    
+    
+// IO Registers instantiation
+   logic [15:0] A_io;
+   logic [7:0] Di_io, Do_io;
+   logic wr_io;
+   logic [7:0] D_IF, D_IE;
+   logic INT_CLR;
+   logic [2:0] INT_ID;
+
+   
+   logic [7:0] INT_IN;
+   assign INT_IN = {3'b000, INTR};
+   
+   // IO/Control Registers
+    IO_Reg IO_Reg(
+        .ADR(A_io[7:0]),
+        .D_IN(Di_io),
+        .CLK(SCLK),
+        .WE(wr_io),
+        .INT_IN(INT_IN),
+        .D_OUT(Do_io),
+        .D_IE(D_IE),
+        .D_IF(D_IF), 
+        .INT_ID(INT_ID),
+        .INT_CLR(INT_CLR)
+    );
+    
 ////////////////////////////
 // Memory Map
 ////////////////////////////
@@ -314,12 +378,12 @@ memory_map memory_map(
     .wr_ctrlMgr     (),
     .rd_ctrlMgr     (),
     //Timer FF04-FF07
-    .A_timer        (),
-    .Di_timer       (),
-    .Do_timer       (),
+    .A_timer        (TIMER_ADDR),
+    .Di_timer       (TIMER_DIN),
+    .Do_timer       (TIMER_DOUT),
     .cs_timer       (),
-    .wr_timer       (),
-    .rd_timer       (),
+    .wr_timer       (TIMER_WE),
+    .rd_timer       (TIMER_RE),
     // High Ram FF80-FFFE
     .A_HRAM         (HRAM_ADDR),
 	.Di_HRAM        (HRAM_DIN),
@@ -334,6 +398,7 @@ memory_map memory_map(
 	.cs_io          (),
 	.wr_io          (wr_io)
    );
+  
 
 ////////////////////////////
 // VGA
@@ -364,32 +429,4 @@ always_comb begin
     endcase
 end
 
-   
-   
- 
-// IO Registers instantiation
-   logic [15:0] A_io;
-   logic [7:0] Di_io, Do_io;
-   logic wr_io;
-   logic [7:0] D_IF, D_IE;
-   logic INT_CLR;
-   logic [2:0] INT_ID;
-
-   
-   logic [7:0] INT_IN;
-   assign INT_IN = {3'b000, INTR};
-   
-   // IO/Control Registers
-    IO_Reg IO_Reg(
-        .ADR(A_io[7:0]),
-        .D_IN(Di_io),
-        .CLK(SCLK),
-        .WE(wr_io),
-        .INT_IN(INT_IN),
-        .D_OUT(Do_io),
-        .D_IE(D_IE),
-        .D_IF(D_IF), 
-        .INT_ID(INT_ID),
-        .INT_CLR(INT_CLR)
-    );
 endmodule

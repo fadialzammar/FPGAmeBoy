@@ -235,37 +235,38 @@ module ppu(
     localparam PF_FULL  = 3'd0; // Normal
 
     assign cpl = ~clk;
+    
     //assign pixel = pf_output_pixel;
     
-//    // HV Timing
-//    localparam PPU_H_FRONT  = 9'd76;
-//    localparam PPU_H_SYNC   = 9'd4;    // So front porch + sync = OAM search
-//    localparam PPU_H_TOTAL  = 9'd456;
-//    localparam PPU_H_PIXEL  = 9'd160;
-//    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
-//    localparam PPU_H_OUTPUT = 8'd168;
+    // HV Timing
+    localparam PPU_H_FRONT  = 9'd76;
+    localparam PPU_H_SYNC   = 9'd4;    // So front porch + sync = OAM search
+    localparam PPU_H_TOTAL  = 9'd456;
+    localparam PPU_H_PIXEL  = 9'd160;
+    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
+    localparam PPU_H_OUTPUT = 8'd168;
 
-//    localparam PPU_V_ACTIVE = 8'd144;
-//    localparam PPU_V_BACK   = 8'd9;
-//    localparam PPU_V_SYNC   = 8'd1;  
-//    localparam PPU_V_BLANK  = 8'd10;
-//    localparam PPU_V_TOTAL  = 8'd154;
+    localparam PPU_V_ACTIVE = 8'd144;
+    localparam PPU_V_BACK   = 8'd9;
+    localparam PPU_V_SYNC   = 8'd1;  
+    localparam PPU_V_BLANK  = 8'd10;
+    localparam PPU_V_TOTAL  = 8'd154;
 
 //    // HV Timing
 //    // 10MHz 800 x 600 @ 60Hz
-    localparam PPU_H_FRONT  = 9'd10;
-    localparam PPU_H_SYNC   = 9'd32;    // So front porch + sync = OAM search
-    localparam PPU_H_TOTAL  = 9'd264;
-    localparam PPU_H_PIXEL  = 9'd200;
-    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
-    localparam PPU_H_OUTPUT = 8'd200;
+//    localparam PPU_H_FRONT  = 9'd10;
+//    localparam PPU_H_SYNC   = 9'd32;    // So front porch + sync = OAM search
+//    localparam PPU_H_TOTAL  = 9'd264;
+//    localparam PPU_H_PIXEL  = 9'd200;
+//    // 8 null pixels in the front for objects which have x < 8, 8 bit counter
+//    localparam PPU_H_OUTPUT = 8'd200;
     
-    localparam PPU_V_ACTIVE = 10'd600;
-    localparam PPU_V_BACK   = 10'd23;
-    localparam PPU_V_SYNC   = 10'd4;  
-    localparam PPU_V_BLANK  = 10'd28;
-    // Visible area + Front Porch
-    localparam PPU_V_TOTAL  = 10'd628;
+//    localparam PPU_V_ACTIVE = 10'd600;
+//    localparam PPU_V_BACK   = 10'd23;
+//    localparam PPU_V_SYNC   = 10'd4;  
+//    localparam PPU_V_BLANK  = 10'd28;
+//    // Visible area + Front Porch
+//    localparam PPU_V_TOTAL  = 10'd628;
 
 // HV Timing
 //    // 5MHz 800 x 600 @ 60Hz
@@ -847,15 +848,15 @@ module ppu(
     always @(posedge clk)
     begin
         if (rst) begin
-            reg_lcdc <= 8'h00;
+            reg_lcdc <= 8'h91;
             reg_stat[7:3] <= 5'h00;
             reg_scy  <= 8'h00;
             reg_scx  <= 8'h00;
             reg_lyc  <= 8'h00;
             reg_dma  <= 8'h00;
             reg_bgp  <= 8'hFC;
-            reg_obp0 <= 8'h00;
-            reg_obp1 <= 8'h00;
+            reg_obp0 <= 8'hFF;
+            reg_obp1 <= 8'hFF;
             reg_wy   <= 8'h00;
             reg_wx   <= 8'h00;
         end

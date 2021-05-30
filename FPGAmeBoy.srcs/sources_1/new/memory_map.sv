@@ -134,8 +134,12 @@ module memory_map(
 );
 
 assign A_crd = A_cpu;
-assign A_ppu_vram = dma_occupy_vidbus ? A_DMA : A_cpu;
-assign A_ppu_oam = dma_occupy_oambus ? A_DMA : A_cpu;
+//assign A_ppu_vram = dma_occupy_vidbus ? A_DMA : A_cpu;
+//assign A_ppu_oam = dma_occupy_oambus ? A_DMA : A_cpu;
+
+// TRY:
+assign A_ppu_vram = A_cpu;
+assign A_ppu_oam = A_cpu;
 assign A_ppu_regs = A_cpu;
 assign A_ram = A_cpu - 16'hC000;
 assign A_wsram = A_cpu - 16'hFF00;
@@ -147,8 +151,10 @@ assign A_io = A_cpu - 16'hFF00;
 
 // Write Enable
 assign wr_crd =   cs_crd ? wr_cpu : 1'b0;
-assign wr_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? 1'b0 : wr_cpu;
-assign wr_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? wr_DMA : wr_cpu;
+//assign wr_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? 1'b0 : wr_cpu;
+//assign wr_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? wr_DMA : wr_cpu;
+assign wr_ppu_vram = cs_ppu_vram ? wr_cpu : 1'b0;
+assign wr_ppu_oam = cs_ppu_oam ? wr_cpu : 1'b0;
 assign wr_ppu_regs = cs_ppu_regs ? wr_cpu : 1'b0;
 assign wr_ram =   cs_ram ? wr_cpu : 1'b0;
 assign wr_wsram = cs_wsram ? wr_cpu : 1'b0;
@@ -162,8 +168,10 @@ assign wr_MMIO = cs_DMA ? wr_cpu : 1'b0;
 
 // Read Enable
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
-assign rd_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? rd_DMA : rd_cpu;
-assign rd_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? rd_DMA : rd_cpu;
+//assign rd_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? rd_DMA : rd_cpu;
+//assign rd_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? rd_DMA : rd_cpu;\
+assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : 1'b0;
+assign rd_ppu_oam = cs_ppu_oam ? rd_cpu : 1'b0;
 assign rd_ppu_regs = cs_ppu_regs ? rd_cpu : 1'b0;
 assign rd_ram =   cs_ram ? rd_cpu : 1'b0;
 assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
@@ -206,13 +214,10 @@ always_comb
 
 //assign CPU_OPCODE = 
 //                cs_BROM ? Do_BROM : (
-//                cs_crd & ~dma_occupy_extbus? Do_crd : 8'hFF);
-                
+//                cs_crd & ~dma_occupy_extbus? Do_crd : 8'hFF);              
                 
 //assign cs_ctrlMgr = A_cpu == 16'hFF00;
-//assign cs_timer = (A_cpu >= 16'hFF04 && A_cpu < 16'hFF08);
 //assign cs_wsram = (A_cpu >= 16'hFF08 && A_cpu < 16'hFF40);
-
 
 
 // Data read into CPU
@@ -229,32 +234,6 @@ assign Di_cpu = cs_crd ? Do_crd : (
 				cs_timer ? Do_timer : (
 				cs_io ? Do_io : 8'b0 
 				)))))))));
-
-// DMA DIN
-//logic [1:0] DMA_SEL;
-//always_comb
-//begin 
-//    case (cs_DMA)
-//        2'b00:
-//        begin
-//        end
-//        // VRAM input
-//        2'b01:
-//        begin
-//            Di_DMA = Do_ppu_vram;
-//        end
-//        // RAM input
-//        2'b10:
-//        begin
-//            Di_DMA = Do_ram;
-//        end   
-//        // OAM input
-//        2'b11:
-//        begin
-//            Di_DMA = Do_ppu_oam;
-//        end
-//    endcase
-//end
 
 // Data write from CPU
 assign Di_crd = cs_crd ? Do_cpu : 8'b0;
