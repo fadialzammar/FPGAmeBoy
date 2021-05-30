@@ -96,13 +96,9 @@ module Sound_Controller(
     input [7:0] NR52,
     
     //wave table
-    input [7:0] sample_01,
-    input [7:0] sample_3031,
+    input [15:0][7:0] wave_table
     
-    output [3:0] CH_1,
-    output [3:0] CH_2,
-    output [3:0] CH_3,
-    output [3:0] CH_4
+
 
     );
 endmodule

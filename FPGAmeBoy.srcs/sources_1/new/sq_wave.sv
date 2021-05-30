@@ -33,18 +33,18 @@
 //  Sweep -> timer -> duty -> length counter -> envelope -> mixer
 //////////////////////////////////////////////////////////////////////////////////
 
-
+//chan 1 done, needs test 
 module sq_wave(
     input clk,
     input en, 
     
-    input [7:0] sweep_data, //NR10 -PPP NSSS
-    input [7:0] dc_ld, //NR11 DDLL LLLL
-    input [7:0] vol_reg, //NR12 VVVV APPP
-    input [7:0] freq_LSB, //NR13 FFFF FFFF
-    input [7:0] freq_MSB, //NR14 [3:0] -FFF
+    input [7:0] NR10, //NR10 -PPP NSSS
+    input [7:0] NR11, //NR11 DDLL LLLL
+    input [7:0] NR12, //NR12 VVVV APPP
+    input [7:0] NR13, //NR13 FFFF FFFF
+    input [7:0] NR14, //NR14 [3:0] TL-- -FFF
     
-    output chan1
+    output [3:0] chan1
     
 
     );
@@ -52,19 +52,25 @@ module sq_wave(
     logic env_clk;
     logic sweep_clk;
     logic len_clk;
-        
+    
+    logic [10:0] freq_cat;        
     logic [10:0] sweep_freq;
-  
+
+    logic dc_out;
+    logic len_en_out;
+    logic len_dc;
+    logic vol_out;
+      
+
     
 
 
-    logic [10:0] freq_cat;
-    assign freq_cat = {freq_MSB[2:0],freq_LSB};
+    assign freq_cat = {NR14[2:0],NR13};
     
     sweep freq_sweep(
     .clk(sweep_clk), .freq(freq_cat),
-    .period(sweep_data[6:4]), .trigger(),
-    .dir(sweep_data[3]), .shift(sweep_data[2:0]),
+    .period(NR10[6:4]), .trigger(NR14[7]),
+    .dir(NR10[3]), .shift(NR10[2:0]),
     .freq_out(sweep_freq)
     );
     
@@ -74,27 +80,29 @@ module sq_wave(
     );
     
     freq_timer timer (
-    .clk(clk), .en(),
+    .clk(clk),
     .freq(sweep_freq), .clk_out(freq_clk)
     );
     
     duty_cycler duty (
-    .clk(freq_clk), .dc(dc_ld[7:6]),
-    .out()
+    .clk(freq_clk), .dc(NR11[7:6]),
+    .out(dc_out)
     );
     
     len_counter len_counter (
-    .clk(len_clk), .len_load(dc_ld[5:0]),
-    .trigger(), .en(),
-    .is_wave(0), .out()
+    .clk(len_clk), .len_load(NR11[5:0]),
+    .trigger(NR14[7]), .en(NR14[6]),
+    .is_wave(0), .out(len_en_out)
     );
     
     envelope volume (
-    .clk(env_clk), .vol_init(vol_reg[7:4]),
-    .vol_dir(vol_reg[3]), .period(vol_reg[2:0]),
-    .volume()
+    .clk(env_clk), .vol_init(NR12[7:4]),
+    .vol_dir(NR12[3]), .period(NR12[2:0]),
+    .volume(vol_out)
     );
     
+    assign len_dc = (dc_out && len_en_out);    
+    assign chan1 = (len_dc) ? vol_out : 0;
     
     
     

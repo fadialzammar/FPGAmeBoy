@@ -19,11 +19,11 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
+//tested and verified, 2 cycles to start
 module duty_cycler(
     input clk,
     input [2:0] dc,
-    output logic out
+    output logic out = 0
     );
     
     logic [7:0] waveform;
@@ -52,17 +52,18 @@ module duty_cycler(
         endcase
     end
    
-    logic [7:0] temp = waveform; 
+    logic [7:0] temp = 0; 
     
     
     always_ff @ (posedge clk)
     begin
         if(counter >= 7)
         begin
-        counter <= 0;
-        temp <= waveform;
+            counter <= 0;
+            temp <= waveform;
         end
-        temp <= (waveform << counter);
+        
+        temp <= (waveform >> counter);
         out <= temp[0];
         counter = counter + 1;
     end

@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 05/14/2021 04:44:05 PM
+// Create Date: 05/29/2021 11:05:59 PM
 // Design Name: 
-// Module Name: freq_timer
+// Module Name: period_timer
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -16,34 +16,28 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// Timer for all 4 channels
+// 
 //////////////////////////////////////////////////////////////////////////////////
 
-//needs testing
-module freq_timer(
+
+module period_timer(
     input clk,
-    input [10:0] freq,
+    input [6:0] period,
     output logic clk_out
+
     );
     
-    logic [19:0] count = 0;
-    logic [12:0] period;
+    logic [6:0] count = 0;
     
-    assign period = (2048 - freq)*4;
-    
-    always_ff @ (posedge clk)
+    always_ff @(posedge clk)
     begin
-        count = count + 1;
-        if (count >= period)
-        begin
-            count <= 0;
-            clk_out <= 1;
-        end
+        clk_out <= (count == period) ? 1 : 0;
+        count <= (count < period) ? count + 1 : 7'b0; 
     end
     
-    always_ff @ (negedge clk)
+    always @(negedge clk)
     begin
         clk_out = 0;
     end
-
+    
 endmodule

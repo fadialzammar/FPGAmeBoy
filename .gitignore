@@ -58,3 +58,5 @@ vivado_pid*.zip
 *.xpr
 FPGAmeBoy.srcs/sources_1/new/Tetris_Time.mem
 FPGAmeBoy.srcs/sources_1/new/BOOTROM.mem
+FPGAmeBoy.srcs/sources_1/new/CPU_WRAPPER_TEST_BENCH.sv
+*.xpr
