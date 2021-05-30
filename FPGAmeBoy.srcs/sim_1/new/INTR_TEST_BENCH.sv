@@ -27,7 +27,8 @@ module INTR_TEST_BENCH();
      logic [7:0] CATHODES,VGA_RGB;
      logic [3:0] ANODES;
      logic [4:0] counter;
-     logic [2:0] INTR_in = 0;
+     logic [3:0] BTN_IN;
+     logic [1:0] INTR_in = 0;
      logic VGA_HS, VGA_VS;
      logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
@@ -36,9 +37,14 @@ module INTR_TEST_BENCH();
      initial forever  #10  CLK =  ! CLK; 
      
      initial begin
+        BTN_IN = 4'b1111;
         RST = 1;
         INTR_in = 0;
         #50
         RST = 0;
+        #5401240
+        BTN_IN = 7;
+        #400
+        BTN_IN = 15;
      end
 endmodule

@@ -5,7 +5,8 @@
 module top(
     input CLK,
     input RST,
-    input [2:0] INTR_in,
+    input [1:0] INTR_in, // Placeholder for test-bench
+    input [3:0] BTN_IN,
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -15,11 +16,11 @@ module top(
 // Clock Divider (10MHz clock)  /*** Currently not connected ***/
 ////////////////////////////
     logic SCLK;
-    
-    C_DIV divider(
-        .CLK        (CLK),
-        .CLK_DIV    (SCLK)
-    );
+    assign SCLK = CLK;  // For faster sim
+//    C_DIV divider(
+//        .CLK        (CLK),
+//        .CLK_DIV    (SCLK)
+//    );
     
 ////////////////////////////
 // Boot ROM
@@ -136,10 +137,7 @@ initial begin
     ppu_lcdc_req = 0;
 end
 
-assign INTR = {INTR_in, ppu_lcdc_req, ppu_vblank_req};
-assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
-assign VRAM_RE = ~VRAM_HOLD;
-assign OAM_RE = ~OAM_HOLD;
+assign INTR = {int_ctrl, INTR_in, ppu_lcdc_req, ppu_vblank_req};
 
 logic [7:0] ppu_debug_scx;
 logic [7:0] ppu_debug_scy;
@@ -306,13 +304,7 @@ memory_map memory_map(
     .cs_ram         (),
     .wr_ram         (MEM_WE),
     .rd_ram         (MEM_RE),
-    //Controller Manager FF00
-    .A_ctrlMgr      (),
-    .Di_ctrlMgr     (),
-    .Do_ctrlMgr     (),
-    .cs_ctrlMgr     (),
-    .wr_ctrlMgr     (),
-    .rd_ctrlMgr     (),
+
     //Timer FF04-FF07
     .A_timer        (),
     .Di_timer       (),
@@ -332,7 +324,12 @@ memory_map memory_map(
 	.Di_io          (Di_io),
 	.Do_io          (Do_io),
 	.cs_io          (),
-	.wr_io          (wr_io)
+	.wr_io          (wr_io),
+	// Joypad Register
+	.Di_joy          (Di_joy),
+	.Do_joy          (Do_joy),
+	.cs_joy          (),
+	.wr_joy          (wr_joy)
    );
 
 ////////////////////////////
@@ -364,9 +361,6 @@ always_comb begin
     endcase
 end
 
-   
-   
- 
 // IO Registers instantiation
    logic [15:0] A_io;
    logic [7:0] Di_io, Do_io;
@@ -377,7 +371,7 @@ end
 
    
    logic [7:0] INT_IN;
-   assign INT_IN = {3'b000, INTR};
+   assign INT_IN = {int_ctrl, 2'b00, INTR};
    
    // IO/Control Registers
     IO_Reg IO_Reg(
@@ -391,5 +385,19 @@ end
         .D_IF(D_IF), 
         .INT_ID(INT_ID),
         .INT_CLR(INT_CLR)
+    );
+    logic int_ctrl;
+    logic [7:0] Do_joy;
+    logic [7:0] Di_joy;
+    logic wr_joy;
+    
+    
+    joypad joypad(
+        .btn_in(BTN_IN),
+        .reg_out(Do_joy),
+        .int_ctrl(int_ctrl),
+        .data_in(Di_joy),
+        .WE(wr_joy), 
+        .CLK(SCLK) 
     );
 endmodule

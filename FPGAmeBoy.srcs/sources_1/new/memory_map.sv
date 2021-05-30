@@ -29,7 +29,7 @@ module memory_map(
 	input					wr_cpu,
 	input					rd_cpu,
 	
-	// DMA (VRAM 8000-H9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
+	// DMA (VRAM 8000-9FFF) || (RAM C000-DFFF) || (OAM FE00-FE9F)
 	input  [15:0]      A_DMA,
 	output logic [7:0] Di_DMA,
 	output logic       cs_DMA,
@@ -87,14 +87,6 @@ module memory_map(
 	output				wr_ram,
 	output				rd_ram,
    
-   //Controller Manager FF00
-    output 	[15:0] 	A_ctrlMgr,
-	output 	[7:0] 	Di_ctrlMgr,
-	input	[7:0]		Do_ctrlMgr,
-	output				cs_ctrlMgr,
-	output				wr_ctrlMgr,
-	output				rd_ctrlMgr,
-   
    //Timer FF04-FF07
 	output 	[15:0] 	A_timer,
 	output 	[7:0] 	Di_timer,
@@ -147,12 +139,11 @@ assign A_io = A_cpu - 16'hFF00;
 
 // Write Enable
 assign wr_crd =   cs_crd ? wr_cpu : 1'b0;
-assign wr_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? 1'b0 : wr_cpu;
-assign wr_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? wr_DMA : wr_cpu;
+assign wr_ppu_vram = cs_ppu_vram ? wr_cpu : 1'b0;
+assign wr_ppu_oam = cs_ppu_oam ? wr_cpu : 1'b0;
 assign wr_ppu_regs = cs_ppu_regs ? wr_cpu : 1'b0;
 assign wr_ram =   cs_ram ? wr_cpu : 1'b0;
 assign wr_wsram = cs_wsram ? wr_cpu : 1'b0;
-assign wr_ctrlMgr = cs_ctrlMgr ? wr_cpu : 1'b0;
 assign wr_timer = cs_timer ? wr_cpu : 1'b0;
 assign wr_HRAM = cs_HRAM ? wr_cpu : 1'b0;
 assign wr_io = cs_io ? wr_cpu : 1'b0;
@@ -162,19 +153,18 @@ assign wr_MMIO = cs_DMA ? wr_cpu : 1'b0;
 
 // Read Enable
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
-assign rd_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? rd_DMA : rd_cpu;
-assign rd_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? rd_DMA : rd_cpu;
+assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : 1'b0;
+assign rd_ppu_oam = cs_ppu_oam ? rd_cpu : 1'b0;
 assign rd_ppu_regs = cs_ppu_regs ? rd_cpu : 1'b0;
 assign rd_ram =   cs_ram ? rd_cpu : 1'b0;
 assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
-assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 assign rd_HRAM = cs_HRAM ? rd_cpu : 1'b0;
 
 //assign cs_BROM = (A_cpu <= 16'h00FF);
 // Chip Select Logic
 assign cs_crd = (A_cpu >= 16'h0000 && A_cpu < 16'h8000) || (A_cpu >= 16'hA000 && A_cpu < 16'hC000);
-assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu < 16'h9FFF);
+assign cs_ppu_vram = (A_cpu >= 16'h8000 && A_cpu <= 16'h9FFF);
 assign cs_ppu_oam = (A_cpu >= 16'hFE00 && A_cpu < 16'hFEA0);
 assign cs_ppu_regs = (A_cpu >= 16'hFF40 && A_cpu < 16'hFF4C);
 // assign cs_DMA = (A_DMA >= 16'h8000 && A_DMA < 16'h9FFF) || (A_DMA >= 16'hC000 && A_DMA < 16'hDFFF) || (A_DMA >= 16'hFE00 && A_DMA < 16'hFE9F);
