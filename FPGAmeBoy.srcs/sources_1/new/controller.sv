@@ -21,11 +21,12 @@
 
 
 module joypad(
-    input [3:0] rows_in,
+    input [3:0] btn_in,  // Button Inputs
+    input [7:0] data_in, // Write Data
+    input WE, CLK,       // Write Enable + CLK
+    
     output [7:0] reg_out,
-    output logic int_ctrl,
-    input [7:0] data_in,
-    input WE, CLK 
+    output logic int_ctrl
     );
     
     logic [1:0] col; 
@@ -35,18 +36,17 @@ module joypad(
     assign reg_out = {2'b11, col, rows};
     assign and_rows = rows[3]&rows[2]&rows[1]&rows[0];
     
-    always_ff @(negedge and_rows)
-    begin
-        int_ctrl <= 1;
-    end
-    
     always_ff @(posedge CLK)
     begin
         if(WE == 1)
         begin
-            col = data_in[5:4];
+            col <= data_in[5:4];
         end
-        rows = rows_in;
+        rows = btn_in;
+        if (and_rows == 0)
+            int_ctrl <= 1; // Yuh
+        else
+            int_ctrl <= 0;
     end
  
 endmodule
