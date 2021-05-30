@@ -6,6 +6,7 @@ module top(
     input CLK,
     input RST,
     input [1:0] INTR_in,
+    input [3:0] BTN_IN,
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -128,15 +129,17 @@ logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
 
 logic [4:0] INTR;
-logic ppu_vblank_req, ppu_lcdc_req, timer_intr_req;
+logic ppu_vblank_req, ppu_lcdc_req, timer_intr_req, int_ctrl;
 
 // Initialize interrupt requests
 initial begin
     ppu_vblank_req = 0;
     ppu_lcdc_req = 0;
+    timer_intr_req = 0;
+    int_ctrl = 0;
 end
 
-assign INTR = {INTR_in, timer_intr_req, ppu_lcdc_req, ppu_vblank_req};
+assign INTR = {int_ctrl, INTR_in, timer_intr_req, ppu_lcdc_req, ppu_vblank_req};
 //assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 //assign VRAM_RE = ~VRAM_HOLD;
 //assign OAM_RE = ~OAM_HOLD;
@@ -266,7 +269,8 @@ end
 // Timer
 ////////////////////////////
 logic [15:0] TIMER_ADDR;
-logic [7:0]  TIMER_DOUT, TIMER_DIN;
+logic [7:0]  TIMER_DOU;
+logic [7:0]  TIMER_DIN;
 logic TIMER_RE, TIMER_WE; 
 
 timer timer(
@@ -307,6 +311,22 @@ timer timer(
         .D_IF(D_IF), 
         .INT_ID(INT_ID),
         .INT_CLR(INT_CLR)
+    );
+
+    
+////////////////////////////
+// Joypad
+////////////////////////////
+logic [7:0] JOY_DIN, JOY_DOUT;
+logic JOY_WE;
+
+joypad joypad(  
+    .rows_in    (BTN_IN),
+    .reg_out    (JOY_DOUT),
+    .int_ctrl   (int_ctrl),
+    .data_in    (JOY_DIN),
+    .WE         (JOY_WE), 
+    .CLK        (SCLK)    
     );
     
 ////////////////////////////
@@ -396,7 +416,13 @@ memory_map memory_map(
 	.Di_io          (Di_io),
 	.Do_io          (Do_io),
 	.cs_io          (),
-	.wr_io          (wr_io)
+	.wr_io          (wr_io),
+		// Joypad Manager
+	.Di_joy         (JOY_DIN),
+	.Do_joy         (JOY_DOUT),
+	
+	.cs_joy         (),
+	.wr_joy         (JOY_WE)
    );
   
 

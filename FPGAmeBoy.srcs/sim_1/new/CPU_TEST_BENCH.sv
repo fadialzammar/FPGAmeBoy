@@ -26,13 +26,14 @@ module CPU_TEST_BENCH();
     // Display outputs
     logic VGA_HS, VGA_VS;
     logic [1:0] INTR_in = 0;
+    logic [3:0] BTN_IN = 0;
     logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
      top DUT (.*);
      
      initial forever #5 CLK = !CLK;
      initial begin 
-         #500;
+         #50;
          RST = 0;
      end
 
