@@ -169,7 +169,7 @@ assign wr_MMIO = cs_DMA ? wr_cpu : 1'b0;
 // Read Enable
 assign rd_crd =   cs_crd ? rd_cpu : 1'b0;
 //assign rd_ppu_vram = cs_ppu_vram & dma_occupy_vidbus ? rd_DMA : rd_cpu;
-//assign rd_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? rd_DMA : rd_cpu;\
+//assign rd_ppu_oam = cs_ppu_oam & dma_occupy_oambus ? rd_DMA : rd_cpu;
 assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : 1'b0;
 assign rd_ppu_oam = cs_ppu_oam ? rd_cpu : 1'b0;
 assign rd_ppu_regs = cs_ppu_regs ? rd_cpu : 1'b0;
@@ -238,7 +238,8 @@ assign Di_cpu = cs_crd ? Do_crd : (
 // Data write from CPU
 assign Di_crd = cs_crd ? Do_cpu : 8'b0;
 assign Di_ppu_vram = cs_ppu_vram ? Do_cpu : 8'b0;
-assign Di_ppu_oam = cs_ppu_oam & dma_occupy_oambus? Do_DMA : Do_cpu;
+//assign Di_ppu_oam = cs_ppu_oam & dma_occupy_oambus? Do_DMA : Do_cpu;
+assign Di_ppu_oam = cs_ppu_oam ? Do_cpu : 8'b0;
 assign Di_ppu_regs = cs_ppu_regs ? Do_cpu : 8'b0;
 assign Di_ram = cs_ram ? Do_cpu : 8'b0;
 assign Di_wsram = cs_wsram ? Do_cpu : 8'b0;
