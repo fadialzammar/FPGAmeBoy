@@ -321,7 +321,7 @@ logic [7:0] JOY_DIN, JOY_DOUT;
 logic JOY_WE;
 
 joypad joypad(  
-    .rows_in    (BTN_IN),
+    .btn_in    (BTN_IN),
     .reg_out    (JOY_DOUT),
     .int_ctrl   (int_ctrl),
     .data_in    (JOY_DIN),
