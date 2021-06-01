@@ -269,7 +269,7 @@ end
 // Timer
 ////////////////////////////
 logic [15:0] TIMER_ADDR;
-logic [7:0]  TIMER_DOU;
+logic [7:0]  TIMER_DOUT;
 logic [7:0]  TIMER_DIN;
 logic TIMER_RE, TIMER_WE; 
 
