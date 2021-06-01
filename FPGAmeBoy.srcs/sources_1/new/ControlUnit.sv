@@ -414,7 +414,7 @@ module ControlUnit(
                                 RF_ADRX = REG_H;
                             end
                             
-                            2'b11: // INC (HL) ////////////=========== Update with (HL) code
+                            2'b11: // INC (HL) ////////////
                                 begin
                                 HL_ALU_FUN = INC_ALU;                      
                                 RF_ADRX = REG_H;
@@ -3378,7 +3378,7 @@ module ControlUnit(
                     RF_ADRY = REG_L;
                     //MEM_HOLD = 1; 
                     HL_HOLD = 1;   
-                    MEM_ADDR_SEL = MEM_ADDR_HL_BUF;
+                    MEM_ADDR_SEL = MEM_ADDR_BUF;
                     //RF_ADRX = REG_A;
                     ALU_SEL = HL_ALU_FUN;
                     ALU_OPY_SEL = ALU_B_MUX_MEM;
