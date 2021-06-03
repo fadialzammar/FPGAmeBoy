@@ -286,8 +286,8 @@ module ControlUnit(
      localparam RET_NOT_TAKEN_WAIT = 5'd7;
      localparam RET_TAKEN_WAIT = 5'd19;
      // CB waits
-     localparam CB_WAIT = 5'd6;
-     localparam CB_HL_PTR_WAIT = 5'd14;
+     localparam CB_WAIT = 5'd5;
+     localparam CB_HL_PTR_WAIT = 5'd13;
      // RST waits
      localparam RST_WAIT = 5'd15;
      
@@ -1452,6 +1452,9 @@ module ControlUnit(
                     8'b11001011: // CB Prefix command
                     begin
                         CB_FLAG = 1'b1;
+                        // Set Wait Counter
+                        WAIT_VAL = CB_WAIT;
+                        WAIT_LD = 1'b1;
                     end                    
                     
                     8'b11111000: // LD HL, SP + r8
@@ -2078,7 +2081,7 @@ module ControlUnit(
                         else if (WAIT_FLAG)
                             NS = HALT;
                         else 
-                            if ( IMMED_FLAG || (WAIT_COUNTER == 5'd0))
+                            if ( IMMED_FLAG || CB_FLAG || (WAIT_COUNTER == 5'd0))
                                 NS = FETCH;
                             else
                                 NS = WAIT_ST;
@@ -3097,10 +3100,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-                        
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
 
                         // RLC, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3156,10 +3155,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
                         
                         // RRC A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3212,10 +3207,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-                        
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
 
                         // RL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3271,9 +3262,6 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
                         
                         // RR  (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3329,10 +3317,6 @@ module ControlUnit(
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
 
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
-                        
                         // SLA, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
@@ -3385,10 +3369,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
                         
                         // SRA (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3442,10 +3422,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-                        
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
 
                         // SWAP (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3498,10 +3474,6 @@ module ControlUnit(
                         // Writes to the opcode defined address
                         RF_ADRX = OPCODE[2:0];
                         RF_ADRY = REG_A;
-    
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
                         
                         // SRL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3530,6 +3502,7 @@ module ControlUnit(
                             WAIT_LD = 1'b1;
                         end                                                        
                     end
+                    
                     8'b01??????:  // BIT K, n
                     begin
                         // ALU A input mux select                                
@@ -3544,11 +3517,7 @@ module ControlUnit(
                         N_FLAG_LD = 1;
                         H_FLAG_LD = 1;                            
                         // Register File Addresses
-                        RF_ADRX = OPCODE[2:0]; 
-                        
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
+                        RF_ADRX = OPCODE[2:0];       
                         
                         // BIT (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
@@ -3594,10 +3563,6 @@ module ControlUnit(
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
                         
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
-                        
                         // SET (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
@@ -3642,10 +3607,6 @@ module ControlUnit(
                         BIT_SEL = OPCODE[5:3];                   
                         // Register File Addresses
                         RF_ADRX = OPCODE[2:0];
-                        
-                        // Set Wait Counter
-                        WAIT_VAL = CB_WAIT;
-                        WAIT_LD = 1'b1;
                         
                         //RES (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)

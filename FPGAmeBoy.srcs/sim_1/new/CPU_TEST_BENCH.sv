@@ -33,7 +33,7 @@ module CPU_TEST_BENCH();
      
      initial forever #5 CLK = !CLK;
      initial begin 
-         #150;
+         #120;
          RST = 0;
      end
 

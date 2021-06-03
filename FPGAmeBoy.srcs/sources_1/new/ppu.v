@@ -92,25 +92,25 @@ module ppu(
     integer i;
     
     // PPU registers
-    reg [7:0] reg_lcdc = 'h91; //$FF40 LCD Control (R/W)
-    reg [7:0] reg_stat = 'h00;//$FF41 LCDC Status (R/W)
-    reg [7:0] reg_scy  = 'h00;//$FF42 Scroll Y (R/W)
-    reg [7:0] reg_scx  = 'h00;  //$FF43 Scroll X (R/W)
-    reg [7:0] reg_ly  = 'h00;   //$FF44 LCDC Y-Coordinate (R) Write will reset the counter
-    reg [7:0] reg_dma  = 'h00;  //$FF46 DMA, actually handled outside of PPU for now
-    reg [7:0] reg_lyc  = 'h00;  //$FF45 LY Compare (R/W)
-    reg [7:0] reg_bgp  = 'hFC;  //$FF47 BG Palette Data (R/W) Non-CGB mode only
-    reg [7:0] reg_obp0  = 'hFF; //$FF48 Object Palette 0 Data (R/W) Non-CGB mode only
-    reg [7:0] reg_obp1  = 'hFF; //$FF49 Object Palette 1 Data (R/W) Non-CGB mode only
-    reg [7:0] reg_wy  = 'h00;   //$FF4A Window Y Position (R/W)
-    reg [7:0] reg_wx  = 'h00;   //$FF4B Window X Position (R/W)
+    reg [7:0] reg_lcdc; //$FF40 LCD Control (R/W)
+    reg [7:0] reg_stat; //$FF41 LCDC Status (R/W)
+    reg [7:0] reg_scy;  //$FF42 Scroll Y (R/W)
+    reg [7:0] reg_scx;  //$FF43 Scroll X (R/W)
+    reg [7:0] reg_ly;   //$FF44 LCDC Y-Coordinate (R) Write will reset the counter
+    reg [7:0] reg_dma;  //$FF46 DMA, actually handled outside of PPU for now
+    reg [7:0] reg_lyc;  //$FF45 LY Compare (R/W)
+    reg [7:0] reg_bgp;  //$FF47 BG Palette Data (R/W) Non-CGB mode only
+    reg [7:0] reg_obp0; //$FF48 Object Palette 0 Data (R/W) Non-CGB mode only
+    reg [7:0] reg_obp1; //$FF49 Object Palette 1 Data (R/W) Non-CGB mode only
+    reg [7:0] reg_wy;   //$FF4A Window Y Position (R/W)
+    reg [7:0] reg_wx;   //$FF4B Window X Position (R/W)
     
     // Some interrupt related register
     reg [7:0] reg_ly_last;
     reg [1:0] reg_mode_last; // Next mode based on next state
     
-    // wire reg_lcd_en = reg_lcdc[7];          //0=Off, 1=On
-    reg reg_lcd_en = 1;
+     wire reg_lcd_en = reg_lcdc[7];          //0=Off, 1=On
+    //reg reg_lcd_en = reg_lcdc[7];     ==>> We added this?? <<===
     wire reg_win_disp_sel = reg_lcdc[6];    //0=9800-9BFF, 1=9C00-9FFF
     wire reg_win_en = reg_lcdc[5];          //0=Off, 1=On
     wire reg_bg_win_data_sel = reg_lcdc[4]; //0=8800-97FF, 1=8000-8FFF
@@ -848,15 +848,15 @@ module ppu(
     always @(posedge clk)
     begin
         if (rst) begin
-            reg_lcdc <= 8'h91;
+            reg_lcdc <= 8'h00;
             reg_stat[7:3] <= 5'h00;
             reg_scy  <= 8'h00;
             reg_scx  <= 8'h00;
             reg_lyc  <= 8'h00;
             reg_dma  <= 8'h00;
             reg_bgp  <= 8'hFC;
-            reg_obp0 <= 8'hFF;
-            reg_obp1 <= 8'hFF;
+            reg_obp0 <= 8'h00;
+            reg_obp1 <= 8'h00;
             reg_wy   <= 8'h00;
             reg_wx   <= 8'h00;
         end
