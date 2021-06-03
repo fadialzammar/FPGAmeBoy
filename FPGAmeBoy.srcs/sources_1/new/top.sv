@@ -17,6 +17,7 @@ module top(
 ////////////////////////////
     logic SCLK;
     assign SCLK = CLK;
+    
 //    C_DIV divider(
 //        .CLK        (CLK),
 //        .CLK_DIV    (SCLK)
