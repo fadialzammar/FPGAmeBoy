@@ -2939,7 +2939,7 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b0;
                         PUSH_FLAG = 1'b0;
                         // Transition to the FETCH state once both bytes are pushed
-                        if (WAIT_COUNTER == 0)
+                        if (IMMED_FLAG || (WAIT_COUNTER == 0))
                             NS = FETCH; 
                         else 
                             NS = WAIT_ST;                                                                                                                     

@@ -11,9 +11,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1364237987fs"></ZoomStartTime>
-      <ZoomEndTime time="1365751988fs"></ZoomEndTime>
-      <Cursor1Time time="1365067987fs"></Cursor1Time>
+      <ZoomStartTime time="915333fs"></ZoomStartTime>
+      <ZoomEndTime time="1016934fs"></ZoomEndTime>
+      <Cursor1Time time="1000000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="188"></NameColumnWidth>
@@ -47,9 +47,11 @@
    <wvobject fp_name="group639" type="group">
       <obj_property name="label">Wait Counter</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ControlUnit/WAIT_COUNTER" type="array">
          <obj_property name="ElementShortName">WAIT_COUNTER[4:0]</obj_property>
          <obj_property name="ObjectShortName">WAIT_COUNTER[4:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ControlUnit/WAIT_VAL" type="array">
          <obj_property name="ElementShortName">WAIT_VAL[4:0]</obj_property>
@@ -941,6 +943,7 @@
    <wvobject fp_name="group559" type="group">
       <obj_property name="label">PPU</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU_ADDR" type="array">
          <obj_property name="ElementShortName">PPU_ADDR[15:0]</obj_property>
          <obj_property name="ObjectShortName">PPU_ADDR[15:0]</obj_property>
@@ -1718,6 +1721,7 @@
    <wvobject fp_name="group515" type="group">
       <obj_property name="label">top</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/VGA_HS" type="logic">
          <obj_property name="ElementShortName">VGA_HS</obj_property>
          <obj_property name="ObjectShortName">VGA_HS</obj_property>
@@ -2522,6 +2526,7 @@
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/ram" type="array">
          <obj_property name="ElementShortName">ram[0:8191][7:0]</obj_property>
          <obj_property name="ObjectShortName">ram[0:8191][7:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
       </wvobject>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/wea" type="logic">
          <obj_property name="ElementShortName">wea</obj_property>

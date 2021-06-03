@@ -228,8 +228,9 @@ assign Di_cpu = cs_crd ? Do_crd : (
 				cs_HRAM ? Do_HRAM : (
 				cs_joy ? Do_joy : (
 				cs_timer ? Do_timer : (
-				cs_io ? Do_io : 8'b0 
-				)))))))));
+				cs_io ? Do_io : (
+				(dma_occupy_vidbus || dma_occupy_oambus || dma_occupy_extbus) ? 8'hFF: 8'h00 
+				))))))))));
 
 // Data write from CPU
 assign Di_crd = cs_crd ? Do_cpu : 8'b0;
