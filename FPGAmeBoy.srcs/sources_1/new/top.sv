@@ -16,11 +16,12 @@ module top(
 // Clock Divider (10MHz clock)  /*** Currently not connected ***/
 ////////////////////////////
     logic SCLK;
+    assign SCLK = CLK;
     
-    C_DIV divider(
-        .CLK        (CLK),
-        .CLK_DIV    (SCLK)
-    );
+//    C_DIV divider(
+//        .CLK        (CLK),
+//        .CLK_DIV    (SCLK)
+//    );
     
 ////////////////////////////
 // Boot ROM
