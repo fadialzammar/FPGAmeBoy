@@ -16,11 +16,11 @@ module top(
 // Clock Divider (10MHz clock)  /*** Currently not connected ***/
 ////////////////////////////
     logic SCLK;
-    
-    C_DIV divider(
-        .CLK        (CLK),
-        .CLK_DIV    (SCLK)
-    );
+    assign SCLK = CLK;
+//    C_DIV divider(
+//        .CLK        (CLK),
+//        .CLK_DIV    (SCLK)
+//    );
     
 ////////////////////////////
 // Boot ROM
@@ -28,9 +28,10 @@ module top(
 logic [15:0] PROG_COUNT;
 logic [15:0] BROM_ADDR;
 logic [7:0] BROM_IR;
+
 BROM BROM(
     .CLK            (SCLK),
-    .BROM_ADDR      (BROM_ADDR),
+    .BROM_ADDR      (PROG_COUNT),
     .BROM_IR        (BROM_IR)
 );
 
@@ -56,12 +57,15 @@ ProgRom ProgRom(
 
 
 // literally its own memory map because bandaid fix time
-logic OPCODE_SEL_CART, OPCODE_SEL_HRAM;
+logic OPCODE_SEL_CART, OPCODE_SEL_HRAM, OPCODE_SEL_BROM;
 
-assign OPCODE_SEL_CART = (PROG_COUNT <= 16'h7FFF);
+assign OPCODE_SEL_BROM = (PROG_COUNT <= 16'h00FF) && ~brom_disable;
+assign OPCODE_SEL_CART = (PROG_COUNT <= 16'h7FFF) && ~OPCODE_SEL_BROM;
 assign OPCODE_SEL_HRAM = (PROG_COUNT >= 16'hFF80) && (PROG_COUNT <= 16'hFFFE);
+
 assign CPU_OPCODE = OPCODE_SEL_CART ? CART_OPCODE : (
-                    OPCODE_SEL_HRAM ? HRAM_OPCODE : 8'bx);
+                    OPCODE_SEL_HRAM ? HRAM_OPCODE : (
+                    OPCODE_SEL_BROM ? BROM_IR : 8'bx));
 
 ////////////////////////////
 // CPU
@@ -299,6 +303,7 @@ timer timer(
    logic [7:0] INT_IN;
    assign INT_IN = {3'b000, INTR};
    
+   logic brom_disable;
    // IO/Control Registers
     IO_Reg IO_Reg(
         .ADR(A_io[7:0]),
@@ -310,7 +315,8 @@ timer timer(
         .D_IE(D_IE),
         .D_IF(D_IF), 
         .INT_ID(INT_ID),
-        .INT_CLR(INT_CLR)
+        .INT_CLR(INT_CLR),
+        .BROM_DI(brom_disable)
     );
 
     
@@ -355,6 +361,7 @@ memory_map memory_map(
 	.A_BROM            (BROM_ADDR),
 	.cs_BROM           (),
 	.Do_BROM           (BROM_IR),
+	.brom_disable      (brom_disable),
     //Cartridge 0100-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
     .A_crd          (CART_ADDR),
     .Di_crd         (),

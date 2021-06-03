@@ -32,7 +32,7 @@ module ProgCount(
     always_ff @(posedge PC_CLK)
     begin
         if (PC_RST == 1'b1)
-            PC_COUNT <= 16'h100;
+            PC_COUNT <= 16'h0000;
         else if (PC_LD == 1'b1)
             PC_COUNT <= PC_DIN;
         else if (PC_INC == 1'b1) // Probably just do a feedback accumulator outside the module

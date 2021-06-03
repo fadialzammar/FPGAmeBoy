@@ -27,7 +27,9 @@ module IO_Reg(
     input [2:0] INT_ID,
     input INT_CLR,
     input CLK, WE,
-    output logic [7:0] D_OUT, D_IE, D_IF, BROM_DI
+
+    output logic [7:0] D_OUT, D_IE, D_IF, 
+    output logic BROM_DI
 );
 
 logic [7:0] mem [0:255];
@@ -82,8 +84,10 @@ end
 //asynchronous read to ports x and y
 assign D_OUT = mem[ADR];
 
-// Always outputting interrupt data
+// Always outputting data
 assign D_IE  = mem[255];
 assign D_IF  = mem[15];
-assign BROM_DI = mem[80];
+
+assign BROM_DI = mem[80][0];
+
 endmodule
