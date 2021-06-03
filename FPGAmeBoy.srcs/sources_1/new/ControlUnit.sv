@@ -260,6 +260,7 @@ module ControlUnit(
      // ALU waits
      localparam ALU_IMMED_WAIT = 5'd5;
      localparam ALU_HL_PTR_WAIT = 5'd5;
+     localparam AlU_HL_INC_DEC_WAIT = 5'd9;
      localparam ALU_16_WAIT = 5'd5;
      localparam ADD_SP_WAIT = 5'd13;
      // SP waits
@@ -493,6 +494,10 @@ module ControlUnit(
                                 HL_FLAG = 1;
                                 HL_FUNC_FLAG = HL_ARITH;
                                 NS = HL_FETCH;
+                                
+                                // Set Wait Counter
+                                WAIT_VAL = AlU_HL_INC_DEC_WAIT;
+                                WAIT_LD = 1'b1;
                                 end
                         endcase
                     end
@@ -556,6 +561,10 @@ module ControlUnit(
                                 HL_FLAG = 1;
                                 HL_FUNC_FLAG = HL_ARITH;
                                 NS = HL_FETCH;
+                                
+                                // Set Wait Counter
+                                WAIT_VAL = AlU_HL_INC_DEC_WAIT;
+                                WAIT_LD = 1'b1;
                                 end
                         endcase
                     end
@@ -2939,7 +2948,7 @@ module ControlUnit(
                         SP_HIGH_FLAG = 1'b0;
                         PUSH_FLAG = 1'b0;
                         // Transition to the FETCH state once both bytes are pushed
-                        if (IMMED_FLAG || (WAIT_COUNTER == 0))
+                        if (IMMED_FLAG || (WAIT_COUNTER == 0) || SP_OPCODE == 8'b00000000)
                             NS = FETCH; 
                         else 
                             NS = WAIT_ST;                                                                                                                     
