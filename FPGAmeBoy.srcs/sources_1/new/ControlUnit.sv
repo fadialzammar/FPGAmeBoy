@@ -285,6 +285,7 @@ module ControlUnit(
      // RET waits
      localparam RET_NOT_TAKEN_WAIT = 5'd5;
      localparam RET_TAKEN_WAIT = 5'd17;
+     localparam RET_WAIT = 5'd13;
      // CB waits
      localparam CB_WAIT = 5'd5;
      localparam CB_HL_PTR_WAIT = 5'd13;
@@ -1571,7 +1572,7 @@ module ControlUnit(
                         SP_OPCODE = OPCODE;
                         SP_HIGH_FLAG = 1'b1; 
                         // Set Wait Counter
-                        WAIT_VAL = RET_TAKEN_WAIT;
+                        WAIT_VAL = RET_WAIT;
                         WAIT_LD = 1'b1; 
                     end
                     
@@ -1587,7 +1588,7 @@ module ControlUnit(
                         MEM_ADDR_SEL = MEM_ADDR_INTR;
                         MEM_WE = 1'b1;
                         // Set Wait Counter
-                        WAIT_VAL = RET_TAKEN_WAIT;
+                        WAIT_VAL = RET_WAIT;
                         WAIT_LD = 1'b1;
                     end
                     
