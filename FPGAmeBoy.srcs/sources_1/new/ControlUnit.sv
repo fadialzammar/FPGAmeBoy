@@ -280,16 +280,16 @@ module ControlUnit(
      localparam JP_NOT_TAKEN_WAIT = 5'd9;
      localparam JP_TAKEN_WAIT = 5'd13;
      // Call waits
-     localparam CALL_NOT_TAKEN_WAIT = 5'd11;
-     localparam CALL_TAKEN_WAIT = 5'd23;
+     localparam CALL_NOT_TAKEN_WAIT = 5'd9;
+     localparam CALL_TAKEN_WAIT = 5'd21;
      // RET waits
-     localparam RET_NOT_TAKEN_WAIT = 5'd7;
-     localparam RET_TAKEN_WAIT = 5'd19;
+     localparam RET_NOT_TAKEN_WAIT = 5'd5;
+     localparam RET_TAKEN_WAIT = 5'd17;
      // CB waits
      localparam CB_WAIT = 5'd5;
      localparam CB_HL_PTR_WAIT = 5'd13;
      // RST waits
-     localparam RST_WAIT = 5'd15;
+     localparam RST_WAIT = 5'd13;
      
     always_ff @(posedge CLK) begin
         if (RESET)
@@ -975,7 +975,7 @@ module ControlUnit(
                         MEM_ADDR_SEL = MEM_ADDR_FF_DY;
                         MEM_WE = 1;
                         // Set Wait Counter
-                        WAIT_VAL = LD_PTR_IMMED_WAIT;
+                        WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
                     end
 
