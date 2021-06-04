@@ -29,11 +29,15 @@ module top(
 logic [15:0] PROG_COUNT;
 logic [15:0] BROM_ADDR;
 logic [7:0] BROM_IR;
+logic [7:0] BROM_DATA;
 
 BROM BROM(
     .CLK            (SCLK),
-    .BROM_ADDR      (PROG_COUNT),
-    .BROM_IR        (BROM_IR)
+    .BROM_ADDR      (BROM_ADDR),
+    .BROM_IR        (BROM_IR),
+    
+    .BROM_DATA      (BROM_DATA),
+    .PROG_COUNT     (PROG_COUNT)
 );
 
 ////////////////////////////
@@ -361,7 +365,7 @@ memory_map memory_map(
 	//Boot Rom 0000 - 00FF
 	.A_BROM            (BROM_ADDR),
 	.cs_BROM           (),
-	.Do_BROM           (BROM_IR),
+	.Do_BROM           (BROM_DATA),
 	.brom_disable      (brom_disable),
     //Cartridge 0100-7FFF & A000-BFFF    // TODO: Incorporate ProgRom into main memory space rather than reading directly from it?
     .A_crd          (CART_ADDR),

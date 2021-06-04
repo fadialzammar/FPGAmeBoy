@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="2295462600fs"></ZoomStartTime>
-      <ZoomEndTime time="2295729601fs"></ZoomEndTime>
-      <Cursor1Time time="2295525000fs"></Cursor1Time>
+      <ZoomStartTime time="2654500000fs"></ZoomStartTime>
+      <ZoomEndTime time="2654710001fs"></ZoomEndTime>
+      <Cursor1Time time="2654675000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="188"></NameColumnWidth>
-      <ValueColumnWidth column_width="75"></ValueColumnWidth>
+      <NameColumnWidth column_width="186"></NameColumnWidth>
+      <ValueColumnWidth column_width="72"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="36" />
+   <WVObjectSize size="37" />
    <wave_markers>
       <marker time="2727838666" label="" />
       <marker time="2560840000" label="" />
@@ -51,7 +51,6 @@
    <wvobject fp_name="group639" type="group">
       <obj_property name="label">Wait Counter</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ControlUnit/WAIT_COUNTER" type="array">
          <obj_property name="ElementShortName">WAIT_COUNTER[4:0]</obj_property>
          <obj_property name="ObjectShortName">WAIT_COUNTER[4:0]</obj_property>
@@ -213,7 +212,6 @@
    <wvobject fp_name="group463" type="group">
       <obj_property name="label">FLAGS</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/Flag_Reg/Z_OUT" type="logic">
          <obj_property name="ElementShortName">Z_OUT</obj_property>
          <obj_property name="ObjectShortName">Z_OUT</obj_property>
@@ -238,7 +236,6 @@
    <wvobject fp_name="group72" type="group">
       <obj_property name="label">MEMORY</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/WE" type="logic">
          <obj_property name="ElementShortName">WE</obj_property>
          <obj_property name="ObjectShortName">WE</obj_property>
@@ -387,10 +384,34 @@
       <obj_property name="label">Memory Map</obj_property>
       <obj_property name="DisplayName">label</obj_property>
       <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="group1470" type="group">
+         <obj_property name="label">BROM</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_BROM" type="array">
+            <obj_property name="ElementShortName">A_BROM[15:0]</obj_property>
+            <obj_property name="ObjectShortName">A_BROM[15:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/cs_BROM" type="logic">
+            <obj_property name="ElementShortName">cs_BROM</obj_property>
+            <obj_property name="ObjectShortName">cs_BROM</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/Do_BROM" type="array">
+            <obj_property name="ElementShortName">Do_BROM[7:0]</obj_property>
+            <obj_property name="ObjectShortName">Do_BROM[7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/brom_disable" type="logic">
+            <obj_property name="ElementShortName">brom_disable</obj_property>
+            <obj_property name="ObjectShortName">brom_disable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/wr_BROM" type="logic">
+            <obj_property name="ElementShortName">wr_BROM</obj_property>
+            <obj_property name="ObjectShortName">wr_BROM</obj_property>
+         </wvobject>
+      </wvobject>
       <wvobject fp_name="group331" type="group">
          <obj_property name="label">CPU[0000 - FFFF]</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_cpu" type="array">
             <obj_property name="ElementShortName">A_cpu[15:0]</obj_property>
             <obj_property name="ObjectShortName">A_cpu[15:0]</obj_property>
@@ -443,7 +464,6 @@
       <wvobject fp_name="group333" type="group">
          <obj_property name="label">Video RAM)8000-9FFF</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_ppu_vram" type="array">
             <obj_property name="ElementShortName">A_ppu_vram[15:0]</obj_property>
             <obj_property name="ObjectShortName">A_ppu_vram[15:0]</obj_property>
@@ -472,7 +492,6 @@
       <wvobject fp_name="group334" type="group">
          <obj_property name="label">OAM FE00-FE9F</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_ppu_oam" type="array">
             <obj_property name="ElementShortName">A_ppu_oam[15:0]</obj_property>
             <obj_property name="ObjectShortName">A_ppu_oam[15:0]</obj_property>
@@ -501,7 +520,6 @@
       <wvobject fp_name="group335" type="group">
          <obj_property name="label">PPU CTRL REG</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_ppu_regs" type="array">
             <obj_property name="ElementShortName">A_ppu_regs[15:0]</obj_property>
             <obj_property name="ObjectShortName">A_ppu_regs[15:0]</obj_property>
@@ -955,7 +973,6 @@
    <wvobject fp_name="group559" type="group">
       <obj_property name="label">PPU</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU_ADDR" type="array">
          <obj_property name="ElementShortName">PPU_ADDR[15:0]</obj_property>
          <obj_property name="ObjectShortName">PPU_ADDR[15:0]</obj_property>
@@ -1728,7 +1745,6 @@
    <wvobject fp_name="group515" type="group">
       <obj_property name="label">top</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/VGA_HS" type="logic">
          <obj_property name="ElementShortName">VGA_HS</obj_property>
          <obj_property name="ObjectShortName">VGA_HS</obj_property>
@@ -2509,7 +2525,6 @@
    <wvobject fp_name="group981" type="group">
       <obj_property name="label">VRAM</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/ABITS" type="array">
          <obj_property name="ElementShortName">ABITS[31:0]</obj_property>
          <obj_property name="ObjectShortName">ABITS[31:0]</obj_property>
@@ -2550,7 +2565,6 @@
    <wvobject fp_name="group333" type="group">
       <obj_property name="label">Video RAM)8000-9FFF</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/cs_ppu_vram" type="logic">
          <obj_property name="ElementShortName">cs_ppu_vram</obj_property>
          <obj_property name="ObjectShortName">cs_ppu_vram</obj_property>
@@ -2567,7 +2581,6 @@
    <wvobject fp_name="group1439" type="group">
       <obj_property name="label">VRAM_ACC_EXT</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/vram_access_ext" type="logic">
          <obj_property name="ElementShortName">vram_access_ext</obj_property>
          <obj_property name="ObjectShortName">vram_access_ext</obj_property>
@@ -2584,5 +2597,34 @@
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU_PIXEL" type="array">
       <obj_property name="ElementShortName">PPU_PIXEL[1:0]</obj_property>
       <obj_property name="ObjectShortName">PPU_PIXEL[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="group1464" type="group">
+      <obj_property name="label">BROM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/CLK" type="logic">
+         <obj_property name="ElementShortName">CLK</obj_property>
+         <obj_property name="ObjectShortName">CLK</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_ADDR" type="array">
+         <obj_property name="ElementShortName">BROM_ADDR[15:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_ADDR[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/PROG_COUNT" type="array">
+         <obj_property name="ElementShortName">PROG_COUNT[15:0]</obj_property>
+         <obj_property name="ObjectShortName">PROG_COUNT[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_IR" type="array">
+         <obj_property name="ElementShortName">BROM_IR[7:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_IR[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_DATA" type="array">
+         <obj_property name="ElementShortName">BROM_DATA[7:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_DATA[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/rom" type="array">
+         <obj_property name="ElementShortName">rom[0:255][7:0]</obj_property>
+         <obj_property name="ObjectShortName">rom[0:255][7:0]</obj_property>
+      </wvobject>
    </wvobject>
 </wave_config>
