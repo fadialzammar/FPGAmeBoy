@@ -2599,7 +2599,7 @@ module ControlUnit(
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment
                                 OPCODE_SIGNED = ~(OPCODE);
-                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 1) : ((OPCODE + PC)-2);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 1) : ((OPCODE + PC));
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end
@@ -2610,7 +2610,7 @@ module ControlUnit(
                                 PC_MUX_SEL = PC_CU_PC_ADDR;
                                 // No +1 for 2's Comp to account for Fetch increment
                                 OPCODE_SIGNED = ~(OPCODE);
-                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 1) : ((OPCODE + PC)-2);
+                                PC_ADDR_OUT = OPCODE[7] ? (PC - OPCODE_SIGNED - 1) : ((OPCODE + PC));
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                      end

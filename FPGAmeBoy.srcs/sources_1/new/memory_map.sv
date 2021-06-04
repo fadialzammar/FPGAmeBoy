@@ -104,14 +104,6 @@ module memory_map(
 	output				wr_timer,
 	output				rd_timer,
    
-	//Working & Stack RAM FF05-FF40
-	output 	[15:0] 	A_wsram,
-	output 	[7:0] 	Di_wsram,
-	input	[7:0]		Do_wsram,
-	output				cs_wsram,
-	output				wr_wsram,
-	output				rd_wsram,
-	
 	//High RAM FF80 - FFFE
 	output 	[15:0] 	A_HRAM,
 	output 	[7:0] 	Di_HRAM,
@@ -144,7 +136,6 @@ assign A_ppu_vram = A_cpu;
 assign A_ppu_oam = A_cpu;
 assign A_ppu_regs = A_cpu;
 assign A_ram = ~(dma_occupy_vidbus || dma_occupy_oambus || dma_occupy_extbus)  ? (A_cpu - 16'hC000) : (A_DMA - 16'hC000);
-assign A_wsram = A_cpu - 16'hFF00;
 assign A_timer = A_cpu;
 assign A_HRAM = A_cpu - 16'hFF80;
 assign A_BROM = A_cpu;
@@ -156,8 +147,6 @@ assign wr_ppu_vram = (cs_ppu_vram && ~dma_occupy_vidbus) ? wr_cpu : 1'b0;
 assign wr_ppu_oam = cs_ppu_oam ?  wr_cpu : dma_occupy_oambus ? wr_DMA : 1'b0;
 assign wr_ppu_regs = cs_ppu_regs ? wr_cpu : 1'b0;
 assign wr_ram =   cs_ram ? wr_cpu : 1'b0;
-assign wr_wsram = cs_wsram ? wr_cpu : 1'b0;
-assign wr_ctrlMgr = cs_ctrlMgr ? wr_cpu : 1'b0;
 assign wr_timer = cs_timer ? wr_cpu : 1'b0;
 assign wr_HRAM = cs_HRAM ? wr_cpu : 1'b0;
 assign wr_io = cs_io ? wr_cpu : 1'b0;
@@ -171,8 +160,6 @@ assign rd_ppu_vram = cs_ppu_vram ? rd_cpu : dma_occupy_vidbus ? rd_DMA : 1'b0;
 assign rd_ppu_oam = cs_ppu_oam && ~dma_occupy_oambus ? rd_cpu : 1'b0;
 assign rd_ppu_regs = cs_ppu_regs ? rd_cpu : 1'b0;
 assign rd_ram =   cs_ram ? rd_cpu : 1'b0;
-assign rd_wsram = cs_wsram ? rd_cpu : 1'b0;
-assign rd_ctrlMgr = cs_ctrlMgr ? rd_cpu : 1'b0;
 assign rd_timer = cs_timer ? rd_cpu : 1'b0;
 assign rd_HRAM = cs_HRAM ? rd_cpu : 1'b0;
 
@@ -239,7 +226,6 @@ assign Di_ppu_vram = cs_ppu_vram ? Do_cpu : 8'b0;
 assign Di_ppu_oam = cs_ppu_oam ? Do_cpu : dma_occupy_oambus ? Do_DMA : 8'bxx;
 assign Di_ppu_regs = cs_ppu_regs ? Do_cpu : 8'b0;
 assign Di_ram = cs_ram ? Do_cpu : 8'b0;
-assign Di_wsram = cs_wsram ? Do_cpu : 8'b0;
 assign Di_HRAM = cs_HRAM ? Do_cpu : 8'b0;
 assign Di_timer = cs_timer ? Do_cpu : 8'b0;
 assign Di_io = cs_io ? Do_cpu : 8'b0;
