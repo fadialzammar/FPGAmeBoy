@@ -2616,33 +2616,41 @@ module ControlUnit(
                      end
                      
                     8'b11101010: begin  // LD (nn), A
-                        // Flag for Immediate Low Byte Load
-                        LOW_IMMED = ~LOW_IMMED ? 1'b1 : 1'b0;
-                        // Flag for 16 bit Immediates
-                        HIGH_IMMED = LOW_IMMED ? 1'b1 : 1'b0;
                         // Reg File writes either the High or Low Byte
                         RF_WR = 1'b0; 
-                        // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
-                        IMMED_ADDR_LOW = LOW_IMMED ? OPCODE : LAST_IMMED_ADDR_LOW;
-                        // Saves the new Immediate Value Data Low Byte for writing
-                        LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;                       
-                        // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                        IMMED_ADDR_HIGH = ~LOW_IMMED ?  OPCODE : LAST_IMMED_ADDR_HIGH;
-                        // Saves the new Immediate Value Data High Byte for writing
-                        LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;
-                        // // Write the High Byte to B and the Low Byte to C
-                        // RF_ADRX = ~LOW_IMMED ? REG_B : REG_C;
-                        // // Load the Stack Pointer with the High and Low Byte immediate values
-                        // RF_WR_SEL = LOW_IMMED ? RF_MUX_IMMED_LOW : RF_MUX_IMMED_HIGH;
+                        case  (LOW_IMMED)
+                            // High Byte
+                            1'b0:
+                            begin
+                                // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
+                                IMMED_ADDR_HIGH = OPCODE;
+                                // Saves the new Immediate Value Address High Byte for writing
+                                LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;  
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                RF_WR_SEL = RF_MUX_IMMED_HIGH;                    
+                                // Reset the HIGH_IMMED Flag
+                                HIGH_IMMED = 1'b0;
 
-                        if (~LOW_IMMED) begin // if storing upper immediate byte
-                            MEM_ADDR_SEL = MEM_ADDR_IMMED;
-                            RF_ADRX = REG_A;
-                            MEM_DATA_SEL = MEM_DATA_DX;
-                            MEM_WE = 1;
-                        end
+                                IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;
 
-                        IMMED_FLAG = LOW_IMMED ? 1'b1 : 1'b0; // if storing lower byte, return to IMMED state after fetching new byte
+                                MEM_ADDR_SEL = MEM_ADDR_IMMED;
+                                RF_ADRX = REG_A;
+                                MEM_DATA_SEL = MEM_DATA_DX;
+                                MEM_WE = 1;
+                            end
+                            // Low Byte
+                            1'b1:
+                            begin
+                                // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
+                                IMMED_ADDR_LOW = OPCODE;
+                                // Saves the new Immediate Value Address Low Byte for writing
+                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                RF_WR_SEL = RF_MUX_IMMED_LOW;
+                                // Set the HIGH_IMMED Flag high
+                                HIGH_IMMED = 1'b1;     
+                            end
+                        endcase     
                     end
                     8'b11111010: begin  // LD A, (nn)
                         // Reg File writes either the High or Low Byte
