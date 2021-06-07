@@ -11,6 +11,7 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
+<<<<<<< Updated upstream
       <ZoomStartTime time="0fs"></ZoomStartTime>
       <ZoomEndTime time="100001000001fs"></ZoomEndTime>
       <Cursor1Time time="16579645000fs"></Cursor1Time>
@@ -24,6 +25,20 @@
       <obj_property name="ElementShortName">CLK100</obj_property>
       <obj_property name="ObjectShortName">CLK100</obj_property>
    </wvobject>
+=======
+      <ZoomStartTime time="7800000000fs"></ZoomStartTime>
+      <ZoomEndTime time="33560000001fs"></ZoomEndTime>
+      <Cursor1Time time="12940000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="176"></NameColumnWidth>
+      <ValueColumnWidth column_width="72"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="39" />
+   <wave_markers>
+      <marker time="26208231510" label="" />
+   </wave_markers>
+>>>>>>> Stashed changes
    <wvobject fp_name="/CPU_TEST_BENCH/DUT/CLK" type="logic">
       <obj_property name="ElementShortName">CLK</obj_property>
       <obj_property name="ObjectShortName">CLK</obj_property>
@@ -380,6 +395,34 @@
    <wvobject fp_name="group270" type="group">
       <obj_property name="label">Memory Map</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+<<<<<<< Updated upstream
+=======
+      <wvobject fp_name="group1470" type="group">
+         <obj_property name="label">BROM</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_BROM" type="array">
+            <obj_property name="ElementShortName">A_BROM[15:0]</obj_property>
+            <obj_property name="ObjectShortName">A_BROM[15:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/cs_BROM" type="logic">
+            <obj_property name="ElementShortName">cs_BROM</obj_property>
+            <obj_property name="ObjectShortName">cs_BROM</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/Do_BROM" type="array">
+            <obj_property name="ElementShortName">Do_BROM[7:0]</obj_property>
+            <obj_property name="ObjectShortName">Do_BROM[7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/brom_disable" type="logic">
+            <obj_property name="ElementShortName">brom_disable</obj_property>
+            <obj_property name="ObjectShortName">brom_disable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/wr_BROM" type="logic">
+            <obj_property name="ElementShortName">wr_BROM</obj_property>
+            <obj_property name="ObjectShortName">wr_BROM</obj_property>
+         </wvobject>
+      </wvobject>
+>>>>>>> Stashed changes
       <wvobject fp_name="group331" type="group">
          <obj_property name="label">CPU[0000 - FFFF]</obj_property>
          <obj_property name="DisplayName">label</obj_property>
@@ -605,30 +648,6 @@
       <wvobject fp_name="group339" type="group">
          <obj_property name="label">Working &amp; Stack RAM FF05-FF40</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/A_wsram" type="array">
-            <obj_property name="ElementShortName">A_wsram[15:0]</obj_property>
-            <obj_property name="ObjectShortName">A_wsram[15:0]</obj_property>
-         </wvobject>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/Di_wsram" type="array">
-            <obj_property name="ElementShortName">Di_wsram[7:0]</obj_property>
-            <obj_property name="ObjectShortName">Di_wsram[7:0]</obj_property>
-         </wvobject>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/Do_wsram" type="array">
-            <obj_property name="ElementShortName">Do_wsram[7:0]</obj_property>
-            <obj_property name="ObjectShortName">Do_wsram[7:0]</obj_property>
-         </wvobject>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/cs_wsram" type="logic">
-            <obj_property name="ElementShortName">cs_wsram</obj_property>
-            <obj_property name="ObjectShortName">cs_wsram</obj_property>
-         </wvobject>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/wr_wsram" type="logic">
-            <obj_property name="ElementShortName">wr_wsram</obj_property>
-            <obj_property name="ObjectShortName">wr_wsram</obj_property>
-         </wvobject>
-         <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/rd_wsram" type="logic">
-            <obj_property name="ElementShortName">rd_wsram</obj_property>
-            <obj_property name="ObjectShortName">rd_wsram</obj_property>
-         </wvobject>
       </wvobject>
       <wvobject fp_name="group340" type="group">
          <obj_property name="label">HRAM FFFE-FF80</obj_property>
@@ -1147,4 +1166,871 @@
          <obj_property name="ObjectShortName">VGA_BLUE[3:0]</obj_property>
       </wvobject>
    </wvobject>
+<<<<<<< Updated upstream
+=======
+   <wvobject fp_name="group1805" type="group">
+      <obj_property name="label">DMA</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/clk" type="logic">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/rst" type="logic">
+         <obj_property name="ElementShortName">rst</obj_property>
+         <obj_property name="ObjectShortName">rst</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_rd" type="logic">
+         <obj_property name="ElementShortName">dma_rd</obj_property>
+         <obj_property name="ObjectShortName">dma_rd</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_wr" type="logic">
+         <obj_property name="ElementShortName">dma_wr</obj_property>
+         <obj_property name="ObjectShortName">dma_wr</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_a" type="array">
+         <obj_property name="ElementShortName">dma_a[15:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_a[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_din" type="array">
+         <obj_property name="ElementShortName">dma_din[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_din[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_dout" type="array">
+         <obj_property name="ElementShortName">dma_dout[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_dout[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/mmio_wr" type="logic">
+         <obj_property name="ElementShortName">mmio_wr</obj_property>
+         <obj_property name="ObjectShortName">mmio_wr</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/mmio_din" type="array">
+         <obj_property name="ElementShortName">mmio_din[7:0]</obj_property>
+         <obj_property name="ObjectShortName">mmio_din[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/mmio_dout" type="array">
+         <obj_property name="ElementShortName">mmio_dout[7:0]</obj_property>
+         <obj_property name="ObjectShortName">mmio_dout[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_occupy_extbus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_extbus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_extbus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_occupy_vidbus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_vidbus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_vidbus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_occupy_oambus" type="logic">
+         <obj_property name="ElementShortName">dma_occupy_oambus</obj_property>
+         <obj_property name="ObjectShortName">dma_occupy_oambus</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/dma_start_addr" type="array">
+         <obj_property name="ElementShortName">dma_start_addr[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dma_start_addr[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/count" type="array">
+         <obj_property name="ElementShortName">count[7:0]</obj_property>
+         <obj_property name="ObjectShortName">count[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/cpu_mem_disable" type="logic">
+         <obj_property name="ElementShortName">cpu_mem_disable</obj_property>
+         <obj_property name="ObjectShortName">cpu_mem_disable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/state" type="array">
+         <obj_property name="ElementShortName">state[2:0]</obj_property>
+         <obj_property name="ObjectShortName">state[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_IDLE" type="array">
+         <obj_property name="ElementShortName">DMA_IDLE[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_IDLE[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_TRANSFER_READ_ADDR" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_READ_ADDR[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_READ_ADDR[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_TRANSFER_READ_DATA" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_READ_DATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_READ_DATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_TRANSFER_WRITE_DATA" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_WRITE_DATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_WRITE_DATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_TRANSFER_WRITE_WAIT" type="array">
+         <obj_property name="ElementShortName">DMA_TRANSFER_WRITE_WAIT[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_TRANSFER_WRITE_WAIT[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/DMA/DMA_DELAY" type="array">
+         <obj_property name="ElementShortName">DMA_DELAY[31:0]</obj_property>
+         <obj_property name="ObjectShortName">DMA_DELAY[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group673" type="group">
+      <obj_property name="label">RAM [C000 - C0A0]</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[0]" type="array">
+         <obj_property name="ElementShortName">[0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[0][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[1]" type="array">
+         <obj_property name="ElementShortName">[1][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[1][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[2]" type="array">
+         <obj_property name="ElementShortName">[2][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[2][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[3]" type="array">
+         <obj_property name="ElementShortName">[3][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[3][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[4]" type="array">
+         <obj_property name="ElementShortName">[4][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[4][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[5]" type="array">
+         <obj_property name="ElementShortName">[5][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[5][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[6]" type="array">
+         <obj_property name="ElementShortName">[6][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[6][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[7]" type="array">
+         <obj_property name="ElementShortName">[7][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[7][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[8]" type="array">
+         <obj_property name="ElementShortName">[8][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[8][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[9]" type="array">
+         <obj_property name="ElementShortName">[9][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[9][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[10]" type="array">
+         <obj_property name="ElementShortName">[10][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[10][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[11]" type="array">
+         <obj_property name="ElementShortName">[11][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[11][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[12]" type="array">
+         <obj_property name="ElementShortName">[12][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[12][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[13]" type="array">
+         <obj_property name="ElementShortName">[13][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[13][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[14]" type="array">
+         <obj_property name="ElementShortName">[14][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[14][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[15]" type="array">
+         <obj_property name="ElementShortName">[15][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[15][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[16]" type="array">
+         <obj_property name="ElementShortName">[16][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[16][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[17]" type="array">
+         <obj_property name="ElementShortName">[17][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[17][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[18]" type="array">
+         <obj_property name="ElementShortName">[18][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[18][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[19]" type="array">
+         <obj_property name="ElementShortName">[19][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[19][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[20]" type="array">
+         <obj_property name="ElementShortName">[20][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[20][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[21]" type="array">
+         <obj_property name="ElementShortName">[21][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[21][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[22]" type="array">
+         <obj_property name="ElementShortName">[22][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[22][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[23]" type="array">
+         <obj_property name="ElementShortName">[23][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[23][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[24]" type="array">
+         <obj_property name="ElementShortName">[24][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[24][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[25]" type="array">
+         <obj_property name="ElementShortName">[25][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[25][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[26]" type="array">
+         <obj_property name="ElementShortName">[26][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[26][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[27]" type="array">
+         <obj_property name="ElementShortName">[27][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[27][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[28]" type="array">
+         <obj_property name="ElementShortName">[28][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[28][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[29]" type="array">
+         <obj_property name="ElementShortName">[29][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[29][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[30]" type="array">
+         <obj_property name="ElementShortName">[30][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[30][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[31]" type="array">
+         <obj_property name="ElementShortName">[31][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[31][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[32]" type="array">
+         <obj_property name="ElementShortName">[32][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[32][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[33]" type="array">
+         <obj_property name="ElementShortName">[33][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[33][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[34]" type="array">
+         <obj_property name="ElementShortName">[34][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[34][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[35]" type="array">
+         <obj_property name="ElementShortName">[35][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[35][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[36]" type="array">
+         <obj_property name="ElementShortName">[36][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[36][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[37]" type="array">
+         <obj_property name="ElementShortName">[37][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[37][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[38]" type="array">
+         <obj_property name="ElementShortName">[38][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[38][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[39]" type="array">
+         <obj_property name="ElementShortName">[39][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[39][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[40]" type="array">
+         <obj_property name="ElementShortName">[40][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[40][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[41]" type="array">
+         <obj_property name="ElementShortName">[41][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[41][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[42]" type="array">
+         <obj_property name="ElementShortName">[42][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[42][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[43]" type="array">
+         <obj_property name="ElementShortName">[43][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[43][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[44]" type="array">
+         <obj_property name="ElementShortName">[44][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[44][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[45]" type="array">
+         <obj_property name="ElementShortName">[45][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[45][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[46]" type="array">
+         <obj_property name="ElementShortName">[46][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[46][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[47]" type="array">
+         <obj_property name="ElementShortName">[47][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[47][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[48]" type="array">
+         <obj_property name="ElementShortName">[48][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[48][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[49]" type="array">
+         <obj_property name="ElementShortName">[49][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[49][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[50]" type="array">
+         <obj_property name="ElementShortName">[50][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[50][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[51]" type="array">
+         <obj_property name="ElementShortName">[51][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[51][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[52]" type="array">
+         <obj_property name="ElementShortName">[52][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[52][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[53]" type="array">
+         <obj_property name="ElementShortName">[53][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[53][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[54]" type="array">
+         <obj_property name="ElementShortName">[54][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[54][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[55]" type="array">
+         <obj_property name="ElementShortName">[55][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[55][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[56]" type="array">
+         <obj_property name="ElementShortName">[56][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[56][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[57]" type="array">
+         <obj_property name="ElementShortName">[57][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[57][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[58]" type="array">
+         <obj_property name="ElementShortName">[58][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[58][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[59]" type="array">
+         <obj_property name="ElementShortName">[59][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[59][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[60]" type="array">
+         <obj_property name="ElementShortName">[60][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[60][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[61]" type="array">
+         <obj_property name="ElementShortName">[61][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[61][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[62]" type="array">
+         <obj_property name="ElementShortName">[62][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[62][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[63]" type="array">
+         <obj_property name="ElementShortName">[63][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[63][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[64]" type="array">
+         <obj_property name="ElementShortName">[64][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[64][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[65]" type="array">
+         <obj_property name="ElementShortName">[65][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[65][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[66]" type="array">
+         <obj_property name="ElementShortName">[66][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[66][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[67]" type="array">
+         <obj_property name="ElementShortName">[67][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[67][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[68]" type="array">
+         <obj_property name="ElementShortName">[68][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[68][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[69]" type="array">
+         <obj_property name="ElementShortName">[69][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[69][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[70]" type="array">
+         <obj_property name="ElementShortName">[70][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[70][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[71]" type="array">
+         <obj_property name="ElementShortName">[71][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[71][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[72]" type="array">
+         <obj_property name="ElementShortName">[72][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[72][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[73]" type="array">
+         <obj_property name="ElementShortName">[73][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[73][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[74]" type="array">
+         <obj_property name="ElementShortName">[74][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[74][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[75]" type="array">
+         <obj_property name="ElementShortName">[75][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[75][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[76]" type="array">
+         <obj_property name="ElementShortName">[76][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[76][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[77]" type="array">
+         <obj_property name="ElementShortName">[77][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[77][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[78]" type="array">
+         <obj_property name="ElementShortName">[78][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[78][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[79]" type="array">
+         <obj_property name="ElementShortName">[79][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[79][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[80]" type="array">
+         <obj_property name="ElementShortName">[80][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[80][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[81]" type="array">
+         <obj_property name="ElementShortName">[81][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[81][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[82]" type="array">
+         <obj_property name="ElementShortName">[82][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[82][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[83]" type="array">
+         <obj_property name="ElementShortName">[83][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[83][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[84]" type="array">
+         <obj_property name="ElementShortName">[84][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[84][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[85]" type="array">
+         <obj_property name="ElementShortName">[85][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[85][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[86]" type="array">
+         <obj_property name="ElementShortName">[86][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[86][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[87]" type="array">
+         <obj_property name="ElementShortName">[87][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[87][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[88]" type="array">
+         <obj_property name="ElementShortName">[88][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[88][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[89]" type="array">
+         <obj_property name="ElementShortName">[89][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[89][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[90]" type="array">
+         <obj_property name="ElementShortName">[90][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[90][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[91]" type="array">
+         <obj_property name="ElementShortName">[91][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[91][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[92]" type="array">
+         <obj_property name="ElementShortName">[92][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[92][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[93]" type="array">
+         <obj_property name="ElementShortName">[93][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[93][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[94]" type="array">
+         <obj_property name="ElementShortName">[94][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[94][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[95]" type="array">
+         <obj_property name="ElementShortName">[95][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[95][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[96]" type="array">
+         <obj_property name="ElementShortName">[96][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[96][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[97]" type="array">
+         <obj_property name="ElementShortName">[97][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[97][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[98]" type="array">
+         <obj_property name="ElementShortName">[98][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[98][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[99]" type="array">
+         <obj_property name="ElementShortName">[99][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[99][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[100]" type="array">
+         <obj_property name="ElementShortName">[100][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[100][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[101]" type="array">
+         <obj_property name="ElementShortName">[101][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[101][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[102]" type="array">
+         <obj_property name="ElementShortName">[102][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[102][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[103]" type="array">
+         <obj_property name="ElementShortName">[103][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[103][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[104]" type="array">
+         <obj_property name="ElementShortName">[104][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[104][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[105]" type="array">
+         <obj_property name="ElementShortName">[105][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[105][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[106]" type="array">
+         <obj_property name="ElementShortName">[106][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[106][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[107]" type="array">
+         <obj_property name="ElementShortName">[107][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[107][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[108]" type="array">
+         <obj_property name="ElementShortName">[108][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[108][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[109]" type="array">
+         <obj_property name="ElementShortName">[109][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[109][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[110]" type="array">
+         <obj_property name="ElementShortName">[110][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[110][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[111]" type="array">
+         <obj_property name="ElementShortName">[111][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[111][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[112]" type="array">
+         <obj_property name="ElementShortName">[112][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[112][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[113]" type="array">
+         <obj_property name="ElementShortName">[113][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[113][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[114]" type="array">
+         <obj_property name="ElementShortName">[114][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[114][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[115]" type="array">
+         <obj_property name="ElementShortName">[115][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[115][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[116]" type="array">
+         <obj_property name="ElementShortName">[116][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[116][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[117]" type="array">
+         <obj_property name="ElementShortName">[117][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[117][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[118]" type="array">
+         <obj_property name="ElementShortName">[118][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[118][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[119]" type="array">
+         <obj_property name="ElementShortName">[119][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[119][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[120]" type="array">
+         <obj_property name="ElementShortName">[120][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[120][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[121]" type="array">
+         <obj_property name="ElementShortName">[121][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[121][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[122]" type="array">
+         <obj_property name="ElementShortName">[122][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[122][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[123]" type="array">
+         <obj_property name="ElementShortName">[123][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[123][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[124]" type="array">
+         <obj_property name="ElementShortName">[124][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[124][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[125]" type="array">
+         <obj_property name="ElementShortName">[125][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[125][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[126]" type="array">
+         <obj_property name="ElementShortName">[126][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[126][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[127]" type="array">
+         <obj_property name="ElementShortName">[127][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[127][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[128]" type="array">
+         <obj_property name="ElementShortName">[128][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[128][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[129]" type="array">
+         <obj_property name="ElementShortName">[129][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[129][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[130]" type="array">
+         <obj_property name="ElementShortName">[130][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[130][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[131]" type="array">
+         <obj_property name="ElementShortName">[131][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[131][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[132]" type="array">
+         <obj_property name="ElementShortName">[132][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[132][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[133]" type="array">
+         <obj_property name="ElementShortName">[133][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[133][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[134]" type="array">
+         <obj_property name="ElementShortName">[134][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[134][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[135]" type="array">
+         <obj_property name="ElementShortName">[135][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[135][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[136]" type="array">
+         <obj_property name="ElementShortName">[136][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[136][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[137]" type="array">
+         <obj_property name="ElementShortName">[137][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[137][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[138]" type="array">
+         <obj_property name="ElementShortName">[138][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[138][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[139]" type="array">
+         <obj_property name="ElementShortName">[139][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[139][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[140]" type="array">
+         <obj_property name="ElementShortName">[140][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[140][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[141]" type="array">
+         <obj_property name="ElementShortName">[141][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[141][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[142]" type="array">
+         <obj_property name="ElementShortName">[142][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[142][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[143]" type="array">
+         <obj_property name="ElementShortName">[143][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[143][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[144]" type="array">
+         <obj_property name="ElementShortName">[144][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[144][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[145]" type="array">
+         <obj_property name="ElementShortName">[145][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[145][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[146]" type="array">
+         <obj_property name="ElementShortName">[146][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[146][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[147]" type="array">
+         <obj_property name="ElementShortName">[147][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[147][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[148]" type="array">
+         <obj_property name="ElementShortName">[148][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[148][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[149]" type="array">
+         <obj_property name="ElementShortName">[149][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[149][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[150]" type="array">
+         <obj_property name="ElementShortName">[150][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[150][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[151]" type="array">
+         <obj_property name="ElementShortName">[151][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[151][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[152]" type="array">
+         <obj_property name="ElementShortName">[152][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[152][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[153]" type="array">
+         <obj_property name="ElementShortName">[153][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[153][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[154]" type="array">
+         <obj_property name="ElementShortName">[154][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[154][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[155]" type="array">
+         <obj_property name="ElementShortName">[155][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[155][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[156]" type="array">
+         <obj_property name="ElementShortName">[156][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[156][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[157]" type="array">
+         <obj_property name="ElementShortName">[157][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[157][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[158]" type="array">
+         <obj_property name="ElementShortName">[158][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[158][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[159]" type="array">
+         <obj_property name="ElementShortName">[159][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[159][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/Memory/mem[160]" type="array">
+         <obj_property name="ElementShortName">[160][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[160][7:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/oam_l" type="array">
+      <obj_property name="ElementShortName">oam_l[0:79][7:0]</obj_property>
+      <obj_property name="ObjectShortName">oam_l[0:79][7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/oam_u" type="array">
+      <obj_property name="ElementShortName">oam_u[0:79][7:0]</obj_property>
+      <obj_property name="ObjectShortName">oam_u[0:79][7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/vram_we" type="logic">
+      <obj_property name="ElementShortName">vram_we</obj_property>
+      <obj_property name="ObjectShortName">vram_we</obj_property>
+   </wvobject>
+   <wvobject fp_name="group981" type="group">
+      <obj_property name="label">VRAM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/ABITS" type="array">
+         <obj_property name="ElementShortName">ABITS[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ABITS[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/WORDS" type="array">
+         <obj_property name="ElementShortName">WORDS[31:0]</obj_property>
+         <obj_property name="ObjectShortName">WORDS[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/addra" type="array">
+         <obj_property name="ElementShortName">addra[12:0]</obj_property>
+         <obj_property name="ObjectShortName">addra[12:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/clka" type="logic">
+         <obj_property name="ElementShortName">clka</obj_property>
+         <obj_property name="ObjectShortName">clka</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/dina" type="array">
+         <obj_property name="ElementShortName">dina[7:0]</obj_property>
+         <obj_property name="ObjectShortName">dina[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/douta" type="array">
+         <obj_property name="ElementShortName">douta[7:0]</obj_property>
+         <obj_property name="ObjectShortName">douta[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/CPU/ProgCount/PC_COUNT" type="array">
+         <obj_property name="ElementShortName">PC_COUNT[15:0]</obj_property>
+         <obj_property name="ObjectShortName">PC_COUNT[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/br_vram/wea" type="logic">
+         <obj_property name="ElementShortName">wea</obj_property>
+         <obj_property name="ObjectShortName">wea</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group333" type="group">
+      <obj_property name="label">Video RAM)8000-9FFF</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/cs_ppu_vram" type="logic">
+         <obj_property name="ElementShortName">cs_ppu_vram</obj_property>
+         <obj_property name="ObjectShortName">cs_ppu_vram</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/wr_ppu_vram" type="logic">
+         <obj_property name="ElementShortName">wr_ppu_vram</obj_property>
+         <obj_property name="ObjectShortName">wr_ppu_vram</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/memory_map/rd_ppu_vram" type="logic">
+         <obj_property name="ElementShortName">rd_ppu_vram</obj_property>
+         <obj_property name="ObjectShortName">rd_ppu_vram</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group1439" type="group">
+      <obj_property name="label">VRAM_ACC_EXT</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/vram_access_ext" type="logic">
+         <obj_property name="ElementShortName">vram_access_ext</obj_property>
+         <obj_property name="ObjectShortName">vram_access_ext</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/vram_access_int" type="logic">
+         <obj_property name="ElementShortName">vram_access_int</obj_property>
+         <obj_property name="ObjectShortName">vram_access_int</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU/reg_mode" type="array">
+      <obj_property name="ElementShortName">reg_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="group1464" type="group">
+      <obj_property name="label">BROM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/CLK" type="logic">
+         <obj_property name="ElementShortName">CLK</obj_property>
+         <obj_property name="ObjectShortName">CLK</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_ADDR" type="array">
+         <obj_property name="ElementShortName">BROM_ADDR[15:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_ADDR[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/PROG_COUNT" type="array">
+         <obj_property name="ElementShortName">PROG_COUNT[15:0]</obj_property>
+         <obj_property name="ObjectShortName">PROG_COUNT[15:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_IR" type="array">
+         <obj_property name="ElementShortName">BROM_IR[7:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_IR[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/BROM_DATA" type="array">
+         <obj_property name="ElementShortName">BROM_DATA[7:0]</obj_property>
+         <obj_property name="ObjectShortName">BROM_DATA[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/CPU_TEST_BENCH/DUT/BROM/rom" type="array">
+         <obj_property name="ElementShortName">rom[0:255][7:0]</obj_property>
+         <obj_property name="ObjectShortName">rom[0:255][7:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/PPU_PIXEL" type="array">
+      <obj_property name="ElementShortName">PPU_PIXEL[1:0]</obj_property>
+      <obj_property name="ObjectShortName">PPU_PIXEL[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/VGA_HS" type="logic">
+      <obj_property name="ElementShortName">VGA_HS</obj_property>
+      <obj_property name="ObjectShortName">VGA_HS</obj_property>
+   </wvobject>
+   <wvobject fp_name="/CPU_TEST_BENCH/DUT/VGA_VS" type="logic">
+      <obj_property name="ElementShortName">VGA_VS</obj_property>
+      <obj_property name="ObjectShortName">VGA_VS</obj_property>
+   </wvobject>
+>>>>>>> Stashed changes
 </wave_config>

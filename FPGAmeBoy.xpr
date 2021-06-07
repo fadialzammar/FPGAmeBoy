@@ -45,7 +45,11 @@
     <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="basys3"/>
+<<<<<<< Updated upstream
     <Option Name="WTXSimLaunchSim" Val="185"/>
+=======
+    <Option Name="WTXSimLaunchSim" Val="470"/>
+>>>>>>> Stashed changes
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -321,26 +325,50 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+<<<<<<< Updated upstream
       <File Path="$PSRCDIR/sources_1/new/intr_tests.mem">
+=======
+      <File Path="$PSRCDIR/sources_1/new/timer.v">
+>>>>>>> Stashed changes
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+<<<<<<< Updated upstream
       <File Path="$PPRDIR/CPU_TEST_BENCH_behav.wcfg">
+=======
+      <File Path="$PSRCDIR/sources_1/new/controller.sv">
+>>>>>>> Stashed changes
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+<<<<<<< Updated upstream
       <File Path="$PSRCDIR/sources_1/new/ld_tests.mem">
+=======
+      <File Path="$PSRCDIR/sources_1/new/BOOTROM.mem">
+>>>>>>> Stashed changes
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+<<<<<<< Updated upstream
       <File Path="$PSRCDIR/sources_1/new/ld_test_rom.mem">
+=======
+      <File Path="$PPRDIR/../../Tetris_Time.mem">
+>>>>>>> Stashed changes
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/sync_generator.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>

@@ -5,7 +5,11 @@
 module top(
     input CLK,
     input RST,
+<<<<<<< Updated upstream
     input [4:0] INTR,
+=======
+    input [3:0] BTN_IN,
+>>>>>>> Stashed changes
     // Display outputs
     output logic VGA_HS, VGA_VS,
     output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
@@ -15,12 +19,29 @@ module top(
 // Clock Divider (10MHz clock)  /*** Currently not connected ***/
 ////////////////////////////
     logic SCLK;
+<<<<<<< Updated upstream
     
     C_DIV divider(
         .CLK        (CLK),
         .CLK_DIV    (SCLK)
     );
     
+=======
+//    assign SCLK = CLK;  
+C_DIV divider(
+    .CLK        (CLK),
+    .CLK_DIV    (SCLK)
+);
+////////////////////////////
+// Sync Pulse Generator
+////////////////////////////
+sync_generator sync_gen(
+    .CLK(CLK),
+    .RST(RST),
+    .HSYNC(VGA_HS),
+    .VSYNC(VGA_VS)
+);  
+>>>>>>> Stashed changes
 ////////////////////////////
 // Boot ROM
 ////////////////////////////
@@ -104,9 +125,27 @@ logic [7:0] OAM_DIN, OAM_DOUT;
 logic PIXEL_CLK, PIXEL_VALID;
 logic [1:0] PPU_PIXEL;
 
+<<<<<<< Updated upstream
 assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 assign VRAM_RE = ~VRAM_HOLD;
 assign OAM_RE = ~OAM_HOLD;
+=======
+logic [4:0] INTR;
+logic ppu_vblank_req, ppu_lcdc_req, timer_intr_req, int_ctrl;
+
+// Initialize interrupt requests
+initial begin
+    ppu_vblank_req = 0;
+    ppu_lcdc_req = 0;
+    timer_intr_req = 0;
+    int_ctrl = 0;
+end
+
+assign INTR = {int_ctrl, 1'b0, timer_intr_req, ppu_lcdc_req, ppu_vblank_req}; // Serial transfer not connected
+//assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
+//assign VRAM_RE = ~VRAM_HOLD;
+//assign OAM_RE = ~OAM_HOLD;
+>>>>>>> Stashed changes
 
 logic [7:0] ppu_debug_scx;
 logic [7:0] ppu_debug_scy;
@@ -141,8 +180,8 @@ ppu PPU(
     .cpl            (PIXEL_CLK),          // Pixel Clock, = ~clk
     .pixel          (PPU_PIXEL),        // Pixel Output
     .valid          (PIXEL_VALID),  // Pixel Valid
-    .hs             (VGA_HS),           // Horizontal Sync, High Valid
-    .vs             (VGA_VS),           // Vertical Sync, High Valid
+    //.hs             (VGA_HS),           // Horizontal Sync, High Valid
+    //.vs             (VGA_VS),           // Vertical Sync, High Valid
     //Debug output
     .scx            (ppu_debug_scx),
     .scy            (ppu_debug_scy),
@@ -300,29 +339,30 @@ memory_map memory_map(
 // Mapping 2-bit pixel color to a 12-bit VGA output
 always_comb begin
     case (PPU_PIXEL)
-        2'b00: begin
+        2'b11: begin
             VGA_RED = 4'hf;
             VGA_GREEN = 4'hf;
             VGA_BLUE = 4'hf;
         end
-        2'b01: begin
-            VGA_RED = 4'hb;
+        2'b10: begin
+            VGA_RED = 4'hf;
             VGA_GREEN = 4'hb;
             VGA_BLUE = 4'hb;
         end
-        2'b10: begin
-            VGA_RED = 4'h6;
+        2'b01: begin
+            VGA_RED = 4'hf;
             VGA_GREEN = 4'h6;
             VGA_BLUE = 4'h6;
         end
-        2'b11: begin
-            VGA_RED = 4'h0;
+        2'b00: begin
+            VGA_RED = 4'hf;
             VGA_GREEN = 4'h0;
             VGA_BLUE = 4'h0;
         end
     endcase
 end
 
+<<<<<<< Updated upstream
    
    
  
@@ -352,4 +392,7 @@ end
         .INT_CLR(INT_CLR)
     );
     
+=======
+
+>>>>>>> Stashed changes
 endmodule
