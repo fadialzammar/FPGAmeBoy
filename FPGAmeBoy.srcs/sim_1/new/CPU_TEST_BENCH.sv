@@ -27,6 +27,7 @@ module CPU_TEST_BENCH();
     logic VGA_HS, VGA_VS;
     logic [1:0] INTR_in = 0;
     logic [3:0] BTN_IN = 0;
+    logic [1:0] COL_OUT = 0;
     logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE;
      
      top DUT (.*);

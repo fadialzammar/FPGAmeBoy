@@ -88,14 +88,6 @@ module memory_map(
 	output				wr_ram,
 	output				rd_ram,
    
-   //Controller Manager FF00
-    output 	[15:0] 	A_ctrlMgr,
-	output 	[7:0] 	Di_ctrlMgr,
-	input	[7:0]		Do_ctrlMgr,
-	output				cs_ctrlMgr,
-	output				wr_ctrlMgr,
-	output				rd_ctrlMgr,
-   
    //Timer FF04-FF07
 	output 	[15:0] 	A_timer,
 	output 	[7:0] 	Di_timer,

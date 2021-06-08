@@ -198,41 +198,65 @@ module ControlUnit(
      logic SP_HIGH_FLAG = 1'b0;
      // Used for saving the opcode into the SP state
      logic [7:0] SP_OPCODE = 8'h00;
+     logic SP_OPCODE_LD = 1'b0;
+     logic SP_OPCODE_INTR = 1'b0;
 
      // Flag for CB prefixes
      logic CB_FLAG = 1'b0;
+     logic CB_FLAG_SET = 1'b0;
+     logic CB_FLAG_CLR = 1'b0;
      // Flag for Immediate value usage
+     logic IMMED_SET = 1'b0;
+     logic IMMED_CLR = 1'b0;
      logic IMMED_FLAG = 1'b0;
      
      // Flags for HL pointer state
      logic HL_FLAG = 1'b0;
      logic HL_CODE = 1'b0;
+     logic HL_CODE_SET = 1'b0;
+     logic HL_CODE_CLR = 1'b0;
      logic HL_FUNC_FLAG = 1'b0;
+     logic HL_FUNC_FLAG_SET = 1'b0;
+     logic HL_FUNC_FLAG_CLR = 1'b0;
      logic [2:0] HL_BIT_SEL = 3'b000;
+     logic HL_BIT_SEL_LD = 1'b0;
      logic [7:0] HL_DATA = 8'h00;
   
      // FLag for 16 bit ALU state
-     logic ALU_16=1'b0;
-     logic [7:0]PS_OPCODE = 8'b00000000;
+     logic ALU_16 = 1'b0;
      
      // Store ALU function for HL States
      logic [4:0] HL_ALU_FUN = 5'b00000;
+     logic [4:0] HL_ALU_FUN_VAL;
+     logic HL_ALU_FUN_LD = 1'b0;
     
      logic IMMED_16_FLAG = 1'b0;
      // Flag for Immediate Low Byte Load
      logic LOW_IMMED = 1'b0;
      logic HIGH_IMMED = 1'b0;
+     logic LOW_IMMED_SET = 1'b0;
+     logic LOW_IMMED_CLR = 1'b0;
+     logic HIGH_IMMED_SET = 1'b0;
+     logic HIGH_IMMED_CLR = 1'b0;
      //Used for saving the last immediate address values
      logic [7:0] LAST_IMMED_ADDR_LOW, LAST_IMMED_ADDR_HIGH;
+     logic LAST_IMMED_ADDR_LOW_LD = 1'b0;
+     logic LAST_IMMED_ADDR_HIGH_LD = 1'b0;
      //Used for saving the last immediate address values
-     logic [7:0] LAST_IMMED_DATA_LOW, LAST_IMMED_DATA_HIGH;
+     logic [7:0] LAST_IMMED_DATA_LOW;
+     logic LAST_IMMED_DATA_LOW_LD = 1'b0;
      // Flags for PUSH and POP
      logic POP_FLAG = 1'b0;
-     logic PUSH_FLAG = 1'b0;     
+     logic PUSH_FLAG = 1'b0;    
+     logic PUSH_SET = 1'b0;
+     logic PUSH_CLR = 1'b0;
+     logic POP_SET = 1'b0; 
+     logic POP_CLR = 1'b0;
      //flag for memory read
      logic MEM_RE;  
      // Immediate Value Select 
-     logic [7:0] OPCODE_HOLD = 8'h00;       
+     logic [7:0] OPCODE_HOLD = 8'h00;
+     logic OPCODE_HOLD_LD = 1'b0;       
      logic [7:0] FLAGS;
      // Flag format for the Gameboy
      assign FLAGS = {Z,N,H,C,4'b0000};
@@ -242,7 +266,15 @@ module ControlUnit(
 
      // Interrupt Master Enable
      logic [1:0] IME_DELAY = 0;
+     logic [1:0] IME_DELAY_VAL = 0;
+     logic IME_EI_LD = 1'b0;
+     logic IME_DI_LD = 1'b0;
+     logic IME_DELAY_CLR = 1'b0;
      logic IME_EN = 0;
+     logic IME_EN_SET = 1'b0;
+     logic IME_EN_CLR = 1'b0;
+     logic IME_SET = 1'b0;
+     logic IME_CLR = 1'b0;
      logic INTR_HOLD = 0;
      logic FETCH_FLAG = 0;
      logic WAIT_FLAG = 0;
@@ -292,6 +324,8 @@ module ControlUnit(
      // RST waits
      localparam RST_WAIT = 5'd13;
      
+     logic RST_WAIT_LD = 0;
+     
     always_ff @(posedge CLK) begin
         if (RESET)
             PS <= INIT;
@@ -310,6 +344,92 @@ module ControlUnit(
             WAIT_COUNTER <= WAIT_COUNTER - 1;
     end
     
+    // Goodbye latches
+    always_ff @(posedge CLK) begin
+        // IMMED FLAG
+        if (IMMED_SET)
+            IMMED_FLAG <= 1'b1;
+        else if (IMMED_CLR)
+            IMMED_FLAG <= 1'b0;
+        // POP FLAG
+        if (POP_SET)
+            POP_FLAG <= 1'b1;
+        else if (POP_CLR)
+            POP_FLAG <= 1'b0;
+        // PUSH FLAG
+        if (PUSH_SET)
+            PUSH_FLAG <= 1'b1;
+        else if (PUSH_CLR)
+            PUSH_FLAG <= 1'b0;    
+        //  IME_DELAY   
+        if (IME_DELAY_CLR)
+            IME_DELAY <= 0;
+        // Might need to be PS
+        else if (IME_DELAY > 0 && NS == FETCH)
+            IME_DELAY <= IME_DELAY - 1;
+        else if (IME_EI_LD)
+            IME_DELAY <= 2'b10;
+        else if (IME_DI_LD)
+            IME_DELAY <= 2'b01;
+        // LOW IMMED FLAG
+        if (LOW_IMMED_SET)
+            LOW_IMMED <= 1'b1;
+        else if (LOW_IMMED_CLR)
+            LOW_IMMED <= 1'b0;
+        // HIGH IMMED FLAG
+        if (HIGH_IMMED_SET)
+            HIGH_IMMED <= 1'b1;
+        else if (HIGH_IMMED_CLR)
+            HIGH_IMMED <= 1'b0;
+        // SP_OPCODE
+        if (SP_OPCODE_LD)
+            SP_OPCODE <= OPCODE;
+        else if (SP_OPCODE_INTR)
+            SP_OPCODE <= 8'h00;
+        // OPCPDE_HOLD
+        if (OPCODE_HOLD_LD)
+            OPCODE_HOLD <= OPCODE;
+        // CB FLAG
+        if (CB_FLAG_SET)
+            CB_FLAG <= 1'b1;
+        else if (CB_FLAG_CLR)
+            CB_FLAG <= 1'b0;
+        // HL FUNC FLAG
+        if (HL_FUNC_FLAG_SET)
+            HL_FUNC_FLAG <= HL_ARITH;
+        else if (HL_FUNC_FLAG_CLR)
+            HL_FUNC_FLAG <= HL_LD;
+        // HL CODE 
+        if (HL_CODE_SET)
+            HL_CODE <= 1'b1;
+        else if (HL_CODE_CLR)
+            HL_CODE <= 1'b0;
+        // HL BIT SEL
+        if (HL_BIT_SEL_LD)
+            HL_BIT_SEL <= OPCODE[5:3];
+        // HL ALU FUN
+        if (HL_ALU_FUN_LD)
+            HL_ALU_FUN <= HL_ALU_FUN_VAL; 
+        // LAST_IMMED_ADDR_LOW
+        if (LAST_IMMED_ADDR_LOW_LD)
+            LAST_IMMED_ADDR_LOW <= IMMED_ADDR_LOW;
+        // LAST_IMMED_ADDR_HIGH
+        if (LAST_IMMED_ADDR_HIGH_LD)
+            LAST_IMMED_ADDR_HIGH <= IMMED_ADDR_HIGH;
+        // LAST_IMMED_DATA_LOW
+        if (LAST_IMMED_DATA_LOW_LD)
+            LAST_IMMED_DATA_LOW <= IMMED_DATA_LOW;
+        if (IME_EN_SET)
+            IME_EN <= 1'b1;
+        else if (IME_EN_CLR)
+            IME_EN <= 1'b0;
+        if (IME_SET)
+            IME <= IME_EN;
+        else if (IME_CLR)
+            IME <= 0;
+    end
+    
+    
     always_comb begin
         I_SET = 0; I_CLR = 0; IO_STRB = 0;
         PC_LD = 0; PC_INC = 0; PC_MUX_SEL = 0;
@@ -318,7 +438,7 @@ module ControlUnit(
         SP_LD=0; SP_INCR=0; SP_DECR=0; SP_DIN_SEL = 0;
         MEM_WE=0; MEM_HOLD = 0; MEM_DATA_SEL=0; MEM_ADDR_SEL=0; 
         IMMED_ADDR_LOW = 0; IMMED_ADDR_HIGH = 0;
-        IMMED_DATA_LOW = 0; IMMED_DATA_LOW = 0;
+        IMMED_DATA_LOW = 0; IMMED_DATA_HIGH = 0;
         ALU_OPY_SEL = 0; ALU_OPX_SEL = 0; ALU_SEL = 0;
         ALU_16_A_SEL = 0; //ALU_16_B_SEL = 0; 
         C_FLAG_LD = 0; C_FLAG_SET = 0; C_FLAG_CLR = 0; 
@@ -327,11 +447,28 @@ module ControlUnit(
         H_FLAG_LD = 0; H_FLAG_SET = 0; H_FLAG_CLR = 0; FLG_LD_SEL = 0;  
         HL_FLAG = 0; BIT_SEL = 0; HL_HOLD = 0; MEM_HOLD = 0; 
         INT_CLR = 0; WAIT_LD = 0;
+        // Not Registers
+        CALL_MUX_SEL = 0; ALU_16_SEL = 0; 
+        SP_LOW_FLAG = 0; SP_HIGH_FLAG = 0; ALU_16 = 0;
+        MEM_ADDR_BUF_WE = 0; FLAGS_DATA_SEL = 0; RST_MUX_SEL = 0;
+        WAIT_VAL = 5'h0; HL_ALU_FUN_VAL = 5'h0;
+        PC_ADDR_OUT = 0; RST_WAIT_LD = 0;
+        // Double check if used
+        INTR_REG_SEL = 0; WAIT_FLAG = 0;
+        // Rip latches
+        IMMED_SET = 0; IMMED_CLR = 0;
+        PUSH_SET = 0; PUSH_CLR = 0;
+        POP_SET = 0; POP_CLR = 0;
+        IME_EI_LD = 0; IME_DI_LD = 0; IME_DELAY_CLR = 0;
+        SP_OPCODE_LD = 0; SP_OPCODE_INTR = 0; OPCODE_HOLD_LD = 0;
+        LOW_IMMED_SET = 0; LOW_IMMED_CLR = 0; HIGH_IMMED_SET = 0; HIGH_IMMED_CLR = 0;
+        CB_FLAG_SET = 0; CB_FLAG_CLR = 0;
+        HL_FUNC_FLAG_SET = 0; HL_FUNC_FLAG_CLR = 0; HL_CODE_SET = 0; HL_CODE_CLR = 0;
+        HL_BIT_SEL_LD = 0; HL_ALU_FUN_LD = 0;
+        LAST_IMMED_ADDR_LOW_LD = 0; LAST_IMMED_ADDR_HIGH_LD = 0; LAST_IMMED_DATA_LOW_LD = 0;
+        IME_SET = 0; IME_CLR = 0; IME_EN_SET = 0; IME_EN_CLR = 0;
+
         
-        if (INTR) 
-        begin
-            NS = INTERRUPT;
-        end
         case (PS)
             INIT: 
             begin
@@ -351,20 +488,28 @@ module ControlUnit(
                 else if (IMMED_FLAG == 1)
                     begin
                         // Reset the LOW_IMMED Flag if the HIGH_LOW Flag is high
-                        LOW_IMMED = ~HIGH_IMMED;
+                        if (HIGH_IMMED)
+                            LOW_IMMED_CLR = 1'b1;
+                        else
+                            LOW_IMMED_SET = 1'b1;
                         NS = IMMED;
                     end               
                 else
-                    NS = EXEC;     
-                    
-                // IME delay logic
-                if(IME_DELAY==1) 
-                begin
-                    IME = IME_EN;
-                    IME_DELAY = 0;
-                end
-                else if (IME_DELAY > 0)
-                    IME_DELAY = IME_DELAY - 1;
+                    NS = EXEC;   
+                  
+                if (IME_DELAY == 1)
+                    begin
+                        IME_SET = 1'b1;
+                        IME_DELAY_CLR = 1'b1;
+                    end
+//                // IME delay logic
+//                if(IME_DELAY==1) 
+//                begin
+//                    IME = IME_EN;
+//                    IME_DELAY = 0;
+//                end
+//                else if (IME_DELAY > 0)
+//                    IME_DELAY = IME_DELAY - 1;
             end
 
             EXEC:
@@ -388,13 +533,15 @@ module ControlUnit(
                     end
                     8'b11111011:  // EI enable interrupt
                     begin 
-                        IME_DELAY = 2;
-                        IME_EN = 1;
+                        //IME_DELAY = 2;
+                        IME_EI_LD = 1'b1;
+                        IME_EN_SET = 1'b1;
                     end
                     8'b11110011:  // DI disable interrupt
                     begin 
-                        IME_DELAY = 1;
-                        IME_EN = 0; 
+                        //IME_DELAY = 1;
+                        IME_DI_LD = 1'b1;
+                        IME_EN_CLR = 1'b1; 
                     end
                     8'b00010000: // STOP 
                     begin
@@ -409,10 +556,10 @@ module ControlUnit(
                     8'b00001000: // LD (a16), SP
                     begin                               
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
-                        IMMED_FLAG = 1'b1;                        
+                        IMMED_SET = 1'b1;                        
                         // Set the Immediate Select to the OPCODE
-                        OPCODE_HOLD = OPCODE;
-                        LOW_IMMED = 1'b1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        LOW_IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = SP_IMMED_16_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -422,11 +569,11 @@ module ControlUnit(
                     8'b00??0001:
                     begin
                         // Set the Immediate Select to the OPCODE
-                        OPCODE_HOLD = OPCODE; 
+                        OPCODE_HOLD_LD = 1'b1; 
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
-                        IMMED_FLAG = 1'b1;  
+                        IMMED_SET = 1'b1;  
                         // Flag for Immediate Low Byte Load
-                        LOW_IMMED = 1'b1;    
+                        LOW_IMMED_SET = 1'b1;    
                         // Set Wait Counter
                         WAIT_VAL = LD_16_REG_WAIT;
                         WAIT_LD = 1'b1;
@@ -476,7 +623,8 @@ module ControlUnit(
                             
                             2'b11: // INC (HL) ////////////
                                 begin
-                                HL_ALU_FUN = INC_ALU;                      
+                                HL_ALU_FUN_VAL = INC_ALU;  
+                                HL_ALU_FUN_LD = 1'b1;                    
                                 RF_ADRX = REG_H;
                                 RF_ADRY = REG_L;
                                 
@@ -493,7 +641,7 @@ module ControlUnit(
                                 H_FLAG_LD = 0;                            
                              
                                 HL_FLAG = 1;
-                                HL_FUNC_FLAG = HL_ARITH;
+                                HL_FUNC_FLAG_SET = 1'b1;
                                 NS = HL_FETCH;
                                 
                                 // Set Wait Counter
@@ -543,7 +691,8 @@ module ControlUnit(
                             
                              2'b11: // DEC (HL) ////////////=========== Update with (HL) code
                                 begin
-                                HL_ALU_FUN = DEC_ALU;                      
+                                HL_ALU_FUN_VAL = DEC_ALU;    
+                                HL_ALU_FUN_LD = 1'b1;                  
                                 RF_ADRX = REG_H;
                                 RF_ADRY = REG_L;
                                 
@@ -560,7 +709,7 @@ module ControlUnit(
                                 H_FLAG_LD = 0;                            
                              
                                 HL_FLAG = 1;
-                                HL_FUNC_FLAG = HL_ARITH;
+                                HL_FUNC_FLAG_SET = 1'b1;
                                 NS = HL_FETCH;
                                 
                                 // Set Wait Counter
@@ -823,17 +972,17 @@ module ControlUnit(
                     8'b00???110: begin  // LD r, n
                     // ***FIX ME***
                         if (OPCODE[5:3] == 3'b110) begin    // LD (HL), n
-                            HL_FUNC_FLAG = HL_LD;
+                            HL_FUNC_FLAG_CLR = 1'b1;
                             HL_FLAG = 1;
-                            OPCODE_HOLD = OPCODE;
+                            OPCODE_HOLD_LD = 1'b1;
                             PC_INC = 1;//*************
                             // Set Wait Counter
                             WAIT_VAL = LD_PTR_WAIT;
                             WAIT_LD = 1'b1;
                         end
                         else begin  // normal LD r8, n8
-                            IMMED_FLAG = 1;
-                            OPCODE_HOLD = OPCODE;
+                            IMMED_SET = 1'b1;
+                            OPCODE_HOLD_LD = 1'b1;
                             // Set Wait Counter
                             WAIT_VAL = LD_IMMED_WAIT;
                             WAIT_LD = 1'b1;
@@ -849,9 +998,9 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;   
                             MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
-                            OPCODE_HOLD = OPCODE;
+                            OPCODE_HOLD_LD = 1'b1;
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_LD;
+                            HL_FUNC_FLAG_CLR = 1'b1;
                             // Set Wait Counter
                             WAIT_VAL = LD_PTR_WAIT;
                             WAIT_LD = 1'b1;
@@ -864,9 +1013,9 @@ module ControlUnit(
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
-                            OPCODE_HOLD = OPCODE;
+                            OPCODE_HOLD_LD = 1'b1;
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_LD;
+                            HL_FUNC_FLAG_CLR = 1'b1;
                             // Set Wait Counter
                             WAIT_VAL = LD_PTR_WAIT;
                             WAIT_LD = 1'b1;
@@ -884,9 +1033,9 @@ module ControlUnit(
                         RF_ADRX = REG_B;
                         RF_ADRY = REG_C;
                         MEM_ADDR_BUF_WE = 1;
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -897,9 +1046,9 @@ module ControlUnit(
                         RF_ADRX = REG_D;
                         RF_ADRY = REG_E;
                         MEM_ADDR_BUF_WE = 1;
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -910,9 +1059,9 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -922,9 +1071,9 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         MEM_ADDR_BUF_WE = 1;    // need to hold reg value so we can read HL
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -934,9 +1083,9 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         MEM_ADDR_BUF_WE = 1;
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -946,9 +1095,9 @@ module ControlUnit(
                         RF_ADRX = REG_H;
                         RF_ADRY = REG_L;
                         MEM_ADDR_BUF_WE = 1;
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_WAIT;
                         WAIT_LD = 1'b1;
@@ -958,9 +1107,9 @@ module ControlUnit(
                         //***FIX ME***
                         // aka LD (FF00 + u8), A
                         RF_ADRX = REG_A;
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         HL_FLAG = 1;
-                        HL_FUNC_FLAG = HL_LD;
+                        HL_FUNC_FLAG_CLR = 1'b1;
                         PC_INC = 1; //*********
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_IMMED_WAIT;
@@ -993,8 +1142,8 @@ module ControlUnit(
                     end
 
                     8'b11111010: begin // LD A, (nn), (nn) = 16-bit immediate, LSB first
-                        OPCODE_HOLD = OPCODE;
-                        IMMED_FLAG = 1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_IMMED_16_WAIT;
                         WAIT_LD = 1'b1;
@@ -1002,8 +1151,8 @@ module ControlUnit(
 
                     8'b11101010: begin // LD (nn), A, (nn) = 16-bit immediate, LSB first
                     // TODO: combine
-                        OPCODE_HOLD = OPCODE;
-                        IMMED_FLAG = 1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = LD_PTR_IMMED_16_WAIT;
                         WAIT_LD = 1'b1;
@@ -1036,7 +1185,8 @@ module ControlUnit(
                         // ADD A, (HL) 
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = ADD_ALU;                      
+                            HL_ALU_FUN_VAL = ADD_ALU; 
+                            HL_ALU_FUN_LD = 1'b1;                     
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1053,7 +1203,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                          
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1087,7 +1237,8 @@ module ControlUnit(
                         // ADC A, (HL)
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = ADC_ALU;                      
+                            HL_ALU_FUN_VAL = ADC_ALU;
+                            HL_ALU_FUN_LD = 1'b1;                      
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1102,7 +1253,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;                         
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1137,7 +1288,8 @@ module ControlUnit(
                         if (OPCODE[2:0] == 3'b110)
 
                         begin
-                            HL_ALU_FUN = AND_ALU;                      
+                            HL_ALU_FUN_VAL = AND_ALU;    
+                            HL_ALU_FUN_LD = 1'b1;                  
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1152,7 +1304,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1186,7 +1338,8 @@ module ControlUnit(
                         // CP A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = CP_ALU;                      
+                            HL_ALU_FUN_VAL = CP_ALU;
+                            HL_ALU_FUN_LD = 1'b1;                      
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1201,7 +1354,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1235,7 +1388,8 @@ module ControlUnit(
                         // OR A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = 5'b00101;                      
+                            HL_ALU_FUN_VAL = 5'b00101;      
+                            HL_ALU_FUN_LD = 1'b1;                
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1250,7 +1404,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1284,7 +1438,8 @@ module ControlUnit(
                         // SBC A, (HL)
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = SBC_ALU;                      
+                            HL_ALU_FUN_VAL = SBC_ALU;   
+                            HL_ALU_FUN_LD = 1'b1;                   
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1299,7 +1454,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1334,7 +1489,8 @@ module ControlUnit(
                         // SUB A, (HL)  /// FIX Later  
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = SUB_ALU;                      
+                            HL_ALU_FUN_VAL = SUB_ALU;   
+                            HL_ALU_FUN_LD = 1'b1;                   
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1349,7 +1505,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1383,7 +1539,8 @@ module ControlUnit(
                         // XOR A, (HL)
                         if (OPCODE[2:0] == 3'b110)
                         begin
-                            HL_ALU_FUN = XOR_ALU;                      
+                            HL_ALU_FUN_VAL = XOR_ALU;   
+                            HL_ALU_FUN_LD = 1'b1;                   
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
                             
@@ -1398,7 +1555,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = ALU_HL_PTR_WAIT;
@@ -1408,8 +1565,8 @@ module ControlUnit(
                     
                     8'b11??0001: // POP
                     begin
-                        POP_FLAG = 1'b1;
-                        SP_OPCODE = OPCODE;
+                        POP_SET = 1'b1;
+                        SP_OPCODE_LD = 1'b1;
                         SP_HIGH_FLAG = 1'b1;       
                         // Set Wait Counter
                         WAIT_VAL = SP_WAIT;
@@ -1418,8 +1575,8 @@ module ControlUnit(
                     
                     8'b11??0101: // PUSH 
                     begin 
-                        PUSH_FLAG = 1'b1;                        
-                        SP_OPCODE = OPCODE;
+                        PUSH_SET = 1'b1;                        
+                        SP_OPCODE_LD = 1'b1;
                         SP_LOW_FLAG = 1'b1;
                         // Decrement before pushing
                         SP_DECR = 1'b1;    
@@ -1431,9 +1588,9 @@ module ControlUnit(
                     8'b11??0110: // ADD, SUB, AND, OR with Immediate values 
                     begin
                         // Save opcode for the next cycle 
-                        OPCODE_HOLD = OPCODE;  
+                        OPCODE_HOLD_LD = 1'b1;  
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
-                        IMMED_FLAG = 1'b1;  
+                        IMMED_SET = 1'b1;  
                         // Set Wait Counter
                         WAIT_VAL = ALU_IMMED_WAIT;
                         WAIT_LD = 1'b1;                                                           
@@ -1442,9 +1599,9 @@ module ControlUnit(
                     8'b11??1110: // ADC, SBC, XOR, CP with Immediate values 
                     begin
                         // Save opcode for the next cycle
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
-                        IMMED_FLAG = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = ALU_IMMED_WAIT;
                         WAIT_LD = 1'b1;
@@ -1452,7 +1609,7 @@ module ControlUnit(
                     
                     8'b11001011: // CB Prefix command
                     begin
-                        CB_FLAG = 1'b1;
+                        CB_FLAG_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = CB_WAIT;
                         WAIT_LD = 1'b1;
@@ -1461,9 +1618,9 @@ module ControlUnit(
                     8'b11111000: // LD HL, SP + r8
                     begin                               
                         // Save opcode for the next cycle
-                        OPCODE_HOLD = OPCODE;
+                        OPCODE_HOLD_LD = 1'b1;
                         // Set the Immediate flag high to transition to the Immediate state after the next fetch
-                        IMMED_FLAG = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = SP_WAIT;
                         WAIT_LD = 1'b1;
@@ -1492,8 +1649,8 @@ module ControlUnit(
                             begin
                                 if (!Z)
                                     begin
-                                        POP_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
+                                        POP_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
                                         SP_HIGH_FLAG = 1'b1; 
                                         // Set Wait Counter
                                         WAIT_VAL = RET_TAKEN_WAIT;
@@ -1511,8 +1668,8 @@ module ControlUnit(
                             begin                          
                                 if (Z)
                                     begin
-                                        POP_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
+                                        POP_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
                                         SP_HIGH_FLAG = 1'b1; 
                                         // Set Wait Counter
                                         WAIT_VAL = RET_TAKEN_WAIT;
@@ -1530,8 +1687,8 @@ module ControlUnit(
                             begin
                                 if (!C)
                                     begin
-                                        POP_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
+                                        POP_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
                                         SP_HIGH_FLAG = 1'b1; 
                                         // Set Wait Counter
                                         WAIT_VAL = RET_TAKEN_WAIT;
@@ -1549,8 +1706,8 @@ module ControlUnit(
                             begin
                                 if (C)
                                     begin
-                                        POP_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
+                                        POP_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
                                         SP_HIGH_FLAG = 1'b1; 
                                         // Set Wait Counter
                                         WAIT_VAL = RET_TAKEN_WAIT;
@@ -1568,8 +1725,8 @@ module ControlUnit(
                     
                     8'b11001001: // RET : Pop two bytes from stack & jump to that address
                     begin
-                        POP_FLAG = 1'b1;
-                        SP_OPCODE = OPCODE;
+                        POP_SET = 1'b1;
+                        SP_OPCODE_LD = 1'b1;
                         SP_HIGH_FLAG = 1'b1; 
                         // Set Wait Counter
                         WAIT_VAL = RET_WAIT;
@@ -1578,8 +1735,8 @@ module ControlUnit(
                     
                      8'b11011001: // RETI : Pop two bytes from stack & jump to that address and enable interrupts
                     begin
-                        POP_FLAG = 1'b1;
-                        SP_OPCODE = OPCODE;
+                        POP_SET = 1'b1;
+                        SP_OPCODE_LD = 1'b1;
                         SP_HIGH_FLAG = 1'b1; 
                         // Set the Interrupt value high
                         INTR_REG_SEL = INTR_MUX_HIGH;
@@ -1594,9 +1751,9 @@ module ControlUnit(
                     
                     8'b11001101: // CALL nn: Push the PC onto the stack & jump to immediate address
                     begin
-                        PUSH_FLAG = 1'b1;
-                        SP_OPCODE = OPCODE;
-                        OPCODE_HOLD = OPCODE;
+                        PUSH_SET = 1'b1;
+                        SP_OPCODE_LD = 1'b1;
+                        OPCODE_HOLD_LD = 1'b1;
                         SP_LOW_FLAG = 1'b1; 
                         // Decrement before pushing
                         SP_DECR = 1'b1;
@@ -1612,9 +1769,9 @@ module ControlUnit(
                             begin
                                 if (!Z)
                                     begin
-                                        PUSH_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
-                                        OPCODE_HOLD = OPCODE;
+                                        PUSH_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
+                                        OPCODE_HOLD_LD = 1'b1;
                                         SP_LOW_FLAG = 1'b1;
                                         // Decrement before pushing
                                         SP_DECR = 1'b1;
@@ -1637,9 +1794,9 @@ module ControlUnit(
                             begin
                                 if (Z)
                                     begin
-                                        PUSH_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
-                                        OPCODE_HOLD = OPCODE;
+                                        PUSH_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
+                                        OPCODE_HOLD_LD = 1'b1;
                                         SP_LOW_FLAG = 1'b1;
                                         // Decrement before pushing
                                         SP_DECR = 1'b1;
@@ -1662,9 +1819,9 @@ module ControlUnit(
                             begin
                                 if (!C)
                                     begin
-                                        PUSH_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
-                                        OPCODE_HOLD = OPCODE;
+                                        PUSH_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
+                                        OPCODE_HOLD_LD = 1'b1;
                                         SP_LOW_FLAG = 1'b1;
                                         // Decrement before pushing
                                         SP_DECR = 1'b1;
@@ -1687,9 +1844,9 @@ module ControlUnit(
                             begin
                                 if (C)
                                     begin
-                                        PUSH_FLAG = 1'b1;
-                                        SP_OPCODE = OPCODE;
-                                        OPCODE_HOLD = OPCODE;
+                                        PUSH_SET = 1'b1;
+                                        SP_OPCODE_LD = 1'b1;
+                                        OPCODE_HOLD_LD = 1'b1;
                                         SP_LOW_FLAG = 1'b1;
                                         // Decrement before pushing
                                         SP_DECR = 1'b1;
@@ -1714,8 +1871,8 @@ module ControlUnit(
                     //ADD SP.r8
                     8'b11101000: 
                     begin
-                        PS_OPCODE= OPCODE;
-                        ALU_16=1'b1; 
+                        OPCODE_HOLD_LD = 1'b1;
+                        ALU_16 = 1'b1; 
                         // Set Wait Counter
                         WAIT_VAL = ADD_SP_WAIT;
                         WAIT_LD = 1'b1;
@@ -1762,8 +1919,8 @@ module ControlUnit(
                             end
                         endcase       
                                                 
-                        PS_OPCODE= OPCODE;
-                        ALU_16=1'b1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        ALU_16 = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = ALU_16_WAIT;
                         WAIT_LD = 1'b1;
@@ -1811,8 +1968,8 @@ module ControlUnit(
                             end
                         endcase                                                                      
                                               
-                        PS_OPCODE= OPCODE;
-                        ALU_16=1'b1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        ALU_16 = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = ALU_16_WAIT;
                         WAIT_LD = 1'b1;
@@ -1862,8 +2019,8 @@ module ControlUnit(
                             end
                           endcase
                         
-                        ALU_16=1'b1;
-                        PS_OPCODE= OPCODE;
+                        ALU_16 = 1'b1;
+                        OPCODE_HOLD_LD = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = ALU_16_WAIT;
                         WAIT_LD = 1'b1;
@@ -1880,8 +2037,8 @@ module ControlUnit(
                     end
                   
                     8'b11000011: begin //JP (nn), jump to address nn = two byte imeediate value (opcode C3) 
-                        OPCODE_HOLD = OPCODE;
-                        IMMED_FLAG = 1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = JP_TAKEN_WAIT;
                         WAIT_LD = 1'b1;
@@ -1890,8 +2047,8 @@ module ControlUnit(
                     8'b11000010: begin // JP cc, nn cc = NZ jump if Z flag is reset. (opcode C2)
                         if(Z == 0)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JP_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -1910,8 +2067,8 @@ module ControlUnit(
                     8'b11001010: begin //JP if Z flag is set (opcode CA)
                         if(Z == 1)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JP_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -1930,8 +2087,8 @@ module ControlUnit(
                     8'b11010010: begin //JP if C flag is reset (opcode D2)
                         if(C == 0)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JP_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -1950,8 +2107,8 @@ module ControlUnit(
                     8'b11011010: begin // JP if C flag is set (opcode DA)
                         if(C == 1)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JP_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -1976,8 +2133,8 @@ module ControlUnit(
                     end
                     
                     8'b00011000: begin //JR: add n to current address and jump to it (opcode 18)
-                        OPCODE_HOLD = OPCODE;
-                        IMMED_FLAG = 1;
+                        OPCODE_HOLD_LD = 1'b1;
+                        IMMED_SET = 1'b1;
                         // Set Wait Counter
                         WAIT_VAL = JR_TAKEN_WAIT;
                         WAIT_LD = 1'b1;
@@ -1986,8 +2143,8 @@ module ControlUnit(
                     8'b00100000: begin //JR cc, n: if Z flag is reset, add n to current address and jump to it (opcode 20)
                         if(Z == 0)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JR_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -2005,8 +2162,8 @@ module ControlUnit(
                     8'b00101000: begin //JR : if Z flag is set, add n to current address and jump to it (opcode 28)
                         if(Z == 1)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JR_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -2024,8 +2181,8 @@ module ControlUnit(
                     8'b00110000: begin //JR : if C flag is reset, add n to current address and jump to it (opcode 30)
                         if(C == 0)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JR_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -2043,8 +2200,8 @@ module ControlUnit(
                     8'b00111000: begin //JR : if C flag is set, add n to current address and jump to it (opcode 38)
                         if(C == 1)
                             begin
-                                OPCODE_HOLD = OPCODE;
-                                IMMED_FLAG = 1;
+                                OPCODE_HOLD_LD = 1'b1;
+                                IMMED_SET = 1'b1;
                                 // Set Wait Counter
                                 WAIT_VAL = JR_TAKEN_WAIT;
                                 WAIT_LD = 1'b1;
@@ -2078,11 +2235,11 @@ module ControlUnit(
                         else if (SP_HIGH_FLAG) // Transition to the SP sate is the Next State Stack Pointer flag is high
                             NS = SP_HIGH;
                         else if (ALU_16)
-                            NS= ALU16;
+                            NS = ALU16;
                         else if (WAIT_FLAG)
                             NS = HALT;
                         else 
-                            if ( IMMED_FLAG || CB_FLAG || (WAIT_COUNTER == 5'd0))
+                            if ( IMMED_FLAG || IMMED_SET || CB_FLAG_SET || (WAIT_COUNTER == 5'd0))
                                 NS = FETCH;
                             else
                                 NS = WAIT_ST;
@@ -2092,12 +2249,12 @@ module ControlUnit(
             
             ALU16: begin // 16 bit ALU
             
-            case (PS_OPCODE) inside
+            case (OPCODE_HOLD) inside
                 //ADD SP.r8
                 8'b11101000: 
                 begin
                     SP_LD =1;
-                    IMMED_DATA_LOW = PS_OPCODE;
+                    IMMED_DATA_LOW = OPCODE_HOLD;
                     ALU_16_SEL = ADDSP_16_ALU;  
                     ALU_16_A_SEL = ALU16_A_MUX_SP;
                     // Flags
@@ -2122,7 +2279,7 @@ module ControlUnit(
                                 
                 // Flag register data select
                 FLAGS_DATA_SEL = FLAGS_DATA_ALU;
-                case (PS_OPCODE[5:4])
+                case (OPCODE_HOLD[5:4])
                     2'b00: // INC C
                     begin
                         // Register File Addresses
@@ -2165,7 +2322,7 @@ module ControlUnit(
                                 
                 // Flag register data select
                 FLAGS_DATA_SEL = FLAGS_DATA_ALU;
-                case (PS_OPCODE[5:4])
+                case (OPCODE_HOLD[5:4])
                     2'b00: // DEC C
                     begin
                         // Register File Addresses
@@ -2220,7 +2377,7 @@ module ControlUnit(
                 // Register File Addresses
                 RF_ADRX = REG_H;
                                                               
-                case (PS_OPCODE[5:4]) 
+                case (OPCODE_HOLD[5:4]) 
                     2'b00: // ADD B to H
                     begin 
                         // Register File Addresses
@@ -2294,9 +2451,9 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
                                 IMMED_ADDR_HIGH = OPCODE;
                                 // Saves the new Immediate Value Address High Byte for writing
-                                LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;                      
+                                LAST_IMMED_ADDR_HIGH_LD = 1'b1;                      
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
                             end
                             // Low Byte
                             1'b1:
@@ -2304,9 +2461,9 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_ADDR_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                LAST_IMMED_ADDR_LOW_LD = 1'b1;  
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;                      
+                                HIGH_IMMED_SET = 1'b1;                      
                             end
                         endcase                       
                     end
@@ -2327,13 +2484,11 @@ module ControlUnit(
                             1'b0:
                             begin
                                 // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
-                                IMMED_DATA_HIGH = OPCODE;
-                                // Saves the new Immediate Value Address High Byte for writing
-                                LAST_IMMED_DATA_HIGH = IMMED_DATA_HIGH;  
+                                IMMED_DATA_HIGH = OPCODE; 
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_HIGH;                    
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
                                 // Set RegFile Address / SP logic
                                 case(OPCODE_HOLD[5:4])
                                     2'b00: // LD BC, d16
@@ -2374,11 +2529,11 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_DATA_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
+                                LAST_IMMED_DATA_LOW_LD = 1'b1;  
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_LOW;
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;        
+                                HIGH_IMMED_SET = 1'b1;        
                                 // Set RegFile Address / SP logic
                                 case(OPCODE_HOLD[5:4])
                                     2'b00: // LD BC, d16
@@ -2417,7 +2572,7 @@ module ControlUnit(
                         // Set the IMMED_DATA_LOW output value to the immediate value (OPCODE) 
                         IMMED_DATA_LOW = OPCODE;
                         // Saves the new Immediate Value Data Low Byte for writing to the H register
-                        LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;
+                        LAST_IMMED_DATA_LOW_LD = 1'b1;
                         // Set Reg File DIN select to the Stack Pointer + immediate value
                         RF_WR_SEL = RF_MUX_SP_IMMED_LOW; 
                         // Write the Low Byte to register L
@@ -2509,7 +2664,7 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to its proper value
                                 IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;                     
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
@@ -2522,9 +2677,9 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_ADDR_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                LAST_IMMED_ADDR_LOW_LD = 1'b1;  
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;                      
+                                HIGH_IMMED_SET = 1'b1;                      
                             end
                         endcase             
                     end
@@ -2542,7 +2697,7 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to its proper value
                                 IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;                     
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
@@ -2555,9 +2710,9 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_ADDR_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                LAST_IMMED_ADDR_LOW_LD = 1'b1;  
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;                      
+                                HIGH_IMMED_SET = 1'b1;                      
                             end
                         endcase             
                     end                                           
@@ -2574,7 +2729,7 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to its proper value
                                 IMMED_DATA_LOW = LAST_IMMED_DATA_LOW;                     
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
                                 // Load the PC with the immediate value address when the data is valid
                                 PC_LD = 1'b1;
                                 // Set the PC MUX select to the CALL input address and set the CALL MUX select accordingly
@@ -2586,9 +2741,9 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_DATA_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_DATA_LOW = IMMED_DATA_LOW;  
+                                LAST_IMMED_DATA_LOW_LD = 1'b1;  
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;
+                                HIGH_IMMED_SET = 1'b1;
                             end
                         endcase   
                     end
@@ -2625,11 +2780,11 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
                                 IMMED_ADDR_HIGH = OPCODE;
                                 // Saves the new Immediate Value Address High Byte for writing
-                                LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;  
-                                // Load the Stack Pointer with the High and Low Byte immediate values
+                                LAST_IMMED_ADDR_HIGH_LD = 1'b1;  
+                                //  Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_HIGH;                    
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
 
                                 IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;
 
@@ -2644,11 +2799,11 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_ADDR_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                LAST_IMMED_ADDR_LOW_LD = 1'b1;  
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_LOW;
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;     
+                                HIGH_IMMED_SET = 1'b1;     
                             end
                         endcase     
                     end
@@ -2662,11 +2817,11 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_HIGH output value to the immediate value (OPCODE) if the LOW_IMMED flag is low
                                 IMMED_ADDR_HIGH = OPCODE;
                                 // Saves the new Immediate Value Address High Byte for writing
-                                LAST_IMMED_ADDR_HIGH = IMMED_ADDR_HIGH;  
+                                LAST_IMMED_ADDR_HIGH_LD = 1'b1;  
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_HIGH;                    
                                 // Reset the HIGH_IMMED Flag
-                                HIGH_IMMED = 1'b0;
+                                HIGH_IMMED_CLR = 1'b1;
 
                                 IMMED_ADDR_LOW = LAST_IMMED_ADDR_LOW;
 
@@ -2681,17 +2836,19 @@ module ControlUnit(
                                 // Set the IMMED_ADDR_LOW output value to the immediate value (OPCODE) if the LOW_IMMED flag is high
                                 IMMED_ADDR_LOW = OPCODE;
                                 // Saves the new Immediate Value Address Low Byte for writing
-                                LAST_IMMED_ADDR_LOW = IMMED_ADDR_LOW;  
+                                LAST_IMMED_ADDR_LOW_LD = 1'b1;  
                                 // Load the Stack Pointer with the High and Low Byte immediate values
                                 RF_WR_SEL = RF_MUX_IMMED_LOW;
                                 // Set the HIGH_IMMED Flag high
-                                HIGH_IMMED = 1'b1;     
+                                HIGH_IMMED_SET = 1'b1;     
                             end
                         endcase             
                     end
                 endcase
                 // Reset Immediate Flag if the value is not LD (a16), SP and transition back to the fetch state
-                IMMED_FLAG = OPCODE_HOLD == (8'b00001000) || HIGH_IMMED && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
+                IMMED_SET = OPCODE_HOLD == (8'b00001000) || HIGH_IMMED_SET && ~SP_LOW_FLAG ? 1'b1 : 1'b0;
+                // Might not work
+                IMMED_CLR = IMMED_SET ? 1'b0 : 1'b1;
                 // Transition to the SP_LOW state if the Stack Pointer Low Flag is High or the SP_HIGH state if the Stack Pointer High Flag is High
                 if (SP_LOW_FLAG)
                     NS = SP_LOW;
@@ -2699,7 +2856,7 @@ module ControlUnit(
                     NS = SP_HIGH;
                 else
                     // 16 bit immediates are finished but still too fast
-                    if (~IMMED_FLAG && (WAIT_COUNTER > 0))
+                    if (IMMED_CLR && (WAIT_COUNTER > 0))
                         NS = WAIT_ST;
                     else
                         NS = FETCH;
@@ -2843,7 +3000,8 @@ module ControlUnit(
                                 PC_LOW_FLAG = 1'b1;
                                 PC_MUX_SEL = PC_MUX_RET;
                                 PC_LD = 1'b1;
-                                IME_DELAY = 1;
+                                //IME_DELAY = 1;
+                                IME_DI_LD = 1'b1;
                             end
                             
                             8'b110??000: // RET Z, RET NZ, RET C, RET NC : POP low byte and load the PC with the popped address
@@ -2858,7 +3016,7 @@ module ControlUnit(
                          endcase                                               
                         // Reset the Stack Pointer Low flag and the POP flag                       
                         SP_LOW_FLAG = 1'b0;
-                        POP_FLAG = 1'b0;
+                        POP_CLR = 1'b1;
                         // Transition to the FETCH state once both bytes are popped
                         if (WAIT_COUNTER == 0)
                             NS = FETCH; 
@@ -2880,7 +3038,7 @@ module ControlUnit(
                         // Reset the Stack Pointer Low Byte Flag
                         SP_LOW_FLAG = 1'b0;
                         // Reset the Immediate Flag
-                        IMMED_FLAG =1'b0;
+                        IMMED_CLR =1'b1;
                         // Transition to the SP_HIGH state to write the High byte of the Stack Pointer
                         NS = SP_HIGH;
                     end                            
@@ -2944,7 +3102,7 @@ module ControlUnit(
                                 // Memory Data select set to DX output of the Reg File
                                 MEM_DATA_SEL = MEM_DATA_PC_HIGH;
                                 // Set the Immediate Flag for the PC immediate address value
-                                IMMED_FLAG = 1'b1;      
+                                IMMED_SET = 1'b1;      
                             end  
                             
                             8'b110??100: // CALL NZ, CALL Z, CALL NC, CALL C: Push the PC High Byte onto the stack
@@ -2952,15 +3110,14 @@ module ControlUnit(
                                 // Memory Data select set to DX output of the Reg File
                                 MEM_DATA_SEL = MEM_DATA_PC_HIGH;
                                 // Set the Immediate Flag for the PC immediate address value
-                                IMMED_FLAG = 1'b1; 
+                                IMMED_SET = 1'b1; 
                             end
-                            
                         endcase                             
                         // Reset the Stack Pointer High Byte Flag and the PUSH Flag
                         SP_HIGH_FLAG = 1'b0;
-                        PUSH_FLAG = 1'b0;
+                        PUSH_CLR = 1'b1;
                         // Transition to the FETCH state once both bytes are pushed
-                        if (IMMED_FLAG || (WAIT_COUNTER == 0) || SP_OPCODE == 8'b00000000)
+                        if (IMMED_FLAG || IMMED_SET || (WAIT_COUNTER == 0) || SP_OPCODE == 8'b00000000)
                             NS = FETCH; 
                         else 
                             NS = WAIT_ST;                                                                                                                     
@@ -3050,7 +3207,7 @@ module ControlUnit(
                         // Reset the Stack Pointer High Byte Flag
                         SP_HIGH_FLAG = 1'b0;
                         // Reset the Immediate Flag
-                        IMMED_FLAG =1'b0;
+                        IMMED_CLR =1'b1;
                         // Transition to the FETCH once both bytes have been written
                         if (WAIT_COUNTER == 0)
                             NS = FETCH;
@@ -3072,7 +3229,7 @@ module ControlUnit(
                         // Reset the Stack Pointer High Byte Flag
                         SP_HIGH_FLAG = 1'b0;
                         // Reset the Immediate Flag
-                        IMMED_FLAG =1'b0;
+                        IMMED_CLR =1'b1;
                         // Transition to the FETCH state once both bytes have been written
                         if (WAIT_COUNTER == 0)
                             NS = FETCH;
@@ -3113,7 +3270,8 @@ module ControlUnit(
                         // RLC, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin            
-                            HL_ALU_FUN = RLC_ALU;                      
+                            HL_ALU_FUN_VAL = RLC_ALU;    
+                            HL_ALU_FUN_LD = 1'b1;                  
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3129,10 +3287,10 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
                             HL_HOLD = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3168,7 +3326,8 @@ module ControlUnit(
                         // RRC A, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = RRC_ALU;                      
+                            HL_ALU_FUN_VAL = RRC_ALU;  
+                            HL_ALU_FUN_LD = 1'b1;                    
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3182,9 +3341,9 @@ module ControlUnit(
                             N_FLAG_LD = 0;
                             H_FLAG_LD = 0;
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3220,7 +3379,8 @@ module ControlUnit(
                         // RL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = RL_ALU;                      
+                            HL_ALU_FUN_VAL = RL_ALU; 
+                            HL_ALU_FUN_LD = 1'b1;                     
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3236,9 +3396,9 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3275,7 +3435,8 @@ module ControlUnit(
                         // RR  (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = RR_ALU;                      
+                            HL_ALU_FUN_VAL = RR_ALU;  
+                            HL_ALU_FUN_LD = 1'b1;                    
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3291,9 +3452,9 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3329,7 +3490,8 @@ module ControlUnit(
                         // SLA, (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = SLA_ALU;                      
+                            HL_ALU_FUN_VAL = SLA_ALU;  
+                            HL_ALU_FUN_LD = 1'b1;                    
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3345,9 +3507,9 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             // Set Wait Counter
                             WAIT_VAL = CB_HL_PTR_WAIT;
@@ -3382,7 +3544,8 @@ module ControlUnit(
                         // SRA (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = SRA_ALU;                      
+                            HL_ALU_FUN_VAL = SRA_ALU;     
+                            HL_ALU_FUN_LD = 1'b1;                 
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3398,9 +3561,9 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3435,7 +3598,8 @@ module ControlUnit(
                         // SWAP (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = SWAP_ALU;                      
+                            HL_ALU_FUN_VAL = SWAP_ALU;   
+                            HL_ALU_FUN_LD = 1'b1;                   
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 
@@ -3449,9 +3613,9 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3487,7 +3651,8 @@ module ControlUnit(
                         // SRL (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = SRL_ALU;                      
+                            HL_ALU_FUN_VAL = SRL_ALU;    
+                            HL_ALU_FUN_LD = 1'b1;                  
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 //                          MEM_ADDR_SEL = 3'b011;
@@ -3503,7 +3668,7 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_CODE = 1; 
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
                             NS = HL_FETCH;
                             // Set Wait Counter
@@ -3531,7 +3696,8 @@ module ControlUnit(
                         // BIT (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = BIT_ALU;                      
+                            HL_ALU_FUN_VAL = BIT_ALU;  
+                            HL_ALU_FUN_LD = 1'b1;                    
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 
@@ -3545,10 +3711,10 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_BIT_SEL = OPCODE[5:3];
-                            HL_CODE = 1; 
+                            HL_BIT_SEL_LD = 1'b1;
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3575,7 +3741,8 @@ module ControlUnit(
                         // SET (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = SET_ALU;                      
+                            HL_ALU_FUN_VAL = SET_ALU;    
+                            HL_ALU_FUN_LD = 1'b1;                  
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 
@@ -3589,10 +3756,10 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_BIT_SEL = OPCODE[5:3];
-                            HL_CODE = 1; 
+                            HL_BIT_SEL_LD = 1'b1;
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3620,7 +3787,8 @@ module ControlUnit(
                         //RES (HL)  /// FIX Later 
                         if (OPCODE[2:0] == 3'b110)
                         begin                      
-                            HL_ALU_FUN = RES_ALU;                      
+                            HL_ALU_FUN_VAL = RES_ALU;  
+                            HL_ALU_FUN_LD = 1'b1;                    
                             RF_ADRX = REG_H;
                             RF_ADRY = REG_L;
 
@@ -3634,10 +3802,10 @@ module ControlUnit(
                             H_FLAG_LD = 0;                            
                             
                             // Store values needed for later
-                            HL_BIT_SEL = OPCODE[5:3];
-                            HL_CODE = 1; 
+                            HL_BIT_SEL_LD = 1'b1;
+                            HL_CODE_SET = 1; 
                             HL_FLAG = 1;
-                            HL_FUNC_FLAG = HL_ARITH;
+                            HL_FUNC_FLAG_SET = 1'b1;
                             NS = HL_FETCH;
                             
                             // Set Wait Counter
@@ -3654,7 +3822,7 @@ module ControlUnit(
                 if (INTR == 1)
                     NS = INTERRUPT;  
                 // Reset the CB Flag
-                CB_FLAG = 1'b0;
+                CB_FLAG_CLR = 1'b1;
                 if(NS != HL_FETCH)
                     begin
                         if (WAIT_COUNTER == 0)
@@ -3907,10 +4075,10 @@ module ControlUnit(
             end // HL_4
             
             INTERRUPT: begin
-                IME = 0;
+                IME_CLR = 1'b1;
                 NS = SP_LOW;
-                PUSH_FLAG = 1;
-                SP_OPCODE = 8'b00000000;  
+                PUSH_SET = 1'b1;
+                SP_OPCODE_INTR = 1'b1;  
             end // INTR
             
             HALT: begin
@@ -3927,8 +4095,19 @@ module ControlUnit(
                         // Setup Wait Counter
                         WAIT_VAL = EXEC_WAIT;
                         WAIT_LD = 1'b1;
+                        // Clear HL_CODE
+                        if (HL_CODE == 1'b1)
+                            HL_CODE_CLR = 1'b1;
                         NS = FETCH;
                     end
+                    
+//                 // Load Ret PC Val
+//                 if ((SP_OPCODE == 8'hC0 || SP_OPCODE == 8'hD0 || SP_OPCODE == 8'hC8 || SP_OPCODE == 8'hD8 || SP_OPCODE == 8'hC9 || SP_OPCODE == 8'hD9) && ~RST_WAIT_LD)
+//                    begin
+//                        PC_MUX_SEL = PC_MUX_RET;
+//                        PC_LD = 1'b1;
+//                        RST_WAIT_LD = 1'b1;
+//                    end
                                         
             end // WAIT_ST
         endcase // PS

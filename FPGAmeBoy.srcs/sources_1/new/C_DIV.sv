@@ -31,7 +31,7 @@ module  C_DIV(
     always_ff @(posedge CLK) 
     begin
         clk_div_counter = clk_div_counter + 1;   
-        if (clk_div_counter == 6'd12) 
+        if (clk_div_counter == 6'd5) 
         begin    
             clk_div_counter = 6'h00;
             CLK_DIV = ~CLK_DIV;    

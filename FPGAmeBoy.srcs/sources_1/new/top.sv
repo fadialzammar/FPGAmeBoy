@@ -5,23 +5,24 @@
 module top(
     input CLK,
     input RST,
-    input [1:0] INTR_in,
     input [3:0] BTN_IN,
     // Display outputs
     output logic VGA_HS, VGA_VS,
-    output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE
+    output logic [3:0] VGA_RED, VGA_GREEN, VGA_BLUE,
+    // Controller output
+    output logic [1:0] COL_OUT
 );
 
 ////////////////////////////
 // Clock Divider (10MHz clock)  /*** Currently not connected ***/
 ////////////////////////////
     logic SCLK;
-    assign SCLK = CLK;
+    //assign SCLK = CLK;
     
-//    C_DIV divider(
-//        .CLK        (CLK),
-//        .CLK_DIV    (SCLK)
-//    );
+    C_DIV divider(
+        .CLK        (CLK),
+        .CLK_DIV    (SCLK)
+    );
     
 ////////////////////////////
 // Boot ROM
@@ -148,7 +149,7 @@ initial begin
     int_ctrl = 0;
 end
 
-assign INTR = {int_ctrl, INTR_in, timer_intr_req, ppu_lcdc_req, ppu_vblank_req};
+assign INTR = {int_ctrl, 1'b0, timer_intr_req, ppu_lcdc_req, ppu_vblank_req};
 //assign PPU_RE = ~PPU_HOLD;      // TODO: replace HOLDs for REs
 //assign VRAM_RE = ~VRAM_HOLD;
 //assign OAM_RE = ~OAM_HOLD;
@@ -340,6 +341,7 @@ joypad joypad(
     .CLK        (SCLK)    
     );
     
+assign COL_OUT = JOY_DOUT[5:4];
 ////////////////////////////
 // Memory Map
 ////////////////////////////
@@ -402,13 +404,6 @@ memory_map memory_map(
     .cs_ram         (),
     .wr_ram         (MEM_WE),
     .rd_ram         (MEM_RE),
-    //Controller Manager FF00
-    .A_ctrlMgr      (),
-    .Di_ctrlMgr     (),
-    .Do_ctrlMgr     (),
-    .cs_ctrlMgr     (),
-    .wr_ctrlMgr     (),
-    .rd_ctrlMgr     (),
     //Timer FF04-FF07
     .A_timer        (TIMER_ADDR),
     .Di_timer       (TIMER_DIN),
@@ -445,25 +440,45 @@ memory_map memory_map(
 always_comb begin
     case (PPU_PIXEL)
         2'b00: begin
-            VGA_RED = 4'hf;
-            VGA_GREEN = 4'hf;
-            VGA_BLUE = 4'hf;
-        end
-        2'b01: begin
-            VGA_RED = 4'hb;
-            VGA_GREEN = 4'hb;
-            VGA_BLUE = 4'hb;
-        end
-        2'b10: begin
-            VGA_RED = 4'h6;
-            VGA_GREEN = 4'h6;
-            VGA_BLUE = 4'h6;
-        end
-        2'b11: begin
             VGA_RED = 4'h0;
             VGA_GREEN = 4'h0;
             VGA_BLUE = 4'h0;
         end
+        2'b01: begin
+            VGA_RED = 4'h6;
+            VGA_GREEN = 4'h6;
+            VGA_BLUE = 4'h6;
+        end
+        2'b10: begin
+            VGA_RED = 4'hB;
+            VGA_GREEN = 4'hB;
+            VGA_BLUE = 4'hB;
+        end
+        2'b11: begin
+            VGA_RED = 4'hF;
+            VGA_GREEN = 4'hF;
+            VGA_BLUE = 4'hF;
+        end
+//        2'b00: begin
+//            VGA_RED = 4'hF;
+//            VGA_GREEN = 4'hF;
+//            VGA_BLUE = 4'hF;
+//        end
+//        2'b01: begin
+//            VGA_RED = 4'hB;
+//            VGA_GREEN = 4'hB;
+//            VGA_BLUE = 4'hB;
+//        end
+//        2'b10: begin
+//            VGA_RED = 4'h6;
+//            VGA_GREEN = 4'h6;
+//            VGA_BLUE = 4'h6;
+//        end
+//        2'b11: begin
+//            VGA_RED = 4'h0;
+//            VGA_GREEN = 4'h0;
+//            VGA_BLUE = 4'h0;
+//        end
     endcase
 end
 

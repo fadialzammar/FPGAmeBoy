@@ -61,7 +61,7 @@ module CPU_Wrapper(
     logic [1:0] ALU_16_A_SEL;
     
     // RegFile Signals
-    logic [4:0] RF_ADRX, RF_ADRY;
+    logic [2:0] RF_ADRX, RF_ADRY;
     logic [7:0] RF_DIN, RF_DX_OUT, RF_DY_OUT;
     logic RF_WR;
     logic [3:0] RF_DIN_SEL;
@@ -155,10 +155,19 @@ module CPU_Wrapper(
     logic [15:0] PC_OFFSET, INTR_RET_PC;
     // Offset for CALL/RET to bypass the immediate values
     assign PC_OFFSET = PC + 2;
-    // Set the Return PC low byte to the low byte popped off the stack
-    assign RET_PC_LOW = PC_LOW_FLAG && !PC_HIGH_FLAG ? MEM_DOUT : RET_PC_LOW;
-    // Set the Return PC high byte to the high byte popped off the stack
-    assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
+   
+    // RET PC REG  
+    always_ff @(posedge CLK) begin
+        if (PC_HIGH_FLAG && !PC_LOW_FLAG)
+                RET_PC_HIGH <= MEM_DOUT;
+    end
+  
+//    // Set the Return PC low byte to the low byte popped off the stack
+//    assign RET_PC_LOW = PC_LOW_FLAG && !PC_HIGH_FLAG ? MEM_DOUT : RET_PC_LOW;
+//    // Set the Return PC high byte to the high byte popped off the stack
+//    assign RET_PC_HIGH = PC_HIGH_FLAG && !PC_LOW_FLAG ? MEM_DOUT : RET_PC_HIGH;
+
+    assign RET_PC_LOW = MEM_DOUT;
     // Concatenate the High and Low Bytes of the PC Address Values
     assign RET_PC = {RET_PC_HIGH,RET_PC_LOW};
     assign CALL_PC = {IMMED_ADDR_HIGH,IMMED_ADDR_LOW};
@@ -177,7 +186,7 @@ module CPU_Wrapper(
     );    
 
     // Restart Address Values    
-    logic [3:0] RST_MUX_SEL;
+    logic [2:0] RST_MUX_SEL;
     logic [15:0] RST_ADDR;
     
     MUX8to1#(.DATA_SIZE(16)) RST_MUX(
